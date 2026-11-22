@@ -378,7 +378,10 @@ export default function StoryPage() {
               </>
             )}
             <div ref={endRef} aria-hidden className="h-1 w-full" />
-            <div ref={optionsRef} className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden">
+            <div
+              ref={optionsRef}
+              className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden [touch-action:none]"
+            >
               {showOptions && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
