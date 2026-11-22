@@ -175,6 +175,16 @@ export default function StoryPage() {
   }, [showOptions, reducedMotion])
 
   useEffect(() => {
+    const el = optionsRef.current
+    if (!el) return
+    const block = (event: TouchEvent) => {
+      if (event.cancelable) event.preventDefault()
+    }
+    el.addEventListener('touchmove', block, { passive: false })
+    return () => el.removeEventListener('touchmove', block)
+  }, [showOptions, options.length])
+
+  useEffect(() => {
     if (!autoAdvance || !scene || scene.options?.length || !textReady) return
     const timer = setTimeout(() => advance(scene), 3000)
     return () => clearTimeout(timer)
