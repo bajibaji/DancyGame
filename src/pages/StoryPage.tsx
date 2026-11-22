@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { Archive, Settings } from 'lucide-react'
@@ -6,11 +6,10 @@ import GameShell from '../components/game/Layout/GameShell'
 import LocationBar from '../components/game/HUD/LocationBar'
 import StatMeters from '../components/game/HUD/StatMeters'
 import ChoiceFeedback from '../components/game/Scene/ChoiceFeedback'
-import RichText from '../components/game/Scene/RichText'
-import TextType from '../components/reactbits/TextType/TextType'
+import TypedRichText from '../components/game/Scene/TypedRichText'
 import StarBorder from '../components/reactbits/StarBorder/StarBorder'
 import GlitchText from '../components/reactbits/GlitchText/GlitchText'
-import { CHARACTERS, getScene, LOCATION_MAP } from '../content/index'
+import { CHARACTERS, CHAPTERS, getScene, LOCATION_MAP } from '../content/index'
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
 import { useGameKeys } from '../lib/keyboard'
@@ -55,6 +54,10 @@ export default function StoryPage() {
   const options = scene?.options ?? []
   const choiceEnabled = textReady && options.length > 0
   const showOptions = options.length > 0 && textReady && optionsUnlocked
+  const chapterData = scene ? CHAPTERS.find((c) => c.chapter === scene.chapter) : undefined
+  const sceneIndex = scene && chapterData ? chapterData.scenes.findIndex((s) => s.id === scene.id) + 1 : 0
+  const sceneTotal = chapterData?.scenes.length ?? 0
+  const chapterLabel = scene ? (scene.chapter === 'prologue' ? '序章' : `第${Number(scene.chapter.replace('ch', ''))}章`) : ''
 
   useEffect(() => {
     setSkipped(false)
@@ -147,8 +150,6 @@ export default function StoryPage() {
     () => (selectedCharacter ? CHARACTERS.find((c) => c.id === selectedCharacter.id) : undefined),
     [selectedCharacter],
   )
-  const typeSegments = useMemo(() => [scene?.body ?? ''], [scene?.body])
-  const handleTyped = useCallback(() => setTypedDone(true), [])
 
   const onChoose = (option: Option) => {
     if (!scene || !choiceEnabled) return
@@ -274,32 +275,24 @@ export default function StoryPage() {
                   <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-sm bg-clue/80" />
                   {scene.title}
                 </h2>
+                {history.length > 0 && (
+                  <p className="mb-3 truncate text-[11px] text-text-dim">
+                    上一步 · {history[history.length - 1].choice} {history[history.length - 1].label}
+                  </p>
+                )}
                 <div
                   className="reading min-h-[9rem] text-text"
                   onClick={() => {
                     if (!textReady) setSkipped(true)
                   }}
                 >
-                  {textReady || instant ? (
-                    <RichText
-                      text={scene.body}
-                      onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
-                    />
-                  ) : (
-                    <TextType
-                      text={typeSegments}
-                      typingSpeed={SPEED_MS[textSpeed]}
-                      initialDelay={200}
-                      typeEffect="none"
-                      showCursor
-                      cursorStyle="bar"
-                      cursorColor="var(--color-clue)"
-                      startOnVisible
-                      loop={false}
-                      onSentenceComplete={handleTyped}
-                      className="text-text"
-                    />
-                  )}
+                  <TypedRichText
+                    text={scene.body}
+                    speed={SPEED_MS[textSpeed]}
+                    revealAll={skipped || reducedMotion || instant}
+                    onDone={() => setTypedDone(true)}
+                    onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
+                  />
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -354,7 +347,7 @@ export default function StoryPage() {
 
           <div className="shrink-0 border-t border-border-subtle/60 bg-bg-deep/95 px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
             <div className="flex min-h-8 items-center justify-between text-[11px] text-text-dim">
-              <span>{history.length > 0 ? `第 ${history.length} 次抉择` : '序章'}</span>
+              <span>{chapterLabel} · {sceneIndex}/{sceneTotal}</span>
               {canUndo && snapshot ? (
                 <button
                   type="button"

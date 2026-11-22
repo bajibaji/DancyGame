@@ -1,15 +1,16 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import SplitText from '../components/reactbits/SplitText/SplitText'
 import BlurText from '../components/reactbits/BlurText/BlurText'
 import DecryptedText from '../components/reactbits/DecryptedText/DecryptedText'
 import SpecularButton from '../components/reactbits/SpecularButton/SpecularButton'
-import HoldButton from '../components/reactbits/HoldButton/HoldButton'
 import GameShell from '../components/game/Layout/GameShell'
 import { useGameStore } from '../stores/gameStore'
 
 export default function TitlePage() {
   const navigate = useNavigate()
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const start = useGameStore((s) => s.start)
   const history = useGameStore((s) => s.history)
   const sceneId = useGameStore((s) => s.sceneId)
@@ -79,18 +80,13 @@ export default function TitlePage() {
               {hasSave ? '继续调查' : '开始调查'}
             </SpecularButton>
             {hasSave && (
-              <HoldButton
-                holdTime={1200}
-                radius={18}
-                backgroundColor="var(--color-surface)"
-                fillColor="var(--color-accent)"
-                textColor="var(--color-text-secondary)"
-                fillTextColor="var(--color-bg-deep)"
-                onHold={onRestart}
-                className="min-w-[200px]"
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(true)}
+                className="rounded-[18px] px-4 py-2 text-xs text-text-dim underline decoration-text-dim/40 underline-offset-4 active:text-text-secondary"
               >
-                长按重新开始
-              </HoldButton>
+                重新开始
+              </button>
             )}
             <div className="flex items-center gap-3 text-sm text-text-dim">
               <button
@@ -115,6 +111,40 @@ export default function TitlePage() {
           </p>
         </motion.div>
       </div>
+
+      {confirmOpen && (
+        <div
+          className="fixed inset-0 z-40 flex items-end justify-center bg-black/55"
+          onClick={() => setConfirmOpen(false)}
+        >
+          <div
+            className="w-full max-w-[430px] rounded-t-2xl border-t border-border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className="font-display text-lg text-text-hi">重新开始？</h3>
+            <p className="mt-2 text-sm leading-relaxed text-text-secondary">当前进度会被覆盖，无法恢复。</p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                className="rounded-[18px] border border-border py-3 text-sm text-text-secondary active:bg-surface-hover"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmOpen(false)
+                  onRestart()
+                }}
+                className="rounded-[18px] border border-danger/50 bg-danger/10 py-3 text-sm text-danger active:bg-danger/20"
+              >
+                重新开始
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </GameShell>
   )
 }
