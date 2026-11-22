@@ -29,6 +29,7 @@ export interface Scene {
   locationId: string
   timeOfDay: string
   body: string
+  variants?: { flag: string; body: string }[]
   options?: Option[]
   next?: string
   ending?: 'auto'
@@ -66,6 +67,7 @@ export interface GameState {
   memories: string[]
   solved: string[]
   appliedScenes: string[]
+  visited: string[]
   history: HistoryEntry[]
   ending?: EndingId
   epilogue?: Epilogue
@@ -80,6 +82,7 @@ export interface Snapshot {
   memories: string[]
   solved: string[]
   appliedScenes: string[]
+  visited: string[]
   history: HistoryEntry[]
   at: number
 }

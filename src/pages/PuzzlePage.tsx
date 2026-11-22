@@ -14,7 +14,6 @@ export default function PuzzlePage() {
   const solved = useGameStore((s) => s.solved)
   const puzzleResult = useGameStore((s) => s.puzzleResult)
   const solvePuzzle = useGameStore((s) => s.solvePuzzle)
-  const closePuzzle = useGameStore((s) => s.closePuzzle)
   const [selected, setSelected] = useState<string[]>([])
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -45,8 +44,7 @@ export default function PuzzlePage() {
   }
 
   const onContinue = () => {
-    closePuzzle()
-    navigate('/story')
+    navigate('/archive')
   }
 
   return (
@@ -63,7 +61,7 @@ export default function PuzzlePage() {
 
       <main className="flex w-full flex-1 flex-col px-4 pb-44 pt-4">
         <p className="mb-3 text-xs leading-relaxed text-text-secondary">
-          点选两张线索卡，在下方按「推演」。推演正确会加深证据链；推错只是死胡同，不会扣分。
+          推理板是可选整理环节：挑两张线索卡组合。推演正确 +2 线索；推错只是死胡同，不影响剧情、数值与结局。
         </p>
         {solvedTitles.length > 0 && (
           <p className="mb-3 text-[11px] text-success">已推演：{solvedTitles.join('、')}</p>

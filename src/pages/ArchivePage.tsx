@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Brain } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
 import RubberSegment from '../components/reactbits/RubberSegment/RubberSegment'
 import SpotlightCard from '../components/reactbits/SpotlightCard/SpotlightCard'
@@ -49,9 +49,17 @@ export default function ArchivePage() {
             <ArrowLeft size={16} strokeWidth={1.8} /> 返回
           </button>
           <h1 className="font-display text-lg text-text-hi">档案库</h1>
-          <div className="text-[11px] text-text-dim">
-            线索 {ownedClues.length}/{CLUES.length} · 记忆 {ownedMemories.length}/{MEMORIES.length}
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/puzzle')}
+            className="flex min-h-11 items-center gap-1 rounded-[18px] px-2 text-xs text-clue active:bg-surface"
+          >
+            <Brain size={14} strokeWidth={1.8} />
+            推理板
+          </button>
+        </div>
+        <div className="mt-1 text-[11px] text-text-dim">
+          线索 {ownedClues.length}/{CLUES.length} · 记忆 {ownedMemories.length}/{MEMORIES.length}
         </div>
       </header>
 

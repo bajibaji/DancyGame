@@ -33,6 +33,7 @@ export function createInitialState(sceneId: string): GameState {
     memories: [],
     solved: [],
     appliedScenes: [],
+    visited: [sceneId],
     history: [],
   }
 }
@@ -63,6 +64,7 @@ export function makeSnapshot(state: GameState): Snapshot {
     memories: [...state.memories],
     solved: [...state.solved],
     appliedScenes: [...state.appliedScenes],
+    visited: [...state.visited],
     history: [...state.history],
     at: Date.now(),
   }
@@ -78,6 +80,7 @@ export function restoreSnapshot(snapshot: Snapshot): GameState {
     memories: [...snapshot.memories],
     solved: [...snapshot.solved],
     appliedScenes: [...snapshot.appliedScenes],
+    visited: [...snapshot.visited],
     history: [...snapshot.history],
   }
 }

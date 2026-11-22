@@ -17,6 +17,7 @@ interface GameStore {
   memories: string[]
   solved: string[]
   appliedScenes: string[]
+  visited: string[]
   history: HistoryEntry[]
   metCharacters: string[]
   started: boolean
@@ -41,11 +42,13 @@ const initial = createInitialState('p01')
 
 function withSceneEffects(state: GameStore, sceneId: string): Partial<GameStore> {
   const scene = getScene(sceneId)
+  const visited =
+    state.visited[state.visited.length - 1] === sceneId ? state.visited : [...state.visited, sceneId]
   if (!scene || state.appliedScenes.includes(sceneId)) {
-    return { sceneId }
+    return { sceneId, visited }
   }
   if (!scene.effects) {
-    return { sceneId, appliedScenes: [...state.appliedScenes, sceneId] }
+    return { sceneId, visited, appliedScenes: [...state.appliedScenes, sceneId] }
   }
   const applied = applyEffects(
     {
@@ -57,12 +60,14 @@ function withSceneEffects(state: GameStore, sceneId: string): Partial<GameStore>
       memories: state.memories,
       solved: state.solved,
       appliedScenes: state.appliedScenes,
+      visited: state.visited,
       history: state.history,
     },
     scene.effects,
   )
   return {
     sceneId,
+    visited,
     meta: applied.meta,
     flags: applied.flags,
     clues: applied.clues,
@@ -83,6 +88,7 @@ export const useGameStore = create<GameStore>()(
       memories: initial.memories,
       solved: initial.solved,
       appliedScenes: initial.appliedScenes,
+      visited: initial.visited,
       history: initial.history,
       metCharacters: ['jiangjia'],
       started: false,
@@ -114,6 +120,7 @@ export const useGameStore = create<GameStore>()(
           memories: state.memories,
           solved: state.solved,
           appliedScenes: state.appliedScenes,
+          visited: state.visited,
           history: state.history,
         })
         const next = engineChoose(
@@ -126,6 +133,7 @@ export const useGameStore = create<GameStore>()(
             memories: state.memories,
             solved: state.solved,
             appliedScenes: state.appliedScenes,
+            visited: state.visited,
             history: state.history,
           },
           scene,
@@ -136,10 +144,6 @@ export const useGameStore = create<GameStore>()(
         set({ ...next, ...entered, snapshot, screen: 'story' })
       },
       advance: (scene) => {
-        if (scene.puzzle) {
-          set({ screen: 'puzzle', puzzleResult: null })
-          return
-        }
         if (scene.ending === 'auto') {
           get().finishAutoEnding()
           return
@@ -161,6 +165,7 @@ export const useGameStore = create<GameStore>()(
             memories: state.memories,
             solved: state.solved,
             appliedScenes: state.appliedScenes,
+            visited: state.visited,
             history: state.history,
           },
           a,
@@ -195,6 +200,7 @@ export const useGameStore = create<GameStore>()(
           memories: state.memories,
           solved: state.solved,
           appliedScenes: state.appliedScenes,
+          visited: state.visited,
           history: state.history,
         })
         set({ ending, screen: 'ending', snapshot: null })
@@ -245,6 +251,7 @@ export const useGameStore = create<GameStore>()(
         memories: state.memories,
         solved: state.solved,
         appliedScenes: state.appliedScenes,
+        visited: state.visited,
         history: state.history,
         metCharacters: state.metCharacters,
         started: state.started,
