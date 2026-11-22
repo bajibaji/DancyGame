@@ -32,11 +32,13 @@ export default function SettingsPage() {
   const fontSize = useSettingsStore((s) => s.fontSize)
   const readingMode = useSettingsStore((s) => s.readingMode)
   const reducedMotion = useSettingsStore((s) => s.reducedMotion)
+  const staticBackground = useSettingsStore((s) => s.staticBackground)
   const autoAdvance = useSettingsStore((s) => s.autoAdvance)
   const setTextSpeed = useSettingsStore((s) => s.setTextSpeed)
   const setFontSize = useSettingsStore((s) => s.setFontSize)
   const setReadingMode = useSettingsStore((s) => s.setReadingMode)
   const setReducedMotion = useSettingsStore((s) => s.setReducedMotion)
+  const setStaticBackground = useSettingsStore((s) => s.setStaticBackground)
   const setAutoAdvance = useSettingsStore((s) => s.setAutoAdvance)
   const reset = useGameStore((s) => s.reset)
 
@@ -116,12 +118,21 @@ export default function SettingsPage() {
 
         <section className="rounded-lg border border-border bg-surface/70 p-4">
           <h2 className="mb-3 text-xs tracking-[0.2em] text-text-dim">动效</h2>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-text">减弱动效</p>
-              <p className="mt-0.5 text-[11px] text-text-dim">暂停背景动画、关闭闪烁与打字机</p>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text">静态背景</p>
+                <p className="mt-0.5 text-[11px] text-text-dim">关闭丝绸波纹流动，使用静态底色</p>
+              </div>
+              <SquishSwitch checked={staticBackground} onChange={setStaticBackground} ariaLabel="静态背景" />
             </div>
-            <SquishSwitch checked={reducedMotion} onChange={setReducedMotion} ariaLabel="减弱动效" />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text">减弱动效</p>
+                <p className="mt-0.5 text-[11px] text-text-dim">暂停背景动画、关闭闪烁与打字机</p>
+              </div>
+              <SquishSwitch checked={reducedMotion} onChange={setReducedMotion} ariaLabel="减弱动效" />
+            </div>
           </div>
         </section>
 

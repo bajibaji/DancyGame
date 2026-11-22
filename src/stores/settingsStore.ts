@@ -10,11 +10,13 @@ interface SettingsStore {
   fontSize: FontSize
   readingMode: ReadingMode
   reducedMotion: boolean
+  staticBackground: boolean
   autoAdvance: boolean
   setTextSpeed: (speed: TextSpeed) => void
   setFontSize: (size: FontSize) => void
   setReadingMode: (mode: ReadingMode) => void
   setReducedMotion: (value: boolean) => void
+  setStaticBackground: (value: boolean) => void
   setAutoAdvance: (value: boolean) => void
 }
 
@@ -25,11 +27,13 @@ export const useSettingsStore = create<SettingsStore>()(
       fontSize: 'small',
       readingMode: 'single',
       reducedMotion: false,
+      staticBackground: false,
       autoAdvance: false,
       setTextSpeed: (textSpeed) => set({ textSpeed }),
       setFontSize: (fontSize) => set({ fontSize }),
       setReadingMode: (readingMode) => set({ readingMode }),
       setReducedMotion: (reducedMotion) => set({ reducedMotion }),
+      setStaticBackground: (staticBackground) => set({ staticBackground }),
       setAutoAdvance: (autoAdvance) => set({ autoAdvance }),
     }),
     { name: 'jiangjia.settings.v3', version: 3 },
