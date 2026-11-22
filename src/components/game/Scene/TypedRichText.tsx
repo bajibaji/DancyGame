@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { parseRichText } from './richTextTokens'
+import { NAME_PATTERN, NAME_TO_ID } from '../../../game/characterNames'
 
 interface TypedRichTextProps {
   text: string
@@ -9,8 +9,39 @@ interface TypedRichTextProps {
   onSelect: (id: string, alias: string) => void
 }
 
+type Token =
+  | { kind: 'text'; text: string }
+  | { kind: 'dialogue'; text: string }
+  | { kind: 'name'; text: string; id: string }
+
+interface Paragraph {
+  dialogueLead: boolean
+  tokens: Token[]
+}
+
+const DIALOGUE = /(「[^」]*」)/g
+
+function parse(text: string): Paragraph[] {
+  return text.split(/\n\n+/).map((paragraph) => {
+    const tokens: Token[] = []
+    for (const segment of paragraph.split(DIALOGUE)) {
+      if (!segment) continue
+      if (segment.startsWith('「') && segment.endsWith('」')) {
+        tokens.push({ kind: 'dialogue', text: segment })
+        continue
+      }
+      for (const part of segment.split(NAME_PATTERN)) {
+        if (!part) continue
+        const id = NAME_TO_ID.get(part)
+        tokens.push(id ? { kind: 'name', text: part, id } : { kind: 'text', text: part })
+      }
+    }
+    return { dialogueLead: paragraph.trimStart().startsWith('「'), tokens }
+  })
+}
+
 export default function TypedRichText({ text, speed, revealAll, onDone, onSelect }: TypedRichTextProps) {
-  const paragraphs = useMemo(() => parseRichText(text), [text])
+  const paragraphs = useMemo(() => parse(text), [text])
   const total = useMemo(
     () => paragraphs.reduce((sum, paragraph) => sum + paragraph.tokens.reduce((n, token) => n + token.text.length, 0), 0),
     [paragraphs],
@@ -60,10 +91,18 @@ export default function TypedRichText({ text, speed, revealAll, onDone, onSelect
               if (remaining <= 0) return null
               const part = token.text.slice(0, remaining)
               used += token.text.length
+              if (token.kind === 'dialogue') {
+                return (
+                  <span key={tokenIndex} className="dialogue">
+                    {part}
+                  </span>
+                )
+              }
               if (token.kind === 'name') {
-                if (part.length < token.text.length) {
+                const full = part.length === token.text.length
+                if (!full) {
                   return (
-                    <span key={tokenIndex} className="whitespace-nowrap font-medium text-accent-strong">
+                    <span key={tokenIndex} className="font-medium text-accent-strong">
                       {part}
                     </span>
                   )
@@ -84,15 +123,8 @@ export default function TypedRichText({ text, speed, revealAll, onDone, onSelect
                         onSelect(token.id, token.text)
                       }
                     }}
-                    className="whitespace-nowrap font-medium text-accent-strong active:text-accent"
+                    className="font-medium text-accent-strong active:text-accent"
                   >
-                    {part}
-                  </span>
-                )
-              }
-              if (token.dialogue) {
-                return (
-                  <span key={tokenIndex} className="dialogue">
                     {part}
                   </span>
                 )
