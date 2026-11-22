@@ -3,14 +3,17 @@ import { persist } from 'zustand/middleware'
 
 export type TextSpeed = 'slow' | 'normal' | 'fast' | 'instant'
 export type FontSize = 'small' | 'medium' | 'large'
+export type ReadingMode = 'single' | 'linear'
 
 interface SettingsStore {
   textSpeed: TextSpeed
   fontSize: FontSize
+  readingMode: ReadingMode
   reducedMotion: boolean
   autoAdvance: boolean
   setTextSpeed: (speed: TextSpeed) => void
   setFontSize: (size: FontSize) => void
+  setReadingMode: (mode: ReadingMode) => void
   setReducedMotion: (value: boolean) => void
   setAutoAdvance: (value: boolean) => void
 }
@@ -20,10 +23,12 @@ export const useSettingsStore = create<SettingsStore>()(
     (set) => ({
       textSpeed: 'fast',
       fontSize: 'small',
+      readingMode: 'single',
       reducedMotion: false,
       autoAdvance: false,
       setTextSpeed: (textSpeed) => set({ textSpeed }),
       setFontSize: (fontSize) => set({ fontSize }),
+      setReadingMode: (readingMode) => set({ readingMode }),
       setReducedMotion: (reducedMotion) => set({ reducedMotion }),
       setAutoAdvance: (autoAdvance) => set({ autoAdvance }),
     }),

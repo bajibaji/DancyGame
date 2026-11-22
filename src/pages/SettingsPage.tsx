@@ -21,14 +21,21 @@ const FONT_ITEMS = [
   { value: 'large', label: '大' },
 ]
 
+const READING_ITEMS = [
+  { value: 'single', label: '单场景' },
+  { value: 'linear', label: '连续' },
+]
+
 export default function SettingsPage() {
   const navigate = useNavigate()
   const textSpeed = useSettingsStore((s) => s.textSpeed)
   const fontSize = useSettingsStore((s) => s.fontSize)
+  const readingMode = useSettingsStore((s) => s.readingMode)
   const reducedMotion = useSettingsStore((s) => s.reducedMotion)
   const autoAdvance = useSettingsStore((s) => s.autoAdvance)
   const setTextSpeed = useSettingsStore((s) => s.setTextSpeed)
   const setFontSize = useSettingsStore((s) => s.setFontSize)
+  const setReadingMode = useSettingsStore((s) => s.setReadingMode)
   const setReducedMotion = useSettingsStore((s) => s.setReducedMotion)
   const setAutoAdvance = useSettingsStore((s) => s.setAutoAdvance)
   const reset = useGameStore((s) => s.reset)
@@ -78,6 +85,19 @@ export default function SettingsPage() {
                 value={fontSize}
                 onChange={(value) => setFontSize(value as typeof fontSize)}
                 aria-label="字号"
+                trackColor="var(--color-surface)"
+                thumbColor="var(--color-accent)"
+                textColor="var(--color-text-secondary)"
+                activeTextColor="var(--color-bg-deep)"
+              />
+            </div>
+            <div>
+              <p className="mb-2 text-sm text-text">阅读方式</p>
+              <RubberSegment
+                items={READING_ITEMS}
+                value={readingMode}
+                onChange={(value) => setReadingMode(value as typeof readingMode)}
+                aria-label="阅读方式"
                 trackColor="var(--color-surface)"
                 thumbColor="var(--color-accent)"
                 textColor="var(--color-text-secondary)"

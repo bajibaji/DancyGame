@@ -6,10 +6,11 @@ import GameShell from '../components/game/Layout/GameShell'
 import LocationBar from '../components/game/HUD/LocationBar'
 import StatMeters from '../components/game/HUD/StatMeters'
 import ChoiceFeedback from '../components/game/Scene/ChoiceFeedback'
+import RichText from '../components/game/Scene/RichText'
 import TypedRichText from '../components/game/Scene/TypedRichText'
 import StarBorder from '../components/reactbits/StarBorder/StarBorder'
 import GlitchText from '../components/reactbits/GlitchText/GlitchText'
-import { CHARACTERS, CHAPTERS, getScene, LOCATION_MAP } from '../content/index'
+import { CHARACTERS, CHAPTERS, chapterTitle, getScene, LOCATION_MAP } from '../content/index'
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
 import { useGameKeys } from '../lib/keyboard'
@@ -31,8 +32,10 @@ export default function StoryPage() {
   const advance = useGameStore((s) => s.advance)
   const undo = useGameStore((s) => s.undo)
   const meet = useGameStore((s) => s.meet)
+  const visited = useGameStore((s) => s.visited)
   const fontSize = useSettingsStore((s) => s.fontSize)
   const textSpeed = useSettingsStore((s) => s.textSpeed)
+  const readingMode = useSettingsStore((s) => s.readingMode)
   const reducedMotion = useSettingsStore((s) => s.reducedMotion)
   const autoAdvance = useSettingsStore((s) => s.autoAdvance)
   const [skipped, setSkipped] = useState(false)
@@ -44,7 +47,7 @@ export default function StoryPage() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const endRef = useRef<HTMLDivElement | null>(null)
-  const optionsRef = useRef<HTMLDivElement | null>(null)
+  const latestRef = useRef<HTMLElement | null>(null)
 
   const scene = getScene(sceneId)
   const location = scene ? LOCATION_MAP.get(scene.locationId) : undefined
@@ -59,6 +62,14 @@ export default function StoryPage() {
   const sceneTotal = chapterData?.scenes.length ?? 0
   const chapterLabel = scene ? (scene.chapter === 'prologue' ? '序章' : `第${Number(scene.chapter.replace('ch', ''))}章`) : ''
   const resolveBody = (section: Scene) => section.variants?.find((variant) => flags[variant.flag])?.body ?? section.body
+  const pathIds = useMemo(
+    () => (visited.length > 0 && visited[visited.length - 1] === sceneId ? visited : [...visited, sceneId]),
+    [visited, sceneId],
+  )
+  const visitedScenes = useMemo(
+    () => pathIds.map((id) => getScene(id)).filter((s): s is Scene => Boolean(s)),
+    [pathIds],
+  )
 
   useEffect(() => {
     setSkipped(false)
@@ -86,6 +97,7 @@ export default function StoryPage() {
   }, [sceneId, scene, meet])
 
   useLayoutEffect(() => {
+    if (readingMode !== 'single') return
     const el = scrollRef.current
     if (!el) return
     el.scrollTop = 0
@@ -99,7 +111,17 @@ export default function StoryPage() {
       cancelAnimationFrame(frame)
       clearTimeout(timer)
     }
-  }, [sceneId])
+  }, [sceneId, readingMode])
+
+  useEffect(() => {
+    if (readingMode !== 'linear' || visited.length <= 1) return
+    const el = latestRef.current
+    if (!el) return
+    const timer = setTimeout(() => {
+      el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
+    }, 80)
+    return () => clearTimeout(timer)
+  }, [sceneId, readingMode, reducedMotion, visited.length])
 
   useEffect(() => {
     setOptionsUnlocked(false)
@@ -142,14 +164,6 @@ export default function StoryPage() {
   useEffect(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current)
   }, [])
-
-  useEffect(() => {
-    if (!showOptions) return
-    const timer = setTimeout(() => {
-      optionsRef.current?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'end' })
-    }, 120)
-    return () => clearTimeout(timer)
-  }, [showOptions, reducedMotion])
 
   useEffect(() => {
     if (!autoAdvance || !scene || scene.options?.length || !textReady) return
@@ -267,91 +281,142 @@ export default function StoryPage() {
               }}
               onContextMenu={(event) => event.preventDefault()}
             >
-            {showMemoryTag && (
-              <div className="mb-3">
-                <GlitchText mode="scan" intensity={0.35} trigger="click" fontSize={12} fontWeight={500} shadowColors={['#67c7d8', '#d9a24b']} className="tracking-[0.3em] text-memory">
-                  记忆碎片 · 读取中
-                </GlitchText>
-              </div>
-            )}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={scene.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: reducedMotion ? 0.12 : 0.22 }}
-              >
-                <h2 className="scene-title mb-4 flex items-center gap-3 font-display tracking-wide text-text-hi">
-                  <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-sm bg-clue/80" />
-                  {scene.title}
-                </h2>
-                <div
-                  className="reading text-text"
-                  onClick={() => {
-                    if (!textReady) setSkipped(true)
-                  }}
-                >
-                  <TypedRichText
-                    text={resolveBody(scene)}
-                    speed={SPEED_MS[textSpeed]}
-                    revealAll={skipped || reducedMotion || instant}
-                    onDone={() => setTypedDone(true)}
-                    onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
-                  />
-                </div>
-              </motion.div>
-            </AnimatePresence>
-            <div ref={optionsRef} className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden">
-              {showOptions ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: reducedMotion ? 0.12 : 0.3 }}
-                  className="flex flex-col gap-2"
-                >
-                  {options.map((option) => (
-                    <StarBorder
-                      key={option.key}
-                      as="button"
-                      onClick={() => onChoose(option)}
-                      disabled={!choiceEnabled}
-                      className="w-full text-left active:scale-[0.99] disabled:cursor-not-allowed"
-                      color="var(--color-accent)"
-                      trailColor="var(--color-clue)"
-                      backgroundColor="var(--color-surface-raised)"
-                      textColor="var(--color-text)"
-                      borderColor="var(--color-border)"
-                      hover="reveal"
-                      clickPulse
-                      stars={1}
-                      radius={18}
-                      thickness={1}
-                    >
-                      <span className="flex w-full items-center gap-3 px-4 py-3">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border-strong font-display text-sm text-accent">
-                          {option.key}
+            {readingMode === 'linear' ? (
+              visitedScenes.map((section, index) => {
+                const isCurrent = section.id === scene.id
+                const previous = visitedScenes[index - 1]
+                const chapterChanged = !previous || previous.chapter !== section.chapter
+                return (
+                  <section key={section.id} ref={isCurrent ? latestRef : undefined} className="mb-7 scroll-mt-2">
+                    {chapterChanged && (
+                      <div className="mb-3 mt-1 flex items-center gap-3">
+                        <span className="h-px flex-1 bg-border-subtle" />
+                        <span className="font-display text-[11px] tracking-[0.3em] text-text-secondary">
+                          {chapterTitle(section.chapter)}
                         </span>
-                        <span className="option-label min-w-0 flex-1">{option.label}</span>
-                      </span>
-                    </StarBorder>
-                  ))}
-                </motion.div>
-              ) : options.length === 0 && textReady ? (
-                <button
-                  type="button"
-                  onClick={onAdvance}
-                  className="w-full rounded-[18px] border border-border-strong bg-surface-raised py-3.5 text-[15px] text-text active:scale-[0.99] active:border-accent/60 active:text-accent"
-                >
-                  {scene.ending === 'auto' ? '合上案卷' : '继 续'}
-                </button>
-              ) : null}
-            </div>
+                        <span className="h-px flex-1 bg-border-subtle" />
+                      </div>
+                    )}
+                    <div className="mb-3 text-center text-[10px] tracking-[0.3em] text-text-dim/80">· {section.title} ·</div>
+                    {isCurrent && showMemoryTag && (
+                      <div className="mb-3">
+                        <GlitchText mode="scan" intensity={0.35} trigger="click" fontSize={12} fontWeight={500} shadowColors={['#67c7d8', '#d9a24b']} className="tracking-[0.3em] text-memory">
+                          记忆碎片 · 读取中
+                        </GlitchText>
+                      </div>
+                    )}
+                    <div
+                      className="reading text-text"
+                      onClick={isCurrent ? () => {
+                        if (!textReady) setSkipped(true)
+                      } : undefined}
+                    >
+                      {isCurrent ? (
+                        <TypedRichText
+                          text={resolveBody(section)}
+                          speed={SPEED_MS[textSpeed]}
+                          revealAll={skipped || reducedMotion || instant}
+                          onDone={() => setTypedDone(true)}
+                          onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
+                        />
+                      ) : (
+                        <RichText
+                          text={resolveBody(section)}
+                          onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
+                        />
+                      )}
+                    </div>
+                  </section>
+                )
+              })
+            ) : (
+              <>
+                {showMemoryTag && (
+                  <div className="mb-3">
+                    <GlitchText mode="scan" intensity={0.35} trigger="click" fontSize={12} fontWeight={500} shadowColors={['#67c7d8', '#d9a24b']} className="tracking-[0.3em] text-memory">
+                      记忆碎片 · 读取中
+                    </GlitchText>
+                  </div>
+                )}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={scene.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: reducedMotion ? 0.12 : 0.22 }}
+                  >
+                    <h2 className="scene-title mb-4 flex items-center gap-3 font-display tracking-wide text-text-hi">
+                      <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-sm bg-clue/80" />
+                      {scene.title}
+                    </h2>
+                    <div
+                      className="reading text-text"
+                      onClick={() => {
+                        if (!textReady) setSkipped(true)
+                      }}
+                    >
+                      <TypedRichText
+                        text={resolveBody(scene)}
+                        speed={SPEED_MS[textSpeed]}
+                        revealAll={skipped || reducedMotion || instant}
+                        onDone={() => setTypedDone(true)}
+                        onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
+                      />
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </>
+            )}
             <div ref={endRef} aria-hidden className="h-1 w-full" />
             </div>
           </div>
 
           <div className="shrink-0 border-t border-border-subtle/60 bg-bg-deep/95 px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
+            {showOptions && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: reducedMotion ? 0.12 : 0.3 }}
+                className="mb-2 flex flex-col gap-2"
+              >
+                {options.map((option) => (
+                  <StarBorder
+                    key={option.key}
+                    as="button"
+                    onClick={() => onChoose(option)}
+                    disabled={!choiceEnabled}
+                    className="w-full text-left active:scale-[0.99] disabled:cursor-not-allowed"
+                    color="var(--color-accent)"
+                    trailColor="var(--color-clue)"
+                    backgroundColor="var(--color-surface-raised)"
+                    textColor="var(--color-text)"
+                    borderColor="var(--color-border)"
+                    hover="reveal"
+                    clickPulse
+                    stars={1}
+                    radius={18}
+                    thickness={1}
+                  >
+                    <span className="flex w-full items-center gap-3 px-4 py-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border-strong font-display text-sm text-accent">
+                        {option.key}
+                      </span>
+                      <span className="option-label min-w-0 flex-1">{option.label}</span>
+                    </span>
+                  </StarBorder>
+                ))}
+              </motion.div>
+            )}
+            {options.length === 0 && textReady && (
+              <button
+                type="button"
+                onClick={onAdvance}
+                className="mb-2 w-full rounded-[18px] border border-border-strong bg-surface-raised py-3.5 text-[15px] text-text active:scale-[0.99] active:border-accent/60 active:text-accent"
+              >
+                {scene.ending === 'auto' ? '合上案卷' : '继 续'}
+              </button>
+            )}
             <div className="flex min-h-8 items-center justify-between text-[11px] text-text-dim">
               <span>{chapterLabel} · {sceneIndex}/{sceneTotal}</span>
               {canUndo && snapshot ? (
