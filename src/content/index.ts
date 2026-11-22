@@ -1,0 +1,87 @@
+import type { Chapter, Scene } from '../game/types'
+import prologueJson from './story/prologue.json'
+import ch01Json from './story/ch01.json'
+import ch02Json from './story/ch02.json'
+import ch03Json from './story/ch03.json'
+import ch04Json from './story/ch04.json'
+import ch05Json from './story/ch05.json'
+import ch06Json from './story/ch06.json'
+import ch07Json from './story/ch07.json'
+import cluesJson from './clues.json'
+import memoriesJson from './memories.json'
+import locationsJson from './hz-locations.json'
+import charactersJson from './characters.json'
+import endingsJson from './endings.json'
+
+export interface ClueCard {
+  id: string
+  title: string
+  category: string
+  description: string
+}
+
+export interface MemoryCard {
+  id: string
+  title: string
+  body: string
+}
+
+export interface LocationCard {
+  id: string
+  name: string
+  district: string
+  detail: string
+}
+
+export interface CharacterCard {
+  id: string
+  name: string
+  role: string
+  note: string
+}
+
+export interface EndingData {
+  name: string
+  body: string
+  resistance?: string
+  epilogues: Record<string, string>
+  variants: { flag: string; text: string }[]
+}
+
+export const CHAPTERS = [
+  prologueJson,
+  ch01Json,
+  ch02Json,
+  ch03Json,
+  ch04Json,
+  ch05Json,
+  ch06Json,
+  ch07Json,
+] as unknown as Chapter[]
+
+export const SCENES = new Map<string, Scene>()
+for (const chapter of CHAPTERS) {
+  for (const scene of chapter.scenes) {
+    SCENES.set(scene.id, scene)
+  }
+}
+
+export const START_SCENE = 'p01'
+
+export function getScene(id: string): Scene | undefined {
+  return SCENES.get(id)
+}
+
+export const CLUES: ClueCard[] = cluesJson as ClueCard[]
+export const MEMORIES: MemoryCard[] = memoriesJson as MemoryCard[]
+export const LOCATIONS: LocationCard[] = locationsJson as LocationCard[]
+export const CHARACTERS: CharacterCard[] = charactersJson as CharacterCard[]
+export const ENDINGS = endingsJson as unknown as Record<'good' | 'bad' | 'neutral', EndingData>
+
+export const CLUE_MAP = new Map(CLUES.map((c) => [c.id, c]))
+export const MEMORY_MAP = new Map(MEMORIES.map((m) => [m.id, m]))
+export const LOCATION_MAP = new Map(LOCATIONS.map((l) => [l.id, l]))
+
+export function chapterTitle(chapterId: string): string {
+  return CHAPTERS.find((c) => c.chapter === chapterId)?.title ?? chapterId
+}
