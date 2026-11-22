@@ -10,11 +10,10 @@ import RichText from '../components/game/Scene/RichText'
 import TypedRichText from '../components/game/Scene/TypedRichText'
 import StarBorder from '../components/reactbits/StarBorder/StarBorder'
 import GlitchText from '../components/reactbits/GlitchText/GlitchText'
-import { CHARACTERS, CHAPTERS, chapterTitle, getScene, LOCATION_MAP } from '../content/index'
+import { CHARACTERS, chapterTitle, getScene, LOCATION_MAP } from '../content/index'
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
 import { useGameKeys } from '../lib/keyboard'
-import { pinChoices } from '../lib/choiceScrollLock'
 import type { Option, Scene } from '../game/types'
 
 interface SelectedCharacter {
@@ -28,13 +27,11 @@ export default function StoryPage() {
   const flags = useGameStore((s) => s.flags)
   const ending = useGameStore((s) => s.ending)
   const screen = useGameStore((s) => s.screen)
-  const snapshot = useGameStore((s) => s.snapshot)
   const choose = useGameStore((s) => s.choose)
   const advance = useGameStore((s) => s.advance)
   const undo = useGameStore((s) => s.undo)
   const meet = useGameStore((s) => s.meet)
   const visited = useGameStore((s) => s.visited)
-  const fontSize = useSettingsStore((s) => s.fontSize)
   const textSpeed = useSettingsStore((s) => s.textSpeed)
   const readingMode = useSettingsStore((s) => s.readingMode)
   const reducedMotion = useSettingsStore((s) => s.reducedMotion)
@@ -44,12 +41,8 @@ export default function StoryPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [canUndo, setCanUndo] = useState(false)
   const [selectedCharacter, setSelectedCharacter] = useState<SelectedCharacter | null>(null)
-  const [unlockedScene, setUnlockedScene] = useState<string | null>(null)
-  const [reviewing, setReviewing] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
-  const endRef = useRef<HTMLDivElement | null>(null)
-  const optionsRef = useRef<HTMLDivElement | null>(null)
   const latestRef = useRef<HTMLElement | null>(null)
 
   const scene = getScene(sceneId)
@@ -59,11 +52,7 @@ export default function StoryPage() {
   const showMemoryTag = Boolean(scene?.effects?.memories?.length)
   const options = scene?.options ?? []
   const choiceEnabled = textReady && options.length > 0
-  const showOptions = options.length > 0 && textReady && unlockedScene === sceneId
-  const chapterData = scene ? CHAPTERS.find((c) => c.chapter === scene.chapter) : undefined
-  const sceneIndex = scene && chapterData ? chapterData.scenes.findIndex((s) => s.id === scene.id) + 1 : 0
-  const sceneTotal = chapterData?.scenes.length ?? 0
-  const chapterLabel = scene ? (scene.chapter === 'prologue' ? '序章' : `第${Number(scene.chapter.replace('ch', ''))}章`) : ''
+  const showOptions = options.length > 0 && textReady
   const resolveBody = (section: Scene) => section.variants?.find((variant) => flags[variant.flag])?.body ?? section.body
   const pathIds = useMemo(
     () => (visited.length > 0 && visited[visited.length - 1] === sceneId ? visited : [...visited, sceneId]),
@@ -80,7 +69,6 @@ export default function StoryPage() {
     setMessage(null)
     setCanUndo(false)
     setSelectedCharacter(null)
-    setReviewing(false)
     const fixedClues = scene?.effects?.clues ?? []
     if (fixedClues.length > 0) {
       setMessage(`线索已入档 · ${fixedClues.join(' / ')} · 可去档案库推理`)
@@ -128,49 +116,12 @@ export default function StoryPage() {
   }, [sceneId, readingMode, reducedMotion, visited.length])
 
   useEffect(() => {
-    const el = scrollRef.current
-    const end = endRef.current
-    if (!el) return
-    const update = () => {
-      if (!textReady) return
-      const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
-      if (remaining <= 8) setUnlockedScene(sceneId)
-    }
-    update()
-    const observer = new ResizeObserver(update)
-    observer.observe(el)
-    let sentinel: IntersectionObserver | null = null
-    if (end) {
-      sentinel = new IntersectionObserver(
-        (entries) => {
-          if (textReady && entries.some((entry) => entry.isIntersecting)) setUnlockedScene(sceneId)
-        },
-        { root: el, threshold: 0.01 },
-      )
-      sentinel.observe(end)
-    }
-    const timer = setTimeout(update, 300)
-    return () => {
-      observer.disconnect()
-      sentinel?.disconnect()
-      clearTimeout(timer)
-    }
-  }, [sceneId, textReady, fontSize])
-
-  useEffect(() => {
     if (ending && screen === 'ending') navigate('/ending')
   }, [ending, screen, navigate])
 
   useEffect(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current)
   }, [])
-
-  useLayoutEffect(() => {
-    const el = scrollRef.current
-    const block = optionsRef.current
-    if (!el || !block || !showOptions || reviewing) return
-    return pinChoices(el, block)
-  }, [showOptions, reviewing, options.length, fontSize])
 
   useEffect(() => {
     if (!autoAdvance || !scene || scene.options?.length || !textReady) return
@@ -278,13 +229,6 @@ export default function StoryPage() {
             <div
               ref={scrollRef}
               className="h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-10 pt-5 [touch-action:pan-y]"
-              onScroll={() => {
-                if (!textReady) return
-                const el = scrollRef.current
-                if (!el) return
-                const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
-                if (remaining <= 8) setUnlockedScene(sceneId)
-              }}
               onContextMenu={(event) => event.preventDefault()}
             >
             {readingMode === 'linear' ? (
@@ -374,11 +318,7 @@ export default function StoryPage() {
                 </AnimatePresence>
               </>
             )}
-            <div ref={endRef} aria-hidden className="h-1 w-full" />
-            <div
-              ref={optionsRef}
-              className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden [touch-action:none]"
-            >
+            <div className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden">
               {showOptions && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -424,32 +364,6 @@ export default function StoryPage() {
                 </button>
               )}
             </div>
-            </div>
-          </div>
-
-          <div className="shrink-0 border-t border-border-subtle/60 bg-bg-deep/95 px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
-            <div className="flex min-h-8 items-center justify-between gap-2 text-[11px] text-text-dim">
-              <span>{chapterLabel} · {sceneIndex}/{sceneTotal}</span>
-              {showOptions && (
-                <button
-                  type="button"
-                  onClick={() => setReviewing((value) => !value)}
-                  className="rounded-[18px] border border-border px-3 py-1 text-text-secondary active:bg-surface"
-                >
-                  {reviewing ? '回到选择' : '回看正文'}
-                </button>
-              )}
-              {canUndo && snapshot ? (
-                <button
-                  type="button"
-                  onClick={() => { undo(); setMessage(null); setCanUndo(false) }}
-                  className="rounded-[18px] border border-accent/40 px-3 py-1 text-accent"
-                >
-                  撤销上一步
-                </button>
-              ) : (
-                <span>{textReady ? '' : '轻点正文可立即显示全文'}</span>
-              )}
             </div>
           </div>
         </main>
