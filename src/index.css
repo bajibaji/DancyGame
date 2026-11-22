@@ -116,6 +116,10 @@ button {
   border-left: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 
+.reading .dialogue-inline {
+  color: var(--color-text-hi);
+}
+
 .option-label {
   font-size: calc(15px * var(--fs-scale));
   line-height: 1.55;
