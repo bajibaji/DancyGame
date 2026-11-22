@@ -23,7 +23,7 @@ export default function ChoiceFeedback({ message, canUndo, onUndo }: ChoiceFeedb
               <button
                 type="button"
                 onClick={onUndo}
-                className="rounded-full border border-accent/40 px-4 py-1.5 text-accent active:bg-accent/15"
+                className="rounded-[18px] border border-accent/40 px-4 py-1.5 text-accent active:bg-accent/15"
               >
                 撤销
               </button>

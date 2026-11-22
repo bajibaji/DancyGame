@@ -4,6 +4,7 @@ import SplitText from '../components/reactbits/SplitText/SplitText'
 import BlurText from '../components/reactbits/BlurText/BlurText'
 import DecryptedText from '../components/reactbits/DecryptedText/DecryptedText'
 import SpecularButton from '../components/reactbits/SpecularButton/SpecularButton'
+import HoldButton from '../components/reactbits/HoldButton/HoldButton'
 import GameShell from '../components/game/Layout/GameShell'
 import { useGameStore } from '../stores/gameStore'
 
@@ -12,9 +13,16 @@ export default function TitlePage() {
   const start = useGameStore((s) => s.start)
   const history = useGameStore((s) => s.history)
   const sceneId = useGameStore((s) => s.sceneId)
-  const hasSave = history.length > 0 || sceneId !== 'p01'
+  const started = useGameStore((s) => s.started)
+  const metCharacters = useGameStore((s) => s.metCharacters)
+  const hasSave = started || history.length > 0 || sceneId !== 'p01' || metCharacters.length > 1
 
   const onStart = () => {
+    start()
+    navigate('/story')
+  }
+
+  const onRestart = () => {
     start()
     navigate('/story')
   }
@@ -60,31 +68,42 @@ export default function TitlePage() {
               encryptedClassName="text-text-dim"
             />
           </div>
-          <div className="mt-10 flex flex-col items-center gap-4">
-            <SpecularButton size="lg" onClick={onStart} lineColor="var(--color-accent)" textColor="var(--color-text-hi)">
-              {hasSave ? '重新开始调查' : '开始调查'}
+          <div className="mt-10 flex w-full flex-col items-center gap-4">
+            <SpecularButton
+              size="lg"
+              radius={18}
+              onClick={hasSave ? () => navigate('/story') : onStart}
+              lineColor="var(--color-accent)"
+              textColor="var(--color-text-hi)"
+            >
+              {hasSave ? '继续调查' : '开始调查'}
             </SpecularButton>
             {hasSave && (
-              <button
-                type="button"
-                onClick={() => navigate('/story')}
-                className="min-h-11 px-4 text-sm text-accent active:text-accent-strong"
+              <HoldButton
+                holdTime={1200}
+                radius={18}
+                backgroundColor="var(--color-surface)"
+                fillColor="var(--color-accent)"
+                textColor="var(--color-text-secondary)"
+                fillTextColor="var(--color-bg-deep)"
+                onHold={onRestart}
+                className="min-w-[200px]"
               >
-                继续上次调查
-              </button>
+                长按重新开始
+              </HoldButton>
             )}
             <div className="flex items-center gap-3 text-sm text-text-dim">
               <button
                 type="button"
                 onClick={() => navigate('/archive')}
-                className="min-h-11 rounded-lg border border-border-subtle px-4 py-2 active:bg-surface"
+                className="min-h-11 rounded-[18px] border border-border-subtle px-4 py-2 active:bg-surface"
               >
                 档案库
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/settings')}
-                className="min-h-11 rounded-lg border border-border-subtle px-4 py-2 active:bg-surface"
+                className="min-h-11 rounded-[18px] border border-border-subtle px-4 py-2 active:bg-surface"
               >
                 设置
               </button>

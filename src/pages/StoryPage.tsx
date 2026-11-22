@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
+import { Archive, Settings } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
 import LocationBar from '../components/game/HUD/LocationBar'
 import StatMeters from '../components/game/HUD/StatMeters'
@@ -94,6 +95,7 @@ export default function StoryPage() {
     const end = endRef.current
     if (!el) return
     const update = () => {
+      if (!textReady) return
       const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
       if (remaining <= 8) setOptionsUnlocked(true)
     }
@@ -104,7 +106,7 @@ export default function StoryPage() {
     if (end) {
       sentinel = new IntersectionObserver(
         (entries) => {
-          if (entries.some((entry) => entry.isIntersecting)) setOptionsUnlocked(true)
+          if (textReady && entries.some((entry) => entry.isIntersecting)) setOptionsUnlocked(true)
         },
         { root: el, threshold: 0.01 },
       )
@@ -145,6 +147,8 @@ export default function StoryPage() {
     () => (selectedCharacter ? CHARACTERS.find((c) => c.id === selectedCharacter.id) : undefined),
     [selectedCharacter],
   )
+  const typeSegments = useMemo(() => [scene?.body ?? ''], [scene?.body])
+  const handleTyped = useCallback(() => setTypedDone(true), [])
 
   const onChoose = (option: Option) => {
     if (!scene || !choiceEnabled) return
@@ -219,17 +223,17 @@ export default function StoryPage() {
               <button
                 type="button"
                 onClick={() => navigate('/archive')}
-                className="flex h-11 min-w-11 flex-col items-center justify-center rounded-lg px-2 text-[10px] leading-tight text-text-dim active:bg-surface"
+                className="flex h-11 min-w-11 flex-col items-center justify-center rounded-[18px] px-2 text-[10px] leading-tight text-text-dim active:bg-surface"
               >
-                <span aria-hidden className="text-sm">▤</span>
+                <span aria-hidden><Archive size={16} strokeWidth={1.8} /></span>
                 档案
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/settings')}
-                className="flex h-11 min-w-11 flex-col items-center justify-center rounded-lg px-2 text-[10px] leading-tight text-text-dim active:bg-surface"
+                className="flex h-11 min-w-11 flex-col items-center justify-center rounded-[18px] px-2 text-[10px] leading-tight text-text-dim active:bg-surface"
               >
-                <span aria-hidden className="text-sm">⚙</span>
+                <span aria-hidden><Settings size={16} strokeWidth={1.8} /></span>
                 设置
               </button>
             </div>
@@ -243,6 +247,7 @@ export default function StoryPage() {
               className="h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-10 pt-5 [touch-action:pan-y]"
               style={{ WebkitOverflowScrolling: 'touch' }}
               onScroll={() => {
+                if (!textReady) return
                 const el = scrollRef.current
                 if (!el) return
                 const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
@@ -282,7 +287,7 @@ export default function StoryPage() {
                     />
                   ) : (
                     <TextType
-                      text={[scene.body]}
+                      text={typeSegments}
                       typingSpeed={SPEED_MS[textSpeed]}
                       initialDelay={200}
                       typeEffect="none"
@@ -290,7 +295,8 @@ export default function StoryPage() {
                       cursorStyle="bar"
                       cursorColor="var(--color-clue)"
                       startOnVisible
-                      onSentenceComplete={() => setTypedDone(true)}
+                      loop={false}
+                      onSentenceComplete={handleTyped}
                       className="text-text"
                     />
                   )}
@@ -320,7 +326,7 @@ export default function StoryPage() {
                       hover="reveal"
                       clickPulse
                       stars={1}
-                      radius={10}
+                      radius={18}
                       thickness={1}
                     >
                       <span className="flex w-full items-center gap-3 px-4 py-3">
@@ -336,7 +342,7 @@ export default function StoryPage() {
                 <button
                   type="button"
                   onClick={onAdvance}
-                  className="w-full rounded-lg border border-border-strong bg-surface-raised py-3.5 text-[15px] text-text active:scale-[0.99] active:border-accent/60 active:text-accent"
+                  className="w-full rounded-[18px] border border-border-strong bg-surface-raised py-3.5 text-[15px] text-text active:scale-[0.99] active:border-accent/60 active:text-accent"
                 >
                   {scene.puzzle ? '进入推理板' : scene.ending === 'auto' ? '合上案卷' : '继 续'}
                 </button>
@@ -353,7 +359,7 @@ export default function StoryPage() {
                 <button
                   type="button"
                   onClick={() => { undo(); setMessage(null); setCanUndo(false) }}
-                  className="rounded-full border border-accent/40 px-3 py-1 text-accent"
+                  className="rounded-[18px] border border-accent/40 px-3 py-1 text-accent"
                 >
                   撤销上一步
                 </button>
@@ -387,7 +393,7 @@ export default function StoryPage() {
             >
               <div className="flex items-baseline justify-between gap-3">
                 <h3 className="font-display text-xl text-text-hi">{characterCard.name}</h3>
-                <button type="button" onClick={() => setSelectedCharacter(null)} className="min-h-11 px-3 text-sm text-text-dim active:text-text">
+                <button type="button" onClick={() => setSelectedCharacter(null)} className="min-h-11 rounded-[18px] px-3 text-sm text-text-dim active:text-text">
                   关闭
                 </button>
               </div>

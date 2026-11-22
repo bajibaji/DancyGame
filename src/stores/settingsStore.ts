@@ -18,8 +18,8 @@ interface SettingsStore {
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
-      textSpeed: 'instant',
-      fontSize: 'medium',
+      textSpeed: 'fast',
+      fontSize: 'small',
       reducedMotion: false,
       autoAdvance: false,
       setTextSpeed: (textSpeed) => set({ textSpeed }),
@@ -27,14 +27,14 @@ export const useSettingsStore = create<SettingsStore>()(
       setReducedMotion: (reducedMotion) => set({ reducedMotion }),
       setAutoAdvance: (autoAdvance) => set({ autoAdvance }),
     }),
-    { name: 'jiangjia.settings.v2', version: 2 },
+    { name: 'jiangjia.settings.v3', version: 3 },
   ),
 )
 
 export const SPEED_MS: Record<TextSpeed, number> = {
-  slow: 22,
-  normal: 10,
-  fast: 4,
+  slow: 28,
+  normal: 16,
+  fast: 8,
   instant: 0,
 }
 

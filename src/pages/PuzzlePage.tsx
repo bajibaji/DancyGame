@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
 import SpotlightCard from '../components/reactbits/SpotlightCard/SpotlightCard'
 import { CLUE_MAP, getScene } from '../content/index'
@@ -50,8 +51,8 @@ export default function PuzzlePage() {
     <GameShell>
       <header className="sticky top-0 z-20 border-b border-border-subtle/50 bg-bg-deep/80 px-4 py-3 backdrop-blur">
         <div className="flex items-center justify-between gap-3">
-          <button type="button" onClick={onContinue} className="flex min-h-11 items-center pl-1 pr-3 text-sm text-accent active:opacity-70">
-            ← 返回
+          <button type="button" onClick={onContinue} className="flex min-h-11 items-center rounded-[18px] pl-1 pr-3 text-sm text-accent active:opacity-70">
+            <ArrowLeft size={16} strokeWidth={1.8} /> 返回
           </button>
           <h1 className="font-display text-lg text-text-hi">推理板</h1>
           <span className="text-[11px] text-text-dim">{scene?.title}</span>
@@ -94,7 +95,7 @@ export default function PuzzlePage() {
             type="button"
             onClick={onSolve}
             disabled={selected.length !== 2}
-            className="mb-6 w-full rounded-md border border-accent/50 bg-accent/10 py-3 text-sm text-accent transition-colors disabled:border-border disabled:bg-surface disabled:text-text-dim"
+            className="mb-6 w-full rounded-[18px] border border-accent/50 bg-accent/10 py-3 text-sm text-accent transition-colors disabled:border-border disabled:bg-surface disabled:text-text-dim"
           >
             推 演
           </button>
@@ -104,7 +105,7 @@ export default function PuzzlePage() {
           <button
             type="button"
             onClick={onContinue}
-            className="mb-6 w-full rounded-md border border-success/50 bg-success/10 py-3 text-sm text-success"
+            className="mb-6 w-full rounded-[18px] border border-success/50 bg-success/10 py-3 text-sm text-success"
           >
             线索 +2 · 继续调查
           </button>
@@ -132,7 +133,7 @@ export default function PuzzlePage() {
             return (
               <button key={id} type="button" onClick={() => toggle(id)} className="text-left">
                 <SpotlightCard
-                  className={`rounded-lg border p-3 transition-colors ${active ? 'border-accent bg-accent/10' : used ? 'border-success/40 bg-surface' : 'border-border bg-surface'}`}
+                  className={`rounded-[18px] border p-3 transition-colors ${active ? 'border-accent bg-accent/10' : used ? 'border-success/40 bg-surface' : 'border-border bg-surface'}`}
                   spotlightColor="rgba(217,162,75,0.2)"
                   intensity={0.4}
                   borderGlow={active ? 0.8 : 0.2}
@@ -150,7 +151,7 @@ export default function PuzzlePage() {
         </div>
 
         <div className="fixed bottom-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 border-t border-border-subtle/50 bg-bg-deep/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-          <button type="button" onClick={onContinue} className="w-full rounded-md border border-border-strong bg-surface-raised py-3.5 text-sm text-text active:scale-[0.99]">
+          <button type="button" onClick={onContinue} className="w-full rounded-[18px] border border-border-strong bg-surface-raised py-3.5 text-sm text-text active:scale-[0.99]">
             跳过推理，继续调查
           </button>
         </div>

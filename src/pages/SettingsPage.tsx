@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
 import RubberSegment from '../components/reactbits/RubberSegment/RubberSegment'
 import SquishSwitch from '../components/reactbits/SquishSwitch/SquishSwitch'
@@ -45,8 +46,8 @@ export default function SettingsPage() {
     <GameShell>
       <header className="sticky top-0 z-20 border-b border-border-subtle/50 bg-bg-deep/80 px-4 py-3 backdrop-blur">
         <div className="flex items-center justify-between">
-          <button type="button" onClick={() => navigate(-1)} className="flex min-h-11 items-center pl-1 pr-3 text-sm text-accent active:opacity-70">
-            ← 返回
+          <button type="button" onClick={() => navigate(-1)} className="flex min-h-11 items-center rounded-[18px] pl-1 pr-3 text-sm text-accent active:opacity-70">
+            <ArrowLeft size={16} strokeWidth={1.8} /> 返回
           </button>
           <h1 className="font-display text-lg text-text-hi">设置</h1>
           <span className="w-12" />
@@ -111,6 +112,7 @@ export default function SettingsPage() {
           </p>
           <HoldButton
             holdTime={1500}
+            radius={18}
             fillColor="var(--color-danger)"
             backgroundColor="var(--color-bg-sunken)"
             textColor="var(--color-text-secondary)"

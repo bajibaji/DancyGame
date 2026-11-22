@@ -19,6 +19,7 @@ interface GameStore {
   appliedScenes: string[]
   history: HistoryEntry[]
   metCharacters: string[]
+  started: boolean
   ending: EndingId | null
   epilogue: Epilogue | null
   snapshot: Snapshot | null
@@ -84,6 +85,7 @@ export const useGameStore = create<GameStore>()(
       appliedScenes: initial.appliedScenes,
       history: initial.history,
       metCharacters: ['jiangjia'],
+      started: false,
       ending: null,
       epilogue: null,
       snapshot: null,
@@ -94,6 +96,7 @@ export const useGameStore = create<GameStore>()(
           ...fresh,
           screen: 'story',
           metCharacters: ['jiangjia'],
+          started: true,
           ending: null,
           epilogue: null,
           snapshot: null,
@@ -220,6 +223,7 @@ export const useGameStore = create<GameStore>()(
           ...fresh,
           screen: 'title',
           metCharacters: ['jiangjia'],
+          started: false,
           ending: null,
           epilogue: null,
           snapshot: null,
@@ -243,6 +247,7 @@ export const useGameStore = create<GameStore>()(
         appliedScenes: state.appliedScenes,
         history: state.history,
         metCharacters: state.metCharacters,
+        started: state.started,
         ending: state.ending,
         epilogue: state.epilogue,
       }),

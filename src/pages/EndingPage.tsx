@@ -138,7 +138,7 @@ export default function EndingPage() {
                   key={key}
                   type="button"
                   onClick={() => setEpilogue(key)}
-                  className={`rounded-md border px-3 py-3 text-sm transition-colors ${epilogue === key ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-surface text-text-secondary'}`}
+                  className={`rounded-[18px] border px-3 py-3 text-sm transition-colors ${epilogue === key ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-surface text-text-secondary'}`}
                 >
                   {EPILOGUE_LABEL[key]}
                 </button>
@@ -151,7 +151,7 @@ export default function EndingPage() {
             <SpecularButton onClick={onRestart} lineColor={accent} textColor="var(--color-text-hi)">
               重新开始
             </SpecularButton>
-            <button type="button" onClick={() => navigate('/archive')} className="min-h-11 px-4 text-xs text-text-dim active:text-text-secondary">
+            <button type="button" onClick={() => navigate('/archive')} className="min-h-11 rounded-[18px] px-4 text-xs text-text-dim active:text-text-secondary">
               查看档案库
             </button>
           </div>

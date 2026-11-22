@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
 import RubberSegment from '../components/reactbits/RubberSegment/RubberSegment'
 import SpotlightCard from '../components/reactbits/SpotlightCard/SpotlightCard'
@@ -44,8 +45,8 @@ export default function ArchivePage() {
     <GameShell>
       <header className="sticky top-0 z-20 border-b border-border-subtle/50 bg-bg-deep/80 px-4 py-3 backdrop-blur">
         <div className="flex items-center justify-between gap-3">
-          <button type="button" onClick={() => navigate('/story')} className="flex min-h-11 items-center gap-1 pl-1 pr-3 text-sm text-accent active:opacity-70">
-            ← 返回
+          <button type="button" onClick={() => navigate('/story')} className="flex min-h-11 items-center gap-1 rounded-[18px] pl-1 pr-3 text-sm text-accent active:opacity-70">
+            <ArrowLeft size={16} strokeWidth={1.8} /> 返回
           </button>
           <h1 className="font-display text-lg text-text-hi">档案库</h1>
           <div className="text-[11px] text-text-dim">
