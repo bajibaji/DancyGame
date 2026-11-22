@@ -2,7 +2,7 @@
 
 移动端竖屏的杭州刑侦互动文字游戏。平行改编自《空相沙漏》（作者：初禾二）。
 
-在线试玩：https://lildanger.github.io/shalou-tingbai/
+在线试玩：https://bajibaji.github.io/DancyGame/
 
 ## 运行
 

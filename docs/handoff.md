@@ -10,7 +10,7 @@
 
 **MVP 已实现并可玩（2026-11-22）**：React 19 + Vite + TS + Tailwind v4 + motion + Zustand；五屏 UI（标题/叙事/档案库/推理板/结局/设置）全部为移动端竖屏 430px 单列；序章 + 7 章 + 三结局全部预写完成，可从头玩到任一结局。`npm run check`（typecheck + lint + 17 项测试）与 `npm run build` 全绿。
 
-线上地址：https://lildanger.github.io/shalou-tingbai/ （GitHub Pages，push 到 main 自动部署；仓库 lildanger/shalou-tingbai，小说原文 book/ 与调研归档 .workflow/ 不入库）。
+线上地址：https://bajibaji.github.io/DancyGame/ （GitHub Pages，push 到 main 自动部署；仓库 bajibaji/DancyGame，小说原文 book/ 与调研归档 .workflow/ 不入库）。
 
 ## 已实现清单
 
