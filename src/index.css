@@ -87,6 +87,16 @@ button {
   word-break: break-word;
 }
 
+.reading-scroll {
+  overflow-anchor: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.reading-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 .reading p {
   margin: 0 0 0.9em;
   text-indent: 2em;

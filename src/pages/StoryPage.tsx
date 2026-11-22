@@ -41,8 +41,10 @@ export default function StoryPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [canUndo, setCanUndo] = useState(false)
   const [selectedCharacter, setSelectedCharacter] = useState<SelectedCharacter | null>(null)
+  const [choicesScene, setChoicesScene] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
+  const endRef = useRef<HTMLDivElement | null>(null)
   const latestRef = useRef<HTMLElement | null>(null)
 
   const scene = getScene(sceneId)
@@ -52,7 +54,7 @@ export default function StoryPage() {
   const showMemoryTag = Boolean(scene?.effects?.memories?.length)
   const options = scene?.options ?? []
   const choiceEnabled = textReady && options.length > 0
-  const showOptions = options.length > 0 && textReady
+  const showOptions = options.length > 0 && textReady && choicesScene === sceneId
   const resolveBody = (section: Scene) => section.variants?.find((variant) => flags[variant.flag])?.body ?? section.body
   const pathIds = useMemo(
     () => (visited.length > 0 && visited[visited.length - 1] === sceneId ? visited : [...visited, sceneId]),
@@ -114,6 +116,35 @@ export default function StoryPage() {
     }, 80)
     return () => clearTimeout(timer)
   }, [sceneId, readingMode, reducedMotion, visited.length])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    const end = endRef.current
+    if (!el) return
+    const update = () => {
+      if (!textReady) return
+      if (el.scrollHeight - el.scrollTop - el.clientHeight <= 8) setChoicesScene(sceneId)
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    let sentinel: IntersectionObserver | null = null
+    if (end) {
+      sentinel = new IntersectionObserver(
+        (entries) => {
+          if (textReady && entries.some((entry) => entry.isIntersecting)) setChoicesScene(sceneId)
+        },
+        { root: el, threshold: 0.01 },
+      )
+      sentinel.observe(end)
+    }
+    const timer = setTimeout(update, 300)
+    return () => {
+      observer.disconnect()
+      sentinel?.disconnect()
+      clearTimeout(timer)
+    }
+  }, [sceneId, textReady])
 
   useEffect(() => {
     if (ending && screen === 'ending') navigate('/ending')
@@ -228,7 +259,12 @@ export default function StoryPage() {
           <div className="relative min-h-0 flex-1">
             <div
               ref={scrollRef}
-              className="h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-10 pt-5 [touch-action:pan-y]"
+              className="reading-scroll h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-10 pt-5 [touch-action:pan-y]"
+              onScroll={(event) => {
+                if (!textReady) return
+                const el = event.currentTarget
+                if (el.scrollHeight - el.scrollTop - el.clientHeight <= 8) setChoicesScene(sceneId)
+              }}
               onContextMenu={(event) => event.preventDefault()}
             >
             {readingMode === 'linear' ? (
@@ -318,43 +354,9 @@ export default function StoryPage() {
                 </AnimatePresence>
               </>
             )}
-            <div className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden">
-              {showOptions && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: reducedMotion ? 0.12 : 0.3 }}
-                  className="flex flex-col gap-2"
-                >
-                  {options.map((option) => (
-                    <StarBorder
-                      key={option.key}
-                      as="button"
-                      onClick={() => onChoose(option)}
-                      disabled={!choiceEnabled}
-                      className="w-full text-left active:scale-[0.99] disabled:cursor-not-allowed"
-                      color="var(--color-accent)"
-                      trailColor="var(--color-clue)"
-                      backgroundColor="var(--color-surface-raised)"
-                      textColor="var(--color-text)"
-                      borderColor="var(--color-border)"
-                      hover="reveal"
-                      clickPulse
-                      stars={1}
-                      radius={18}
-                      thickness={1}
-                    >
-                      <span className="flex w-full items-center gap-3 px-4 py-3">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border-strong font-display text-sm text-accent">
-                          {option.key}
-                        </span>
-                        <span className="option-label min-w-0 flex-1">{option.label}</span>
-                      </span>
-                    </StarBorder>
-                  ))}
-                </motion.div>
-              )}
-              {options.length === 0 && textReady && (
+            <div ref={endRef} aria-hidden className="h-1 w-full" />
+            {options.length === 0 && textReady && (
+              <div className="mt-6">
                 <button
                   type="button"
                   onClick={onAdvance}
@@ -362,10 +364,48 @@ export default function StoryPage() {
                 >
                   {scene.ending === 'auto' ? '合上案卷' : '继 续'}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
             </div>
           </div>
+
+          {showOptions && (
+            <div className="shrink-0 border-t border-border-subtle/60 bg-bg-deep/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: reducedMotion ? 0.12 : 0.3 }}
+                className="flex flex-col gap-2"
+              >
+                {options.map((option) => (
+                  <StarBorder
+                    key={option.key}
+                    as="button"
+                    onClick={() => onChoose(option)}
+                    disabled={!choiceEnabled}
+                    className="w-full text-left active:scale-[0.99] disabled:cursor-not-allowed"
+                    color="var(--color-accent)"
+                    trailColor="var(--color-clue)"
+                    backgroundColor="var(--color-surface-raised)"
+                    textColor="var(--color-text)"
+                    borderColor="var(--color-border)"
+                    hover="reveal"
+                    clickPulse
+                    stars={1}
+                    radius={18}
+                    thickness={1}
+                  >
+                    <span className="flex w-full items-center gap-3 px-4 py-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border-strong font-display text-sm text-accent">
+                        {option.key}
+                      </span>
+                      <span className="option-label min-w-0 flex-1">{option.label}</span>
+                    </span>
+                  </StarBorder>
+                ))}
+              </motion.div>
+            </div>
+          )}
         </main>
       </div>
 
