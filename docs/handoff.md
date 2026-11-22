@@ -19,7 +19,7 @@
 - 组件：22 个 ReactBits 组件（Silk/DarkVeil/Grainient/Lightning/Noise/GradualBlur/TextType/SplitText/BlurText/DecryptedText/GlitchText/CountUp/PixelTransition/StarBorder/SpotlightCard/SpecularButton/HoloCard/FlipCard/ChromaGrid/SquishSwitch/RubberSegment/HoldButton）已从知识库提取并清注释。
 - 校验：tests/story-data.test.ts 校验剧情图完整性、选项 ABC、跳转/线索/地点引用、正文长度与禁用词；三结局可达性模拟（安全路线好结局、避险中立、冒进坏结局）。
 - 移动端交互（2026-11-22 迭代）：阅读区改为连续正文——走过的场景按顺序拼接成一篇，章节/场景用细分隔线，新场景自动滚入并淡入；选项在正文末尾、滚到底才出现；推理板不再自动弹出打断流程，改为档案库右上角的可选入口，获得新线索时底部提示「可去档案库推理」；推理板推错不影响剧情、数值与结局，推对仅 +2 线索。正文中文小说排版（17.5px、1.9 行高、首行缩进 2em），角色对白独立成块（换行、左竖线、亮色）；自研 TypedRichText 打字机边打边显示颜色/对白排版（无换轨跳变、逐字不回退）；底部状态栏显示章节进度（如 序章 · 4/8）；推理板为紧凑线索卡 + 底部固定操作栏（两个选卡槽、推演 n/2、跳过）；字号设置同时作用于正文、标题与选项，默认文字速度快、字号小；有存档时主页大按钮为「继续调查」，重新开始需确认弹窗；界面图标统一使用 lucide-react，按钮圆角统一 18px；选项只显示 A/B/C 与文案，不显示倾向/风险/数值；正文人名冷青高亮、点击弹出防剧透人物卡；人物库按出场进度解锁；禁用正文选中与长按菜单；滚动条为 4px 细条、透明轨道、低透明度滑块；全部按钮热区 ≥44px、底部安全区适配、移除键盘提示。
-- 文风：全部章节正文正在按「去 AI 腔」标准重写（tests/story-style.test.ts 固化为检查：禁模板化表达、比喻/破折号密度、段落开头多样性、正文长度区间）。
+- 文风：全部章节正文已按「去 AI 腔」标准重写完成，并通过 tests/story-style.test.ts（禁模板化表达、比喻/破折号密度、段落开头多样性、正文长度区间；含场景变体文本）。
 - 运行：`npm run dev` → http://localhost:5173 （建议 375-430px 竖屏视口）。
 
 已知限制：无音频与插画资源；结局抵抗仅为文本展示；坏结局判定的「记忆重置」无独立动画；bundle 约 811KB（gsap + WebGL 组件），未做代码分割。
