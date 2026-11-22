@@ -1,66 +1,55 @@
 import { Fragment, useMemo } from 'react'
-import { NAME_PATTERN, NAME_TO_ID } from '../../../game/characterNames'
+import { parseRichText } from './richTextTokens'
+import type { RichTextToken } from './richTextTokens'
 
 interface RichTextProps {
   text: string
   onSelect: (id: string, alias: string) => void
 }
 
-const DIALOGUE = /(「[^」]*」)/g
-
-function renderNarration(segment: string, keyPrefix: string, onSelect: RichTextProps['onSelect']) {
-  return segment.split(NAME_PATTERN).map((token, index) => {
-    const id = NAME_TO_ID.get(token)
-    if (!id) return <Fragment key={`${keyPrefix}-n${index}`}>{token}</Fragment>
+function renderToken(token: RichTextToken, key: string, onSelect: RichTextProps['onSelect']) {
+  if (token.kind === 'name') {
     return (
       <span
-        key={`${keyPrefix}-b${index}`}
+        key={key}
         role="button"
         tabIndex={0}
         onClick={(event) => {
           event.stopPropagation()
-          onSelect(id, token)
+          onSelect(token.id, token.text)
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
             event.stopPropagation()
-            onSelect(id, token)
+            onSelect(token.id, token.text)
           }
         }}
-        className="font-medium text-accent-strong active:text-accent"
+        className="whitespace-nowrap font-medium text-accent-strong active:text-accent"
       >
-        {token}
+        {token.text}
       </span>
     )
-  })
+  }
+  if (token.dialogue) {
+    return (
+      <span key={key} className="dialogue">
+        {token.text}
+      </span>
+    )
+  }
+  return <Fragment key={key}>{token.text}</Fragment>
 }
 
 export default function RichText({ text, onSelect }: RichTextProps) {
-  const paragraphs = useMemo(() => text.split(/\n\n+/), [text])
+  const paragraphs = useMemo(() => parseRichText(text), [text])
   return (
     <>
-      {paragraphs.map((paragraph, index) => {
-        const isDialogue = paragraph.trimStart().startsWith('「')
-        return (
-          <p key={index} className={isDialogue ? 'dialogue-paragraph' : undefined}>
-            {paragraph.split(DIALOGUE).map((segment, i) => {
-              if (segment.startsWith('「') && segment.endsWith('」')) {
-                return (
-                  <span key={`d${i}`} className="dialogue">
-                    {segment}
-                  </span>
-                )
-              }
-              return (
-                <Fragment key={`s${i}`}>
-                  {renderNarration(segment, `p${index}-s${i}`, onSelect)}
-                </Fragment>
-              )
-            })}
-          </p>
-        )
-      })}
+      {paragraphs.map((paragraph, index) => (
+        <p key={index} className={paragraph.dialogueLead ? 'dialogue-paragraph' : undefined}>
+          {paragraph.tokens.map((token, tokenIndex) => renderToken(token, `${index}-${tokenIndex}`, onSelect))}
+        </p>
+      ))}
     </>
   )
 }

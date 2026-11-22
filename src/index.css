@@ -84,7 +84,9 @@ button {
   font-size: calc(17.5px * var(--fs-scale));
   line-height: 1.9;
   letter-spacing: 0.02em;
-  word-break: break-word;
+  line-break: strict;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .reading-scroll {
@@ -109,12 +111,7 @@ button {
 }
 
 .reading .dialogue {
-  display: block;
   color: var(--color-text-hi);
-  text-indent: 0;
-  margin: 0.4em 0;
-  padding-left: 0.9em;
-  border-left: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 
 .option-label {
