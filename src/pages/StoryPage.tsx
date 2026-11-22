@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { Archive, Settings } from 'lucide-react'
@@ -6,11 +6,10 @@ import GameShell from '../components/game/Layout/GameShell'
 import LocationBar from '../components/game/HUD/LocationBar'
 import StatMeters from '../components/game/HUD/StatMeters'
 import ChoiceFeedback from '../components/game/Scene/ChoiceFeedback'
-import RichText from '../components/game/Scene/RichText'
 import TypedRichText from '../components/game/Scene/TypedRichText'
 import StarBorder from '../components/reactbits/StarBorder/StarBorder'
 import GlitchText from '../components/reactbits/GlitchText/GlitchText'
-import { CHARACTERS, CHAPTERS, chapterTitle, getScene, LOCATION_MAP } from '../content/index'
+import { CHARACTERS, CHAPTERS, getScene, LOCATION_MAP } from '../content/index'
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
 import { useGameKeys } from '../lib/keyboard'
@@ -32,7 +31,6 @@ export default function StoryPage() {
   const advance = useGameStore((s) => s.advance)
   const undo = useGameStore((s) => s.undo)
   const meet = useGameStore((s) => s.meet)
-  const visited = useGameStore((s) => s.visited)
   const fontSize = useSettingsStore((s) => s.fontSize)
   const textSpeed = useSettingsStore((s) => s.textSpeed)
   const reducedMotion = useSettingsStore((s) => s.reducedMotion)
@@ -47,7 +45,6 @@ export default function StoryPage() {
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const endRef = useRef<HTMLDivElement | null>(null)
   const optionsRef = useRef<HTMLDivElement | null>(null)
-  const latestRef = useRef<HTMLElement | null>(null)
 
   const scene = getScene(sceneId)
   const location = scene ? LOCATION_MAP.get(scene.locationId) : undefined
@@ -61,14 +58,6 @@ export default function StoryPage() {
   const sceneIndex = scene && chapterData ? chapterData.scenes.findIndex((s) => s.id === scene.id) + 1 : 0
   const sceneTotal = chapterData?.scenes.length ?? 0
   const chapterLabel = scene ? (scene.chapter === 'prologue' ? '序章' : `第${Number(scene.chapter.replace('ch', ''))}章`) : ''
-  const pathIds = useMemo(
-    () => (visited.length > 0 && visited[visited.length - 1] === sceneId ? visited : [...visited, sceneId]),
-    [visited, sceneId],
-  )
-  const visitedScenes = useMemo(
-    () => pathIds.map((id) => getScene(id)).filter((s): s is Scene => Boolean(s)),
-    [pathIds],
-  )
   const resolveBody = (section: Scene) => section.variants?.find((variant) => flags[variant.flag])?.body ?? section.body
 
   useEffect(() => {
@@ -96,15 +85,21 @@ export default function StoryPage() {
     )
   }, [sceneId, scene, meet])
 
-  useEffect(() => {
-    if (visited.length <= 1) return
-    const el = latestRef.current
+  useLayoutEffect(() => {
+    const el = scrollRef.current
     if (!el) return
+    el.scrollTop = 0
+    const frame = requestAnimationFrame(() => {
+      el.scrollTop = 0
+    })
     const timer = setTimeout(() => {
-      el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
-    }, 80)
-    return () => clearTimeout(timer)
-  }, [sceneId, reducedMotion, visited.length])
+      el.scrollTop = 0
+    }, 120)
+    return () => {
+      cancelAnimationFrame(frame)
+      clearTimeout(timer)
+    }
+  }, [sceneId])
 
   useEffect(() => {
     setOptionsUnlocked(false)
@@ -272,53 +267,42 @@ export default function StoryPage() {
               }}
               onContextMenu={(event) => event.preventDefault()}
             >
-            {visitedScenes.map((section, index) => {
-              const isCurrent = section.id === scene.id
-              const previous = visitedScenes[index - 1]
-              const chapterChanged = !previous || previous.chapter !== section.chapter
-              return (
-                <section key={section.id} ref={isCurrent ? latestRef : undefined} className="mb-7 scroll-mt-2">
-                  {chapterChanged && (
-                    <div className="mb-3 mt-1 flex items-center gap-3">
-                      <span className="h-px flex-1 bg-border-subtle" />
-                      <span className="font-display text-[11px] tracking-[0.3em] text-text-secondary">
-                        {chapterTitle(section.chapter)}
-                      </span>
-                      <span className="h-px flex-1 bg-border-subtle" />
-                    </div>
-                  )}
-                  <div className="mb-3 text-center text-[10px] tracking-[0.3em] text-text-dim/80">· {section.title} ·</div>
-                  {isCurrent && showMemoryTag && (
-                    <div className="mb-3">
-                      <GlitchText mode="scan" intensity={0.35} trigger="click" fontSize={12} fontWeight={500} shadowColors={['#67c7d8', '#d9a24b']} className="tracking-[0.3em] text-memory">
-                        记忆碎片 · 读取中
-                      </GlitchText>
-                    </div>
-                  )}
-                  <div
-                    className="reading text-text"
-                    onClick={isCurrent ? () => {
-                      if (!textReady) setSkipped(true)
-                    } : undefined}
-                  >
-                    {isCurrent ? (
-                      <TypedRichText
-                        text={resolveBody(section)}
-                        speed={SPEED_MS[textSpeed]}
-                        revealAll={skipped || reducedMotion || instant}
-                        onDone={() => setTypedDone(true)}
-                        onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
-                      />
-                    ) : (
-                      <RichText
-                        text={resolveBody(section)}
-                        onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
-                      />
-                    )}
-                  </div>
-                </section>
-              )
-            })}            <div ref={optionsRef} className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden">
+            {showMemoryTag && (
+              <div className="mb-3">
+                <GlitchText mode="scan" intensity={0.35} trigger="click" fontSize={12} fontWeight={500} shadowColors={['#67c7d8', '#d9a24b']} className="tracking-[0.3em] text-memory">
+                  记忆碎片 · 读取中
+                </GlitchText>
+              </div>
+            )}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={scene.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: reducedMotion ? 0.12 : 0.22 }}
+              >
+                <h2 className="scene-title mb-4 flex items-center gap-3 font-display tracking-wide text-text-hi">
+                  <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-sm bg-clue/80" />
+                  {scene.title}
+                </h2>
+                <div
+                  className="reading text-text"
+                  onClick={() => {
+                    if (!textReady) setSkipped(true)
+                  }}
+                >
+                  <TypedRichText
+                    text={resolveBody(scene)}
+                    speed={SPEED_MS[textSpeed]}
+                    revealAll={skipped || reducedMotion || instant}
+                    onDone={() => setTypedDone(true)}
+                    onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
+                  />
+                </div>
+              </motion.div>
+            </AnimatePresence>
+            <div ref={optionsRef} className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden">
               {showOptions ? (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
