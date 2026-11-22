@@ -2,8 +2,6 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
-import RubberSegment from '../components/reactbits/RubberSegment/RubberSegment'
-import SquishSwitch from '../components/reactbits/SquishSwitch/SquishSwitch'
 import HoldButton from '../components/reactbits/HoldButton/HoldButton'
 import { FONT_SCALE, useSettingsStore } from '../stores/settingsStore'
 import { useGameStore } from '../stores/gameStore'
@@ -25,6 +23,46 @@ const READING_ITEMS = [
   { value: 'single', label: '单场景' },
   { value: 'linear', label: '连续' },
 ]
+
+function SettingToggle({ checked, onChange, label }: { checked: boolean; onChange: (value: boolean) => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={`flex min-h-11 min-w-[76px] shrink-0 items-center justify-center rounded-[18px] border px-4 text-sm transition-colors active:opacity-80 ${
+        checked
+          ? 'border-accent bg-accent text-bg-deep'
+          : 'border-border bg-surface text-text-secondary active:bg-surface-hover'
+      }`}
+    >
+      {checked ? '开启' : '关闭'}
+    </button>
+  )
+}
+
+function SettingSegment({ items, value, onChange, label }: { items: { value: string; label: string }[]; value: string; onChange: (value: string) => void; label: string }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="grid grid-flow-col auto-cols-fr gap-1 rounded-[18px] border border-border bg-surface p-1">
+      {items.map((item) => (
+        <button
+          key={item.value}
+          type="button"
+          role="radio"
+          aria-checked={value === item.value}
+          onClick={() => onChange(item.value)}
+          className={`flex min-h-11 items-center justify-center rounded-[14px] px-2 text-sm transition-colors ${
+            value === item.value ? 'bg-accent font-medium text-bg-deep' : 'text-text-secondary active:bg-surface-hover'
+          }`}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const navigate = useNavigate()
@@ -69,49 +107,37 @@ export default function SettingsPage() {
           <div className="flex flex-col gap-4">
             <div>
               <p className="mb-2 text-sm text-text">文字速度</p>
-              <RubberSegment
+              <SettingSegment
                 items={SPEED_ITEMS}
                 value={textSpeed}
                 onChange={(value) => setTextSpeed(value as typeof textSpeed)}
-                aria-label="文字速度"
-                trackColor="var(--color-surface)"
-                thumbColor="var(--color-accent)"
-                textColor="var(--color-text-secondary)"
-                activeTextColor="var(--color-bg-deep)"
+                label="文字速度"
               />
             </div>
             <div>
               <p className="mb-2 text-sm text-text">字号（正文与选项）</p>
-              <RubberSegment
+              <SettingSegment
                 items={FONT_ITEMS}
                 value={fontSize}
                 onChange={(value) => setFontSize(value as typeof fontSize)}
-                aria-label="字号"
-                trackColor="var(--color-surface)"
-                thumbColor="var(--color-accent)"
-                textColor="var(--color-text-secondary)"
-                activeTextColor="var(--color-bg-deep)"
+                label="字号"
               />
             </div>
             <div>
               <p className="mb-2 text-sm text-text">阅读方式</p>
-              <RubberSegment
+              <SettingSegment
                 items={READING_ITEMS}
                 value={readingMode}
                 onChange={(value) => setReadingMode(value as typeof readingMode)}
-                aria-label="阅读方式"
-                trackColor="var(--color-surface)"
-                thumbColor="var(--color-accent)"
-                textColor="var(--color-text-secondary)"
-                activeTextColor="var(--color-bg-deep)"
+                label="阅读方式"
               />
             </div>
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-text">自动继续</p>
                 <p className="mt-0.5 text-[11px] text-text-dim">无选择的段落自动推进</p>
               </div>
-              <SquishSwitch checked={autoAdvance} onChange={setAutoAdvance} ariaLabel="自动继续" />
+              <SettingToggle checked={autoAdvance} onChange={setAutoAdvance} label="自动继续" />
             </div>
           </div>
         </section>
@@ -119,19 +145,19 @@ export default function SettingsPage() {
         <section className="rounded-lg border border-border bg-surface/70 p-4">
           <h2 className="mb-3 text-xs tracking-[0.2em] text-text-dim">动效</h2>
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-text">静态背景</p>
                 <p className="mt-0.5 text-[11px] text-text-dim">关闭丝绸波纹流动，使用静态底色</p>
               </div>
-              <SquishSwitch checked={staticBackground} onChange={setStaticBackground} ariaLabel="静态背景" />
+              <SettingToggle checked={staticBackground} onChange={setStaticBackground} label="静态背景" />
             </div>
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-text">减弱动效</p>
                 <p className="mt-0.5 text-[11px] text-text-dim">暂停背景动画、关闭闪烁与打字机</p>
               </div>
-              <SquishSwitch checked={reducedMotion} onChange={setReducedMotion} ariaLabel="减弱动效" />
+              <SettingToggle checked={reducedMotion} onChange={setReducedMotion} label="减弱动效" />
             </div>
           </div>
         </section>
