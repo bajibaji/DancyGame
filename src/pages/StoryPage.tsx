@@ -14,6 +14,7 @@ import { CHARACTERS, CHAPTERS, chapterTitle, getScene, LOCATION_MAP } from '../c
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
 import { useGameKeys } from '../lib/keyboard'
+import { pinChoices } from '../lib/choiceScrollLock'
 import type { Option, Scene } from '../game/types'
 
 interface SelectedCharacter {
@@ -43,7 +44,8 @@ export default function StoryPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [canUndo, setCanUndo] = useState(false)
   const [selectedCharacter, setSelectedCharacter] = useState<SelectedCharacter | null>(null)
-  const [optionsUnlocked, setOptionsUnlocked] = useState(false)
+  const [unlockedScene, setUnlockedScene] = useState<string | null>(null)
+  const [reviewing, setReviewing] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const endRef = useRef<HTMLDivElement | null>(null)
@@ -57,7 +59,7 @@ export default function StoryPage() {
   const showMemoryTag = Boolean(scene?.effects?.memories?.length)
   const options = scene?.options ?? []
   const choiceEnabled = textReady && options.length > 0
-  const showOptions = options.length > 0 && textReady && optionsUnlocked
+  const showOptions = options.length > 0 && textReady && unlockedScene === sceneId
   const chapterData = scene ? CHAPTERS.find((c) => c.chapter === scene.chapter) : undefined
   const sceneIndex = scene && chapterData ? chapterData.scenes.findIndex((s) => s.id === scene.id) + 1 : 0
   const sceneTotal = chapterData?.scenes.length ?? 0
@@ -78,6 +80,7 @@ export default function StoryPage() {
     setMessage(null)
     setCanUndo(false)
     setSelectedCharacter(null)
+    setReviewing(false)
     const fixedClues = scene?.effects?.clues ?? []
     if (fixedClues.length > 0) {
       setMessage(`线索已入档 · ${fixedClues.join(' / ')} · 可去档案库推理`)
@@ -125,17 +128,13 @@ export default function StoryPage() {
   }, [sceneId, readingMode, reducedMotion, visited.length])
 
   useEffect(() => {
-    setOptionsUnlocked(false)
-  }, [sceneId])
-
-  useEffect(() => {
     const el = scrollRef.current
     const end = endRef.current
     if (!el) return
     const update = () => {
       if (!textReady) return
       const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
-      if (remaining <= 8) setOptionsUnlocked(true)
+      if (remaining <= 8) setUnlockedScene(sceneId)
     }
     update()
     const observer = new ResizeObserver(update)
@@ -144,7 +143,7 @@ export default function StoryPage() {
     if (end) {
       sentinel = new IntersectionObserver(
         (entries) => {
-          if (textReady && entries.some((entry) => entry.isIntersecting)) setOptionsUnlocked(true)
+          if (textReady && entries.some((entry) => entry.isIntersecting)) setUnlockedScene(sceneId)
         },
         { root: el, threshold: 0.01 },
       )
@@ -166,23 +165,12 @@ export default function StoryPage() {
     if (timerRef.current) clearTimeout(timerRef.current)
   }, [])
 
-  useEffect(() => {
-    if (!showOptions) return
-    const timer = setTimeout(() => {
-      optionsRef.current?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'end' })
-    }, 120)
-    return () => clearTimeout(timer)
-  }, [showOptions, reducedMotion])
-
-  useEffect(() => {
-    const el = optionsRef.current
-    if (!el) return
-    const block = (event: TouchEvent) => {
-      if (event.cancelable) event.preventDefault()
-    }
-    el.addEventListener('touchmove', block, { passive: false })
-    return () => el.removeEventListener('touchmove', block)
-  }, [showOptions, options.length])
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    const block = optionsRef.current
+    if (!el || !block || !showOptions || reviewing) return
+    return pinChoices(el, block)
+  }, [showOptions, reviewing, options.length, fontSize])
 
   useEffect(() => {
     if (!autoAdvance || !scene || scene.options?.length || !textReady) return
@@ -290,13 +278,12 @@ export default function StoryPage() {
             <div
               ref={scrollRef}
               className="h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-10 pt-5 [touch-action:pan-y]"
-              style={{ WebkitOverflowScrolling: 'touch' }}
               onScroll={() => {
                 if (!textReady) return
                 const el = scrollRef.current
                 if (!el) return
                 const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
-                if (remaining <= 8) setOptionsUnlocked(true)
+                if (remaining <= 8) setUnlockedScene(sceneId)
               }}
               onContextMenu={(event) => event.preventDefault()}
             >
@@ -441,8 +428,17 @@ export default function StoryPage() {
           </div>
 
           <div className="shrink-0 border-t border-border-subtle/60 bg-bg-deep/95 px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
-            <div className="flex min-h-8 items-center justify-between text-[11px] text-text-dim">
+            <div className="flex min-h-8 items-center justify-between gap-2 text-[11px] text-text-dim">
               <span>{chapterLabel} · {sceneIndex}/{sceneTotal}</span>
+              {showOptions && (
+                <button
+                  type="button"
+                  onClick={() => setReviewing((value) => !value)}
+                  className="rounded-[18px] border border-border px-3 py-1 text-text-secondary active:bg-surface"
+                >
+                  {reviewing ? '回到选择' : '回看正文'}
+                </button>
+              )}
               {canUndo && snapshot ? (
                 <button
                   type="button"
