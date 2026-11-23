@@ -1,20 +1,35 @@
 import { describe, expect, it } from 'vitest'
-import { SCENES } from '../src/content/index'
+import { ENDINGS, ENDING_MEMORY, SCENES } from '../src/content/index'
+import type { Scene } from '../src/game/types'
 
 const FORBIDDEN = ['心里一沉', '你意识到', '仿佛在说', '像是在诉说', '深吸一口气', '不由得', '不禁', '空气仿佛凝固']
 
-const bodiesOf = (scene: { body: string; variants?: { flag: string; body: string }[] }) => [
+const bodiesOf = (scene: Scene) => [
   scene.body,
   ...(scene.variants?.map((variant) => variant.body) ?? []),
 ]
 
+const textToCheck = [
+  ...[...SCENES.values()].flatMap((scene) => [
+    ...bodiesOf(scene),
+    ...(scene.recalls ?? []).map((entry) => entry.text),
+    ...(scene.options ?? []).flatMap((option) => [option.label, option.consequence]),
+  ].map((body) => [scene.id, body] as const)),
+  ...Object.values(ENDING_MEMORY).map((body) => ['memoryRecap', body] as const),
+  ...Object.entries(ENDINGS).flatMap(([id, ending]) => [
+    ending.body,
+    ...Object.values(ending.caseStatus),
+    ...Object.values(ending.fallout ?? {}),
+    ...Object.values(ending.epilogues).map((entry) => entry.text),
+    ...ending.variants.map((entry) => entry.text),
+  ].map((body) => [id, body] as const)),
+]
+
 describe('文风约束（去 AI 腔）', () => {
   it('不使用模板化表达', () => {
-    for (const scene of SCENES.values()) {
-      for (const body of bodiesOf(scene)) {
-        for (const phrase of FORBIDDEN) {
-          expect(body.includes(phrase), `${scene.id} 含模板化表达「${phrase}」`).toBe(false)
-        }
+    for (const [id, body] of textToCheck) {
+      for (const phrase of FORBIDDEN) {
+        expect(body.includes(phrase), `${id} 含模板化表达「${phrase}」`).toBe(false)
       }
     }
   })

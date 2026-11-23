@@ -1,4 +1,5 @@
-import type { Chapter, Scene } from '../game/types'
+import type { Chapter, EndingId, Epilogue, Scene } from '../game/types'
+import type { CaptureStatus, MemoryStatus } from '../game/narrative'
 import prologueJson from './story/prologue.json'
 import ch01Json from './story/ch01.json'
 import ch02Json from './story/ch02.json'
@@ -43,8 +44,9 @@ export interface CharacterCard {
 export interface EndingData {
   name: string
   body: string
-  resistance?: string
-  epilogues: Record<string, string>
+  caseStatus: Record<CaptureStatus, string>
+  fallout?: { exposure: string; isolation: string }
+  epilogues: Record<Epilogue, { label: string; text: string }>
   variants: { flag: string; text: string }[]
 }
 
@@ -76,7 +78,9 @@ export const CLUES: ClueCard[] = cluesJson as ClueCard[]
 export const MEMORIES: MemoryCard[] = memoriesJson as MemoryCard[]
 export const LOCATIONS: LocationCard[] = locationsJson as LocationCard[]
 export const CHARACTERS: CharacterCard[] = charactersJson as CharacterCard[]
-export const ENDINGS = endingsJson as unknown as Record<'good' | 'bad' | 'neutral', EndingData>
+const { memoryRecap, ...endings } = endingsJson
+export const ENDINGS: Record<EndingId, EndingData> = endings
+export const ENDING_MEMORY: Record<MemoryStatus, string> = memoryRecap
 
 export const CLUE_MAP = new Map(CLUES.map((c) => [c.id, c]))
 export const MEMORY_MAP = new Map(MEMORIES.map((m) => [m.id, m]))

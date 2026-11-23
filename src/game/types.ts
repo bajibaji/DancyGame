@@ -19,6 +19,8 @@ export interface Option {
   tendency: Tendency
   risk: Risk
   effects: Effects
+  consequence: string
+  progress?: string
   next: string
 }
 
@@ -30,6 +32,9 @@ export interface Scene {
   timeOfDay: string
   body: string
   variants?: { flag: string; body: string }[]
+  recalls?: { flag: string; text: string }[]
+  followUps?: { recipe: string; label: string; text: string }[]
+  progress?: string
   options?: Option[]
   next?: string
   ending?: 'auto'
@@ -56,6 +61,9 @@ export interface HistoryEntry {
   choice: 'A' | 'B' | 'C'
   label: string
   at: number
+  next?: string
+  consequence?: string
+  progress?: string
 }
 
 export interface GameState {

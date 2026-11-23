@@ -11,7 +11,7 @@ export function useGameKeys(handlers: KeyHandlers, enabled: boolean): void {
   useEffect(() => {
     if (!enabled) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return
+      if (event.defaultPrevented || event.repeat || event.metaKey || event.ctrlKey || event.altKey) return
       const target = event.target as HTMLElement | null
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
       const key = event.key.toUpperCase()
@@ -19,7 +19,7 @@ export function useGameKeys(handlers: KeyHandlers, enabled: boolean): void {
       else if (key === 'B' || key === '2') handlers.onChoice?.('B')
       else if (key === 'C' || key === '3') handlers.onChoice?.('C')
       else if (key === ' ' || key === 'ENTER') {
-        if (target && (target.tagName === 'BUTTON' || target.tagName === 'A')) return
+        if (target?.closest('button, a, summary')) return
         event.preventDefault()
         handlers.onAdvance?.()
       } else if (key === 'Z') handlers.onUndo?.()

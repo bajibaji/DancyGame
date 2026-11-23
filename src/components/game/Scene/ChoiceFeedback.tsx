@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'motion/react'
+import { Undo2 } from 'lucide-react'
 
 interface ChoiceFeedbackProps {
   message: string | null
@@ -9,28 +9,22 @@ interface ChoiceFeedbackProps {
 export default function ChoiceFeedback({ message, canUndo, onUndo }: ChoiceFeedbackProps) {
   return (
     <div className="pointer-events-none fixed inset-x-0 top-0 z-40 flex justify-center px-4 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
-      <AnimatePresence>
-        {message && (
-          <motion.div
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.2 }}
-            className="pointer-events-auto flex max-w-[430px] items-center gap-3 rounded-[18px] border border-border bg-surface/95 px-4 py-2 text-xs text-text-secondary shadow-lg backdrop-blur"
-          >
-            <span>{message}</span>
-            {canUndo && (
-              <button
-                type="button"
-                onClick={onUndo}
-                className="rounded-[18px] border border-accent/40 px-4 py-1.5 text-accent active:bg-accent/15"
-              >
-                撤销
-              </button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <span role="status" className="sr-only">{message}</span>
+      {(message || canUndo) && (
+        <div className="pointer-events-auto flex max-w-[430px] min-w-0 items-center gap-3 rounded-[18px] border border-border bg-surface/95 px-3 py-1 text-xs text-text-secondary shadow-lg backdrop-blur">
+          {message && <span aria-hidden className="min-w-0 break-words">{message}</span>}
+          {canUndo && (
+            <button
+              type="button"
+              onClick={onUndo}
+              className="flex min-h-11 shrink-0 items-center gap-1 rounded-[18px] border border-accent/40 px-3 text-accent active:bg-accent/15"
+            >
+              <Undo2 size={14} aria-hidden />
+              撤销
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

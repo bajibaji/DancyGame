@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { EndingId, Epilogue, GameMeta, HistoryEntry, Option, Scene, Snapshot } from '../game/types'
-import { applyEffects, choose as engineChoose, createInitialState, decideEnding, makeSnapshot, restoreSnapshot } from '../game/engine'
+import { applyEffects, CHOICE_UNDO_MS, choose as engineChoose, createInitialState, decideEnding, makeSnapshot, restoreSnapshot } from '../game/engine'
 import { solvePuzzle as engineSolvePuzzle } from '../game/puzzle'
 import type { Recipe } from '../game/puzzle'
 import { getScene } from '../content/index'
@@ -23,13 +23,11 @@ interface GameStore {
   started: boolean
   ending: EndingId | null
   epilogue: Epilogue | null
-  snapshot: Snapshot | null
-  puzzleResult: { recipe: Recipe | null; cards: [string, string] } | null
+  snapshot: (Snapshot & { metCharacters: string[] }) | null
   start: () => void
   choose: (option: Option, scene: Scene) => void
   advance: (scene: Scene) => void
-  solvePuzzle: (a: string, b: string) => void
-  closePuzzle: (nextSceneId?: string) => void
+  solvePuzzle: (a: string, b: string) => Recipe | null
   finishAutoEnding: () => void
   setEpilogue: (epilogue: Epilogue) => void
   meet: (text: string) => void
@@ -39,6 +37,26 @@ interface GameStore {
 }
 
 const initial = createInitialState('p01')
+
+function mergeSave(saved: unknown, current: GameStore): GameStore {
+  const state = { ...current, ...(saved as Partial<GameStore>) }
+  const portChoice = state.history.find((entry) => entry.sceneId === 'c0704')
+  const awaitingBorderDecision = state.sceneId === 'c0705' || state.sceneId === 'c0706'
+  if (awaitingBorderDecision && portChoice?.choice === 'A' && !portChoice.next) {
+    const toPort = (id: string) => id === 'c0705' || id === 'c0706' ? `${id}p` : id
+    return {
+      ...state,
+      sceneId: toPort(state.sceneId),
+      visited: state.visited.map(toPort),
+      appliedScenes: state.appliedScenes.map(toPort),
+    }
+  }
+  if (state.sceneId === 'c0609' || state.visited.includes('c0609')) return state
+  if (!state.clues.includes('C22') && !state.flags.F62_MEMORY_TRUTH) return state
+  const flags = { ...state.flags }
+  delete flags.F62_MEMORY_TRUTH
+  return { ...state, clues: state.clues.filter((id) => id !== 'C22'), flags }
+}
 
 function withSceneEffects(state: GameStore, sceneId: string): Partial<GameStore> {
   const scene = getScene(sceneId)
@@ -95,7 +113,6 @@ export const useGameStore = create<GameStore>()(
       ending: null,
       epilogue: null,
       snapshot: null,
-      puzzleResult: null,
       start: () => {
         const fresh = createInitialState('p01')
         set({
@@ -106,23 +123,15 @@ export const useGameStore = create<GameStore>()(
           ending: null,
           epilogue: null,
           snapshot: null,
-          puzzleResult: null,
         })
       },
       choose: (option, scene) => {
         const state = get()
-        const snapshot = makeSnapshot({
-          sceneId: state.sceneId,
-          meta: state.meta,
-          relationship: state.relationship,
-          flags: state.flags,
-          clues: state.clues,
-          memories: state.memories,
-          solved: state.solved,
-          appliedScenes: state.appliedScenes,
-          visited: state.visited,
-          history: state.history,
-        })
+        if (scene.id !== state.sceneId || !scene.options?.includes(option)) return
+        const snapshot = {
+          ...makeSnapshot({ ...state, ending: undefined, epilogue: undefined }),
+          metCharacters: state.metCharacters,
+        }
         const next = engineChoose(
           {
             sceneId: state.sceneId,
@@ -144,6 +153,7 @@ export const useGameStore = create<GameStore>()(
         set({ ...next, ...entered, snapshot, screen: 'story' })
       },
       advance: (scene) => {
+        if (scene.id !== get().sceneId || scene.options?.length) return
         if (scene.ending === 'auto') {
           get().finishAutoEnding()
           return
@@ -171,23 +181,8 @@ export const useGameStore = create<GameStore>()(
           a,
           b,
         )
-        set({
-          meta: result.state.meta,
-          flags: result.state.flags,
-          solved: result.state.solved,
-          puzzleResult: { recipe: result.result, cards: [a, b] },
-        })
-      },
-      closePuzzle: (nextSceneId) => {
-        const state = get()
-        const scene = getScene(state.sceneId)
-        const target = nextSceneId ?? scene?.next
-        if (target) {
-          const entered = withSceneEffects(state, target)
-          set({ ...entered, screen: 'story', puzzleResult: null })
-        } else {
-          set({ screen: 'story', puzzleResult: null })
-        }
+        if (result.result) set({ meta: result.state.meta, solved: result.state.solved })
+        return result.result
       },
       finishAutoEnding: () => {
         const state = get()
@@ -216,12 +211,12 @@ export const useGameStore = create<GameStore>()(
       undo: () => {
         const state = get()
         if (!state.snapshot) return
-        if (Date.now() - state.snapshot.at > 5000) {
+        if (Date.now() - state.snapshot.at >= CHOICE_UNDO_MS) {
           set({ snapshot: null })
           return
         }
         const restored = restoreSnapshot(state.snapshot)
-        set({ ...restored, snapshot: null, screen: 'story' })
+        set({ ...restored, metCharacters: state.snapshot.metCharacters, snapshot: null, screen: 'story' })
       },
       reset: () => {
         const fresh = createInitialState('p01')
@@ -233,7 +228,6 @@ export const useGameStore = create<GameStore>()(
           ending: null,
           epilogue: null,
           snapshot: null,
-          puzzleResult: null,
         })
       },
       setScreen: (screen) => set({ screen }),
@@ -241,6 +235,7 @@ export const useGameStore = create<GameStore>()(
     {
       name: 'jiangjia.save.v1',
       version: 1,
+      merge: mergeSave,
       partialize: (state) => ({
         screen: state.screen,
         sceneId: state.sceneId,

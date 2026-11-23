@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { Archive, Settings } from 'lucide-react'
@@ -10,10 +10,12 @@ import RichText from '../components/game/Scene/RichText'
 import TypedRichText from '../components/game/Scene/TypedRichText'
 import StarBorder from '../components/reactbits/StarBorder/StarBorder'
 import GlitchText from '../components/reactbits/GlitchText/GlitchText'
-import { CHARACTERS, chapterTitle, getScene, LOCATION_MAP } from '../content/index'
+import { CHARACTERS, chapterTitle, CLUE_MAP, getScene, LOCATION_MAP, MEMORY_MAP } from '../content/index'
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
 import { useGameKeys } from '../lib/keyboard'
+import { CHOICE_UNDO_MS } from '../game/engine'
+import { resolveSceneBody, resolveSceneFollowUps, resolveSceneProgress } from '../game/narrative'
 import type { Option, Scene } from '../game/types'
 
 interface SelectedCharacter {
@@ -32,28 +34,35 @@ export default function StoryPage() {
   const undo = useGameStore((s) => s.undo)
   const meet = useGameStore((s) => s.meet)
   const visited = useGameStore((s) => s.visited)
+  const history = useGameStore((s) => s.history)
+  const snapshot = useGameStore((s) => s.snapshot)
+  const clues = useGameStore((s) => s.clues)
+  const memories = useGameStore((s) => s.memories)
+  const solved = useGameStore((s) => s.solved)
   const textSpeed = useSettingsStore((s) => s.textSpeed)
   const readingMode = useSettingsStore((s) => s.readingMode)
   const reducedMotion = useSettingsStore((s) => s.reducedMotion)
   const autoAdvance = useSettingsStore((s) => s.autoAdvance)
-  const [skipped, setSkipped] = useState(false)
-  const [typedDone, setTypedDone] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-  const [canUndo, setCanUndo] = useState(false)
+  const [readScene, setReadScene] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<{ sceneId: string; message: string | null; canUndo: boolean } | null>(null)
   const [selectedCharacter, setSelectedCharacter] = useState<SelectedCharacter | null>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const latestRef = useRef<HTMLElement | null>(null)
 
   const scene = getScene(sceneId)
   const location = scene ? LOCATION_MAP.get(scene.locationId) : undefined
   const instant = textSpeed === 'instant' || reducedMotion
-  const textReady = instant || skipped || typedDone
+  const textReady = instant || readScene === sceneId
   const showMemoryTag = Boolean(scene?.effects?.memories?.length)
   const options = scene?.options ?? []
   const choiceEnabled = textReady && options.length > 0
   const showOptions = options.length > 0 && textReady
-  const resolveBody = (section: Scene) => section.variants?.find((variant) => flags[variant.flag])?.body ?? section.body
+  const arrivals = useMemo(() => new Map(history.map((entry) => [entry.next, entry])), [history])
+  const resolveBody = (section: Scene) => resolveSceneBody(section, flags, arrivals.get(section.id))
+  const activeBody = scene ? resolveBody(scene) : ''
+  const activeFollowUps = scene ? resolveSceneFollowUps(scene, solved) : []
+  const currentFeedback = feedback?.sceneId === sceneId ? feedback : null
+  const canUndo = Boolean(snapshot && currentFeedback?.canUndo)
   const pathIds = useMemo(
     () => (visited.length > 0 && visited[visited.length - 1] === sceneId ? visited : [...visited, sceneId]),
     [visited, sceneId],
@@ -64,29 +73,28 @@ export default function StoryPage() {
   )
 
   useEffect(() => {
-    setSkipped(false)
-    setTypedDone(false)
-    setMessage(null)
-    setCanUndo(false)
     setSelectedCharacter(null)
-    const fixedClues = scene?.effects?.clues ?? []
-    if (fixedClues.length > 0) {
-      setMessage(`线索已入档 · ${fixedClues.join(' / ')} · 可去档案库推理`)
-      if (timerRef.current) clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(() => setMessage(null), 4000)
-    }
   }, [sceneId])
 
   useEffect(() => {
     if (!scene) return
-    meet(
-      [
-        scene.body,
-        ...(scene.variants?.map((variant) => variant.body) ?? []),
-        ...(scene.options?.map((option) => option.label) ?? []),
-      ].join('\n'),
-    )
-  }, [sceneId, scene, meet])
+    const activeUndo = snapshot ? CHOICE_UNDO_MS - (Date.now() - snapshot.at) : 0
+    const newClues = snapshot ? clues.filter((id) => !snapshot.clues.includes(id)) : scene.effects?.clues ?? []
+    const newMemories = snapshot ? memories.filter((id) => !snapshot.memories.includes(id)) : scene.effects?.memories ?? []
+    const names = [...newClues.map((id) => CLUE_MAP.get(id)?.title), ...newMemories.map((id) => MEMORY_MAP.get(id)?.title)].filter(Boolean)
+    const message = names.length ? `已归档：${names.join('、')}` : null
+    if (!message && activeUndo <= 0) {
+      setFeedback(null)
+      return
+    }
+    setFeedback({ sceneId: scene.id, message, canUndo: activeUndo > 0 })
+    const timer = setTimeout(() => setFeedback(null), activeUndo > 0 ? activeUndo : 4000)
+    return () => clearTimeout(timer)
+  }, [scene, snapshot, clues, memories])
+
+  useEffect(() => {
+    if (activeBody) meet(activeBody)
+  }, [activeBody, meet])
 
   useLayoutEffect(() => {
     if (readingMode !== 'single') return
@@ -119,47 +127,42 @@ export default function StoryPage() {
     if (ending && screen === 'ending') navigate('/ending')
   }, [ending, screen, navigate])
 
-  useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-  }, [])
-
   useEffect(() => {
-    if (!autoAdvance || !scene || scene.options?.length || !textReady) return
-    const timer = setTimeout(() => advance(scene), 3000)
+    if (!autoAdvance || !scene || scene.options?.length || !textReady || resolveSceneFollowUps(scene, solved).length) return
+    const remainingUndo = snapshot ? CHOICE_UNDO_MS - (Date.now() - snapshot.at) : 0
+    const timer = setTimeout(() => advance(scene), Math.max(3000, remainingUndo))
     return () => clearTimeout(timer)
-  }, [autoAdvance, scene, textReady, advance])
+  }, [autoAdvance, scene, textReady, advance, snapshot, solved])
 
   const characterCard = useMemo(
     () => (selectedCharacter ? CHARACTERS.find((c) => c.id === selectedCharacter.id) : undefined),
     [selectedCharacter],
   )
 
-  const onChoose = (option: Option) => {
+  const onChoose = useCallback((option: Option) => {
     if (!scene || !choiceEnabled) return
     choose(option, scene)
-    const gainedMemories = option.effects.memories ?? []
-    const gainedClues = option.effects.clues ?? []
-    let text = '选择已记录'
-    if (gainedMemories.length > 0) text = `记忆碎片已归档 · ${gainedMemories.join(' / ')}`
-    else if (gainedClues.length > 0) text = `线索已入档 · ${gainedClues.join(' / ')} · 可去档案库推理`
-    setMessage(text)
-    setCanUndo(true)
-    if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      setCanUndo(false)
-      setMessage(null)
-    }, 5000)
-    scrollRef.current?.scrollTo({ top: 0 })
-  }
+  }, [scene, choiceEnabled, choose])
 
-  const onAdvance = () => {
+  const revealText = useCallback(() => {
+    if (useGameStore.getState().sceneId === sceneId) setReadScene(sceneId)
+  }, [sceneId])
+
+  const onAdvance = useCallback(() => {
     if (!scene) return
     if (!textReady) {
-      setSkipped(true)
+      revealText()
       return
     }
     advance(scene)
-  }
+  }, [scene, textReady, revealText, advance])
+
+  const onUndo = useCallback(() => {
+    if (!canUndo || !snapshot) return
+    undo()
+    setReadScene(snapshot.sceneId)
+    setFeedback(null)
+  }, [canUndo, snapshot, undo])
 
   const keys = useMemo(
     () => ({
@@ -168,16 +171,10 @@ export default function StoryPage() {
         if (option && choiceEnabled) onChoose(option)
       },
       onAdvance,
-      onUndo: () => {
-        if (canUndo) {
-          undo()
-          setMessage(null)
-          setCanUndo(false)
-        }
-      },
-      onEscape: () => navigate('/settings'),
+      onUndo,
+      onEscape: () => selectedCharacter ? setSelectedCharacter(null) : navigate('/settings'),
     }),
-    [options, choiceEnabled, scene, canUndo],
+    [options, choiceEnabled, onChoose, onAdvance, onUndo, navigate, selectedCharacter],
   )
   useGameKeys(keys, true)
 
@@ -210,7 +207,7 @@ export default function StoryPage() {
                 className="flex h-11 min-w-11 flex-col items-center justify-center rounded-[18px] px-2 text-[10px] leading-tight text-text-dim active:bg-surface"
               >
                 <span aria-hidden><Archive size={16} strokeWidth={1.8} /></span>
-                档案
+                档案库
               </button>
               <button
                 type="button"
@@ -258,15 +255,15 @@ export default function StoryPage() {
                     <div
                       className="reading text-text"
                       onClick={isCurrent ? () => {
-                        if (!textReady) setSkipped(true)
+                        if (!textReady) revealText()
                       } : undefined}
                     >
                       {isCurrent ? (
                         <TypedRichText
-                          text={resolveBody(section)}
+                          text={activeBody}
                           speed={SPEED_MS[textSpeed]}
-                          revealAll={skipped || reducedMotion || instant}
-                          onDone={() => setTypedDone(true)}
+                          revealAll={textReady}
+                          onDone={revealText}
                           onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
                         />
                       ) : (
@@ -276,6 +273,7 @@ export default function StoryPage() {
                         />
                       )}
                     </div>
+                    {!isCurrent && <SceneProgress items={resolveSceneProgress(section, arrivals.get(section.id))} />}
                   </section>
                 )
               })
@@ -303,20 +301,32 @@ export default function StoryPage() {
                     <div
                       className="reading text-text"
                       onClick={() => {
-                        if (!textReady) setSkipped(true)
+                        if (!textReady) revealText()
                       }}
                     >
                       <TypedRichText
-                        text={resolveBody(scene)}
+                        key={scene.id}
+                        text={activeBody}
                         speed={SPEED_MS[textSpeed]}
-                        revealAll={skipped || reducedMotion || instant}
-                        onDone={() => setTypedDone(true)}
+                        revealAll={textReady}
+                        onDone={revealText}
                         onSelect={(id, alias) => setSelectedCharacter({ id, alias })}
                       />
                     </div>
                   </motion.div>
                 </AnimatePresence>
               </>
+            )}
+            {textReady && (
+              <div key={scene.id}>
+                <SceneProgress items={resolveSceneProgress(scene, arrivals.get(scene.id))} />
+                {activeFollowUps.map(({ recipe, label, text }) => (
+                  <details key={recipe} className="mt-4 border-l-2 border-clue/45 pl-3">
+                    <summary className="min-h-11 cursor-pointer py-3 text-sm leading-relaxed text-clue">{label}</summary>
+                    <p className="pb-2 text-sm leading-relaxed text-text-secondary">{text}</p>
+                  </details>
+                ))}
+              </div>
             )}
             <div className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden">
               {showOptions && (
@@ -360,7 +370,7 @@ export default function StoryPage() {
                   onClick={onAdvance}
                   className="w-full rounded-[18px] border border-border-strong bg-surface-raised py-3.5 text-[15px] text-text active:scale-[0.99] active:border-accent/60 active:text-accent"
                 >
-                  {scene.ending === 'auto' ? '合上案卷' : '继 续'}
+                  {scene.ending === 'auto' ? '查看结局' : scene.puzzle ? '继续下一章' : '继续'}
                 </button>
               )}
             </div>
@@ -369,7 +379,7 @@ export default function StoryPage() {
         </main>
       </div>
 
-      <ChoiceFeedback message={message} canUndo={canUndo} onUndo={() => { undo(); setMessage(null); setCanUndo(false) }} />
+      <ChoiceFeedback message={currentFeedback?.message ?? null} canUndo={canUndo} onUndo={onUndo} />
 
       <AnimatePresence>
         {selectedCharacter && characterCard && (
@@ -405,5 +415,15 @@ export default function StoryPage() {
         )}
       </AnimatePresence>
     </GameShell>
+  )
+}
+
+function SceneProgress({ items }: { items: string[] }) {
+  if (!items.length) return null
+  return (
+    <div role="group" aria-label="调查进展" className="mt-5 border-l-2 border-success/70 pl-3">
+      <p className="mb-1 text-xs text-success">调查进展</p>
+      {items.map((item) => <p key={item} className="text-sm leading-relaxed text-text-secondary">{item}</p>)}
+    </div>
   )
 }

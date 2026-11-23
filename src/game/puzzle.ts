@@ -5,7 +5,6 @@ export interface Recipe {
   id: string
   cards: [string, string]
   title: string
-  flag?: string
 }
 
 export const RECIPES: Recipe[] = recipesData as Recipe[]
@@ -31,11 +30,9 @@ export function solvePuzzle(state: GameState, a: string, b: string): { state: Ga
   if (!recipe || state.solved.includes(recipe.id)) {
     return { state, result: null }
   }
-  const flags = recipe.flag ? { ...state.flags, [recipe.flag]: true } : state.flags
   return {
     state: {
       ...state,
-      flags,
       solved: [...state.solved, recipe.id],
       meta: { ...state.meta, clue: Math.min(30, state.meta.clue + 2) },
     },

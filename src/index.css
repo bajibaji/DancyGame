@@ -103,8 +103,6 @@ button {
 
 .reading p.dialogue-paragraph {
   text-indent: 0;
-  padding-left: 0.85em;
-  border-left: 2px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
 }
 
 .reading .dialogue {
@@ -112,8 +110,12 @@ button {
   color: var(--color-text-hi);
   text-indent: 0;
   margin: 0.4em 0;
-  padding-left: 0.9em;
-  border-left: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.reading p.dialogue-paragraph,
+.reading p:not(.dialogue-paragraph) > .dialogue {
+  padding-inline-start: 0.9em;
+  border-inline-start: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
 }
 
 .reading .dialogue-inline {

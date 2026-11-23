@@ -1,4 +1,7 @@
 import type { Effects, EndingId, GameMeta, GameState, Option, Scene, Snapshot } from './types'
+import { captureStatus, memoryStatus } from './narrative'
+
+export const CHOICE_UNDO_MS = 5000
 
 export const INITIAL_META: GameMeta = { clue: 5, relation: 4, danger: 2, memory: 0 }
 
@@ -98,21 +101,28 @@ export function choose(state: GameState, scene: Scene, option: Option): GameStat
         choice: option.key,
         label: option.label,
         at: Date.now(),
+        next: option.next,
+        consequence: option.consequence,
+        progress: option.progress,
       },
     ],
   }
 }
 
+export function breakdownCause(meta: GameMeta): 'exposure' | 'isolation' | undefined {
+  if (meta.danger >= 9) return 'exposure'
+  if (meta.relation <= 3) return 'isolation'
+}
+
 export function decideEnding(state: GameState): EndingId {
   const { clue, relation, danger, memory } = state.meta
-  const bad = danger >= 9 || relation <= 3 || Boolean(state.flags.F78_YIN_HOSTILE)
-  if (bad) return 'bad'
+  if (breakdownCause(state.meta)) return 'bad'
   const good =
     clue >= 20 &&
-    memory >= 6 &&
+    memoryStatus(memory) === 'recovered' &&
     relation >= 6 &&
     danger <= 7 &&
-    Boolean(state.flags.F76_SANCHEZ_CAUGHT) &&
+    captureStatus(state.flags) === 'caught' &&
     Boolean(state.flags.F61_XIE_XIAOLONG_TRUTH) &&
     Boolean(state.flags.F62_MEMORY_TRUTH)
   return good ? 'good' : 'neutral'

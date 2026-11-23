@@ -3,28 +3,34 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
 import SpotlightCard from '../components/reactbits/SpotlightCard/SpotlightCard'
-import { CLUE_MAP, getScene } from '../content/index'
+import { CHAPTERS, CLUE_MAP, getScene } from '../content/index'
 import { useGameStore } from '../stores/gameStore'
-import { RECIPES, matchRecipe } from '../game/puzzle'
+import { availableRecipes, matchRecipe } from '../game/puzzle'
+import type { Recipe } from '../game/puzzle'
 
 export default function PuzzlePage() {
   const navigate = useNavigate()
   const sceneId = useGameStore((s) => s.sceneId)
   const clues = useGameStore((s) => s.clues)
   const solved = useGameStore((s) => s.solved)
-  const puzzleResult = useGameStore((s) => s.puzzleResult)
   const solvePuzzle = useGameStore((s) => s.solvePuzzle)
   const [selected, setSelected] = useState<string[]>([])
   const [notice, setNotice] = useState<string | null>(null)
+  const [result, setResult] = useState<{ recipe: Recipe | null } | null>(null)
 
   const scene = getScene(sceneId)
   const owned = useMemo(() => clues.filter((id) => CLUE_MAP.has(id)), [clues])
-  const result = puzzleResult
-  const solvedTitles = useMemo(() => RECIPES.filter((r) => solved.includes(r.id)).map((r) => r.title), [solved])
-  const success = Boolean(result?.recipe)
+  const solvedTitles = useMemo(() => availableRecipes(clues).filter((r) => solved.includes(r.id)).map((r) => r.title), [clues, solved])
+  const success = result?.recipe
+  const chapterScenes = CHAPTERS.find(({ chapter }) => chapter === scene?.chapter)?.scenes ?? []
+  const currentIndex = chapterScenes.findIndex(({ id }) => id === sceneId)
+  const followUpScene = success && chapterScenes.find((section, index) =>
+    index >= currentIndex && section.followUps?.some(({ recipe }) => recipe === success.id),
+  )
 
   const toggle = (id: string) => {
     setNotice(null)
+    setResult(null)
     setSelected((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id)
       if (prev.length >= 2) return [prev[1], id]
@@ -40,7 +46,7 @@ export default function PuzzlePage() {
       return
     }
     setNotice(null)
-    solvePuzzle(selected[0], selected[1])
+    setResult({ recipe: solvePuzzle(selected[0], selected[1]) })
   }
 
   const onContinue = () => {
@@ -61,7 +67,7 @@ export default function PuzzlePage() {
 
       <main className="flex w-full flex-1 flex-col px-4 pb-44 pt-4">
         <p className="mb-3 text-xs leading-relaxed text-text-secondary">
-          推理板是可选整理环节：挑两张线索卡组合。推演正确 +2 线索；推错只是死胡同，不影响剧情、数值与结局。
+          对照已入档的线索，不代替现场核查。
         </p>
         {solvedTitles.length > 0 && (
           <p className="mb-3 text-[11px] text-success">已推演：{solvedTitles.join('、')}</p>
@@ -72,11 +78,13 @@ export default function PuzzlePage() {
           <div className={`mb-4 rounded-[18px] border p-3.5 text-sm ${success ? 'border-success/50 bg-success/10 text-success' : 'border-border bg-surface text-text-secondary'}`}>
             {success ? (
               <>
-                <p className="font-display text-base text-text-hi">推理成立 · {result.recipe!.title}</p>
-                <p className="mt-1 text-xs text-text-secondary">线索 +2，组合已记入案情板。</p>
+                <p className="font-display text-base text-text-hi">推理成立 · {success.title}</p>
+                <p className="mt-1 text-xs text-text-secondary">
+                  {followUpScene ? `${followUpScene.title} · 已准备一份补充材料。` : '已记入推理板。'}
+                </p>
               </>
             ) : (
-              <p>两张卡对不上。这是个死胡同——换个组合，或者继续调查。</p>
+              <p>暂未发现这两条线索的关联。</p>
             )}
           </div>
         )}
@@ -87,7 +95,7 @@ export default function PuzzlePage() {
             const clue = CLUE_MAP.get(id)!
             const active = selected.includes(id)
             return (
-              <button key={id} type="button" onClick={() => toggle(id)} className="text-left active:scale-[0.99]">
+              <button key={id} type="button" aria-pressed={active} onClick={() => toggle(id)} className="text-left active:scale-[0.99]">
                 <SpotlightCard
                   className={`rounded-[18px] border px-3.5 py-3 transition-colors ${active ? 'border-accent bg-accent/10' : 'border-border bg-surface'}`}
                   spotlightColor="rgba(217,162,75,0.18)"
@@ -122,16 +130,8 @@ export default function PuzzlePage() {
             )
           })}
         </div>
-        {success ? (
-          <button
-            type="button"
-            onClick={onContinue}
-            className="w-full rounded-[18px] border border-success/50 bg-success/10 py-3.5 text-sm text-success active:scale-[0.99]"
-          >
-            线索 +2 · 继续调查
-          </button>
-        ) : (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {!success && (
             <button
               type="button"
               onClick={onSolve}
@@ -140,15 +140,15 @@ export default function PuzzlePage() {
             >
               推演（{selected.length}/2）
             </button>
-            <button
-              type="button"
-              onClick={onContinue}
-              className="shrink-0 rounded-[18px] px-3 py-3.5 text-xs text-text-dim active:text-text-secondary"
-            >
-              跳过
-            </button>
-          </div>
-        )}
+          )}
+          <button
+            type="button"
+            onClick={onContinue}
+            className={success ? 'w-full rounded-[18px] border border-success/50 bg-success/10 py-3.5 text-sm text-success active:scale-[0.99]' : 'shrink-0 rounded-[18px] px-3 py-3.5 text-xs text-text-dim active:text-text-secondary'}
+          >
+            返回档案库
+          </button>
+        </div>
       </div>
     </GameShell>
   )
