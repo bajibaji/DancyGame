@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { EndingId, Epilogue, GameMeta, HistoryEntry, Option, Scene, Snapshot } from '../game/types'
-import { applyEffects, CHOICE_UNDO_MS, choose as engineChoose, createInitialState, decideEnding, makeSnapshot, restoreSnapshot } from '../game/engine'
+import { applyEffects, CHOICE_UNDO_MS, choose as engineChoose, createInitialState, decideEnding, LIMITS, makeSnapshot, restoreSnapshot } from '../game/engine'
 import { solvePuzzle as engineSolvePuzzle } from '../game/puzzle'
 import type { Recipe } from '../game/puzzle'
 import { getScene } from '../content/index'
@@ -38,8 +38,19 @@ interface GameStore {
 
 const initial = createInitialState('p01')
 
-function mergeSave(saved: unknown, current: GameStore): GameStore {
-  const state = { ...current, ...(saved as Partial<GameStore>) }
+function migrateSave(persisted: unknown, version: number): GameStore {
+  const state = (persisted ?? {}) as Partial<GameStore>
+  if (version >= 2 || !state.meta) return state as GameStore
+  return {
+    ...state,
+    meta: {
+      ...state.meta,
+      relation: Math.min(LIMITS.relation[1], state.meta.relation * 2),
+    },
+  } as GameStore
+}
+
+function mergeSave(saved: unknown, current: GameStore): GameStore {  const state = { ...current, ...(saved as Partial<GameStore>) }
   const portChoice = state.history.find((entry) => entry.sceneId === 'c0704')
   const awaitingBorderDecision = state.sceneId === 'c0705' || state.sceneId === 'c0706'
   if (awaitingBorderDecision && portChoice?.choice === 'A' && !portChoice.next) {
@@ -234,7 +245,8 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: 'jiangjia.save.v1',
-      version: 1,
+      version: 2,
+      migrate: migrateSave,
       merge: mergeSave,
       partialize: (state) => ({
         screen: state.screen,

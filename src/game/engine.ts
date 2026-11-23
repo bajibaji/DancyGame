@@ -17,10 +17,16 @@ export const INITIAL_RELATIONSHIP: Record<string, number> = {
 
 export const LIMITS = {
   clue: [0, 30],
-  relation: [0, 10],
-  danger: [0, 10],
+  relation: [0, 30],
+  danger: [0, 20],
   memory: [0, 10],
 } as const
+
+export const GOOD_CLUE = 18
+export const GOOD_RELATION = 18
+export const GOOD_DANGER = 14
+export const BAD_EXPOSURE = 16
+export const BAD_ISOLATION = 9
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
@@ -110,18 +116,18 @@ export function choose(state: GameState, scene: Scene, option: Option): GameStat
 }
 
 export function breakdownCause(meta: GameMeta): 'exposure' | 'isolation' | undefined {
-  if (meta.danger >= 9) return 'exposure'
-  if (meta.relation <= 3) return 'isolation'
+  if (meta.danger >= BAD_EXPOSURE) return 'exposure'
+  if (meta.relation <= BAD_ISOLATION) return 'isolation'
 }
 
 export function decideEnding(state: GameState): EndingId {
   const { clue, relation, danger, memory } = state.meta
   if (breakdownCause(state.meta)) return 'bad'
   const good =
-    clue >= 20 &&
+    clue >= GOOD_CLUE &&
     memoryStatus(memory) === 'recovered' &&
-    relation >= 6 &&
-    danger <= 7 &&
+    relation >= GOOD_RELATION &&
+    danger <= GOOD_DANGER &&
     captureStatus(state.flags) === 'caught' &&
     Boolean(state.flags.F61_XIE_XIAOLONG_TRUTH) &&
     Boolean(state.flags.F62_MEMORY_TRUTH)

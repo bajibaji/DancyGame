@@ -1,18 +1,40 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Brain } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
+import PuzzleBoard from '../components/game/PuzzleBoard'
 import RubberSegment from '../components/reactbits/RubberSegment/RubberSegment'
 import SpotlightCard from '../components/reactbits/SpotlightCard/SpotlightCard'
 import ChromaGrid from '../components/reactbits/ChromaGrid/ChromaGrid'
 import { CHARACTERS, CLUES, MEMORIES } from '../content/index'
+import { RECIPES } from '../game/puzzle'
 import { useGameStore } from '../stores/gameStore'
 
 const TABS = [
+  { value: 'puzzle', label: '推理板' },
   { value: 'clues', label: '线索' },
   { value: 'memories', label: '记忆' },
   { value: 'people', label: '人物' },
 ]
+
+const TAB_TINT: Record<string, string> = {
+  puzzle: 'var(--color-accent)',
+  clues: 'var(--color-clue)',
+  memories: 'var(--color-memory)',
+  people: 'var(--color-accent-strong)',
+}
+
+const TAB_KEY = 'jiangjia.archive.tab'
+
+function readTab(): string {
+  try {
+    const saved = localStorage.getItem(TAB_KEY)
+    if (saved && TABS.some(({ value }) => value === saved)) return saved
+  } catch {
+    // 存储不可用时回落到默认标签
+  }
+  return 'puzzle'
+}
 
 function memoryImage(title: string, index: number): string {
   const palette = ['#1a2430', '#202a38', '#16242c', '#241f2e']
@@ -26,7 +48,18 @@ export default function ArchivePage() {
   const clues = useGameStore((s) => s.clues)
   const memories = useGameStore((s) => s.memories)
   const metCharacters = useGameStore((s) => s.metCharacters)
-  const [tab, setTab] = useState('clues')
+  const solved = useGameStore((s) => s.solved)
+  const [tab, setTab] = useState(readTab)
+
+  const changeTab = (value: string) => {
+    setTab(value)
+    window.scrollTo(0, 0)
+    try {
+      localStorage.setItem(TAB_KEY, value)
+    } catch {
+      // 存储不可用时只保留内存状态
+    }
+  }
 
   const ownedClues = useMemo(
     () => CLUES.filter((c) => clues.includes(c.id)),
@@ -44,22 +77,15 @@ export default function ArchivePage() {
   return (
     <GameShell>
       <header className="sticky top-0 z-20 border-b border-border-subtle/50 bg-bg-deep/80 px-4 py-3 backdrop-blur">
-        <div className="flex items-center justify-between gap-3">
-          <button type="button" onClick={() => navigate('/story')} className="flex min-h-11 items-center gap-1 rounded-[18px] pl-1 pr-3 text-sm text-accent active:opacity-70">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <button type="button" onClick={() => navigate('/story')} className="flex min-h-11 items-center gap-1 justify-self-start rounded-[18px] pl-1 pr-3 text-sm text-accent active:opacity-70">
             <ArrowLeft size={16} strokeWidth={1.8} /> 返回
           </button>
           <h1 className="font-display text-lg text-text-hi">档案库</h1>
-          <button
-            type="button"
-            onClick={() => navigate('/puzzle')}
-            className="flex min-h-11 items-center gap-1 rounded-[18px] px-2 text-xs text-clue active:bg-surface"
-          >
-            <Brain size={14} strokeWidth={1.8} />
-            推理板
-          </button>
+          <span aria-hidden />
         </div>
         <div className="mt-1 text-[11px] text-text-dim">
-          线索 {ownedClues.length}/{CLUES.length} · 记忆 {ownedMemories.length}/{MEMORIES.length}
+          线索 {ownedClues.length}/{CLUES.length} · 记忆 {ownedMemories.length}/{MEMORIES.length} · 推演 {solved.length}/{RECIPES.length}
         </div>
       </header>
 
@@ -68,13 +94,20 @@ export default function ArchivePage() {
           <RubberSegment
             items={TABS}
             value={tab}
-            onChange={setTab}
+            onChange={changeTab}
             aria-label="档案分类"
-            trackColor="var(--color-surface)"
-            thumbColor="var(--color-accent)"
+            size="lg"
+            radius={18}
+            className="w-full border border-border-subtle/80"
+            trackColor="var(--color-surface-raised)"
+            thumbColor={TAB_TINT[tab]}
             textColor="var(--color-text-secondary)"
             activeTextColor="var(--color-bg-deep)"
           />
+        </div>
+
+        <div hidden={tab !== 'puzzle'}>
+          <PuzzleBoard />
         </div>
 
         {tab === 'clues' && (

@@ -5,9 +5,9 @@ import { resolveSceneBody, resolveSceneProgress } from '../src/game/narrative'
 
 const SAVE_KEY = 'jiangjia.save.v1'
 
-async function loadStore(saved?: unknown) {
+async function loadStore(saved?: unknown, version = 2) {
   const entries = new Map<string, string>()
-  if (saved) entries.set(SAVE_KEY, JSON.stringify({ version: 1, state: saved }))
+  if (saved) entries.set(SAVE_KEY, JSON.stringify({ version, state: saved }))
   const storage = {
     getItem: (key: string) => entries.get(key) ?? null,
     setItem: (key: string, value: string) => entries.set(key, value),
@@ -85,6 +85,16 @@ describe('游玩进度', () => {
     expect(state.meta).toEqual(raw.state.meta)
     expect(resolveSceneBody(getScene(option.next)!, state.flags, state.history[0])).toContain(option.consequence)
     expect(resolveSceneProgress(getScene(option.next)!, state.history[0])).toContain(option.progress)
+  })
+
+  it('旧版本关系值翻倍到新刻度，其他数值不动', async () => {
+    const saved = {
+      ...createInitialState('c0205'),
+      started: true,
+      meta: { clue: 8, relation: 10, danger: 2, memory: 3 },
+    }
+    const { store } = await loadStore(saved, 1)
+    expect(store.getState().meta).toEqual({ clue: 8, relation: 20, danger: 2, memory: 3 })
   })
 
   it('撤销对质后换证据，覆盖上一次选择的进展', async () => {

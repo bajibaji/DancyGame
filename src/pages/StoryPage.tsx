@@ -22,6 +22,7 @@ interface SelectedCharacter {
   id: string
   alias: string
 }
+type StatDelta = { key: 'clue' | 'relation' | 'danger'; label: string; value: number }
 export default function StoryPage() {
   const navigate = useNavigate()
   const sceneId = useGameStore((s) => s.sceneId)
@@ -44,7 +45,7 @@ export default function StoryPage() {
   const reducedMotion = useSettingsStore((s) => s.reducedMotion)
   const autoAdvance = useSettingsStore((s) => s.autoAdvance)
   const [readScene, setReadScene] = useState<string | null>(null)
-  const [feedback, setFeedback] = useState<{ sceneId: string; message: string | null; canUndo: boolean } | null>(null)
+  const [feedback, setFeedback] = useState<{ sceneId: string; message: string | null; canUndo: boolean; deltas: StatDelta[] } | null>(null)
   const [selectedCharacter, setSelectedCharacter] = useState<SelectedCharacter | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const latestRef = useRef<HTMLElement | null>(null)
@@ -83,14 +84,21 @@ export default function StoryPage() {
     const newMemories = snapshot ? memories.filter((id) => !snapshot.memories.includes(id)) : scene.effects?.memories ?? []
     const names = [...newClues.map((id) => CLUE_MAP.get(id)?.title), ...newMemories.map((id) => MEMORY_MAP.get(id)?.title)].filter(Boolean)
     const message = names.length ? `已归档：${names.join('、')}` : null
-    if (!message && activeUndo <= 0) {
+    const deltas: StatDelta[] = snapshot
+      ? ([
+          { key: 'clue', label: '线索', value: meta.clue - snapshot.meta.clue },
+          { key: 'relation', label: '关系', value: meta.relation - snapshot.meta.relation },
+          { key: 'danger', label: '危险', value: meta.danger - snapshot.meta.danger },
+        ] satisfies StatDelta[]).filter((delta) => delta.value !== 0)
+      : []
+    if (!message && activeUndo <= 0 && deltas.length === 0) {
       setFeedback(null)
       return
     }
-    setFeedback({ sceneId: scene.id, message, canUndo: activeUndo > 0 })
+    setFeedback({ sceneId: scene.id, message, canUndo: activeUndo > 0, deltas })
     const timer = setTimeout(() => setFeedback(null), activeUndo > 0 ? activeUndo : 4000)
     return () => clearTimeout(timer)
-  }, [scene, snapshot, clues, memories])
+  }, [scene, snapshot, clues, memories, meta])
 
   useEffect(() => {
     if (activeBody) meet(activeBody)
@@ -198,7 +206,7 @@ export default function StoryPage() {
           <LocationBar location={location} timeOfDay={scene.timeOfDay} chapter={scene.chapter} />
           <div className="flex min-h-13 items-center justify-between gap-4 px-3">
             <div className="min-w-0 flex-1">
-              <StatMeters meta={meta} showMemory={meta.memory > 0 || scene.effects?.memories !== undefined} />
+              <StatMeters meta={meta} />
             </div>
             <div className="flex shrink-0 items-center gap-1">
               <button
@@ -221,7 +229,7 @@ export default function StoryPage() {
           </div>
         </header>
 
-        <ChoiceFeedback message={currentFeedback?.message ?? null} canUndo={canUndo} onUndo={onUndo} />
+        <ChoiceFeedback message={currentFeedback?.message ?? null} canUndo={canUndo} onUndo={onUndo} deltas={currentFeedback?.deltas ?? []} />
 
         <main className="flex min-h-0 flex-1 flex-col">
           <div className="relative min-h-0 flex-1">

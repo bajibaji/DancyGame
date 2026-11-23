@@ -83,7 +83,7 @@ describe('三结局可达性模拟', () => {
   it('冒进路线可以到达坏结局', () => {
     const result = play(recklessPolicy)
     expect(result.ending).toBe('bad')
-    expect(result.meta.danger).toBeGreaterThanOrEqual(9)
+    expect(result.meta.danger).toBeGreaterThanOrEqual(16)
   })
 
   it('三种结局在策略扫描中均出现', () => {
@@ -124,7 +124,7 @@ describe('三结局可达性模拟', () => {
       endings.add(result.ending!)
       clues.add(result.meta.clue)
       const { clue, relation, danger, memory } = result.meta
-      if (clue < 20 && relation >= 6 && danger <= 7 && memory >= 8 && captureStatus(result.flags) === 'caught') {
+      if (clue < 18 && relation >= 18 && danger <= 14 && memory >= 8 && captureStatus(result.flags) === 'caught') {
         expect(result.ending).toBe('neutral')
         caughtWithoutEnoughEvidence = true
       }

@@ -45,19 +45,19 @@ describe('engine', () => {
 
   describe('结局判定', () => {
     const goodFlags = { F76_SANCHEZ_CAUGHT: true, F61_XIE_XIAOLONG_TRUTH: true, F62_MEMORY_TRUTH: true }
-    const goodMeta = { clue: 20, memory: 8, relation: 6, danger: 7 }
+    const goodMeta = { clue: 20, memory: 8, relation: 18, danger: 12 }
     it('满足条件为好结局', () => {
       expect(decideEnding(stateWith(goodMeta, goodFlags))).toBe('good')
     })
     it('危险过高为坏结局', () => {
-      const state = stateWith({ ...goodMeta, danger: 9 }, goodFlags)
+      const state = stateWith({ ...goodMeta, danger: 16 }, goodFlags)
       expect(decideEnding(state)).toBe('bad')
       expect(breakdownCause(state.meta)).toBe('exposure')
       expect(captureStatus(state.flags)).toBe('caught')
       expect(memoryStatus(state.meta.memory)).toBe('recovered')
     })
     it('关系过低为坏结局', () => {
-      const state = stateWith({ ...goodMeta, relation: 3 }, goodFlags)
+      const state = stateWith({ ...goodMeta, relation: 9 }, goodFlags)
       expect(decideEnding(state)).toBe('bad')
       expect(breakdownCause(state.meta)).toBe('isolation')
     })
@@ -65,7 +65,7 @@ describe('engine', () => {
       expect(decideEnding(stateWith(goodMeta, { ...goodFlags, F78_YIN_HOSTILE: true }))).toBe('good')
     })
     it('到案但材料、记忆或合作未达好结局边界时为中立', () => {
-      for (const meta of [{ clue: 19 }, { memory: 7 }, { relation: 5 }, { danger: 8 }]) {
+      for (const meta of [{ clue: 17 }, { memory: 7 }, { relation: 17 }, { danger: 15 }]) {
         expect(decideEnding(stateWith({ ...goodMeta, ...meta }, goodFlags))).toBe('neutral')
       }
       expect(decideEnding(stateWith(goodMeta, { ...goodFlags, F62_MEMORY_TRUTH: false }))).toBe('neutral')
