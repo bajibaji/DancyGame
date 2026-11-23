@@ -5,6 +5,7 @@ import GameShell from '../components/game/Layout/GameShell'
 import HoldButton from '../components/reactbits/HoldButton/HoldButton'
 import { FONT_SCALE, useSettingsStore } from '../stores/settingsStore'
 import { useGameStore } from '../stores/gameStore'
+import { APP_VERSION } from '../lib/version'
 
 const SPEED_ITEMS = [
   { value: 'slow', label: '慢' },
@@ -183,8 +184,8 @@ export default function SettingsPage() {
 
         <section className="rounded-lg border border-border bg-surface/70 p-4 text-[11px] leading-relaxed text-text-dim">
           <h2 className="mb-2 text-xs tracking-[0.2em] text-text-dim">关于</h2>
-          <p>《沙漏停摆》· 杭州失忆刑侦档案。平行改编自《空相沙漏》（作者：初禾二）。</p>
-          <p className="mt-1">故事、人物与机构均为虚构；真实地名仅作空间锚点。存档版本 v1。</p>
+          <p>《沙漏停摆》 v{APP_VERSION} · 杭州失忆刑侦档案。平行改编自《空相沙漏》（作者：初禾二）。</p>
+          <p className="mt-1">故事、人物与机构均为虚构；真实地名仅作空间锚点。存档格式 v2。</p>
         </section>
       </main>
     </GameShell>

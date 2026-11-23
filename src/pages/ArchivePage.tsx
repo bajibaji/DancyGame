@@ -31,7 +31,7 @@ function readTab(): string {
     const saved = localStorage.getItem(TAB_KEY)
     if (saved && TABS.some(({ value }) => value === saved)) return saved
   } catch {
-    // 存储不可用时回落到默认标签
+    return 'puzzle'
   }
   return 'puzzle'
 }
@@ -57,7 +57,7 @@ export default function ArchivePage() {
     try {
       localStorage.setItem(TAB_KEY, value)
     } catch {
-      // 存储不可用时只保留内存状态
+      return
     }
   }
 
