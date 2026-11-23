@@ -92,7 +92,7 @@ export default function SettingsPage() {
 
   return (
     <GameShell>
-      <header className="sticky top-0 z-20 border-b border-border-subtle/50 bg-bg-deep/80 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-border-subtle/50 bg-bg-deep/80 px-4 py-3 backdrop-blur md:px-6 lg:mx-auto lg:w-full lg:max-w-[1000px]">
         <div className="flex items-center justify-between">
           <button type="button" onClick={() => navigate(-1)} className="flex min-h-11 items-center rounded-[18px] pl-1 pr-3 text-sm text-accent active:opacity-70">
             <ArrowLeft size={16} strokeWidth={1.8} /> 返回
@@ -102,7 +102,7 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <main className="flex w-full flex-1 flex-col gap-6 px-4 py-6">
+      <main className="flex w-full flex-1 flex-col gap-6 px-4 py-6 md:grid md:grid-cols-2 md:items-start md:gap-5 md:px-6 lg:mx-auto lg:max-w-[1000px]">
         <section className="rounded-lg border border-border bg-surface/70 p-4">
           <h2 className="mb-3 text-xs tracking-[0.2em] text-text-dim">阅读</h2>
           <div className="flex flex-col gap-4">

@@ -10,7 +10,8 @@ import RichText from '../components/game/Scene/RichText'
 import TypedRichText from '../components/game/Scene/TypedRichText'
 import StarBorder from '../components/reactbits/StarBorder/StarBorder'
 import GlitchText from '../components/reactbits/GlitchText/GlitchText'
-import { CHARACTERS, chapterTitle, CLUE_MAP, getScene, LOCATION_MAP, MEMORY_MAP } from '../content/index'
+import { CHARACTERS, CLUES, MEMORIES, chapterTitle, CLUE_MAP, getScene, LOCATION_MAP, MEMORY_MAP } from '../content/index'
+import { RECIPES } from '../game/puzzle'
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
 import { useGameKeys } from '../lib/keyboard'
@@ -22,7 +23,6 @@ interface SelectedCharacter {
   id: string
   alias: string
 }
-type StatDelta = { key: 'clue' | 'relation' | 'danger'; label: string; value: number }
 export default function StoryPage() {
   const navigate = useNavigate()
   const sceneId = useGameStore((s) => s.sceneId)
@@ -45,7 +45,7 @@ export default function StoryPage() {
   const reducedMotion = useSettingsStore((s) => s.reducedMotion)
   const autoAdvance = useSettingsStore((s) => s.autoAdvance)
   const [readScene, setReadScene] = useState<string | null>(null)
-  const [feedback, setFeedback] = useState<{ sceneId: string; message: string | null; canUndo: boolean; deltas: StatDelta[] } | null>(null)
+  const [feedback, setFeedback] = useState<{ sceneId: string; message: string | null; canUndo: boolean } | null>(null)
   const [selectedCharacter, setSelectedCharacter] = useState<SelectedCharacter | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const latestRef = useRef<HTMLElement | null>(null)
@@ -84,21 +84,14 @@ export default function StoryPage() {
     const newMemories = snapshot ? memories.filter((id) => !snapshot.memories.includes(id)) : scene.effects?.memories ?? []
     const names = [...newClues.map((id) => CLUE_MAP.get(id)?.title), ...newMemories.map((id) => MEMORY_MAP.get(id)?.title)].filter(Boolean)
     const message = names.length ? `已归档：${names.join('、')}` : null
-    const deltas: StatDelta[] = snapshot
-      ? ([
-          { key: 'clue', label: '线索', value: meta.clue - snapshot.meta.clue },
-          { key: 'relation', label: '关系', value: meta.relation - snapshot.meta.relation },
-          { key: 'danger', label: '危险', value: meta.danger - snapshot.meta.danger },
-        ] satisfies StatDelta[]).filter((delta) => delta.value !== 0)
-      : []
-    if (!message && activeUndo <= 0 && deltas.length === 0) {
+    if (!message && activeUndo <= 0) {
       setFeedback(null)
       return
     }
-    setFeedback({ sceneId: scene.id, message, canUndo: activeUndo > 0, deltas })
+    setFeedback({ sceneId: scene.id, message, canUndo: activeUndo > 0 })
     const timer = setTimeout(() => setFeedback(null), activeUndo > 0 ? activeUndo : 4000)
     return () => clearTimeout(timer)
-  }, [scene, snapshot, clues, memories, meta])
+  }, [scene, snapshot, clues, memories])
 
   useEffect(() => {
     if (activeBody) meet(activeBody)
@@ -204,8 +197,8 @@ export default function StoryPage() {
       <div className="flex h-dvh flex-col overflow-hidden">
         <header className="shrink-0 border-b border-border-subtle/50 bg-bg-deep/80">
           <LocationBar location={location} timeOfDay={scene.timeOfDay} chapter={scene.chapter} />
-          <div className="flex min-h-13 items-center justify-between gap-4 px-3">
-            <div className="min-w-0 flex-1">
+          <div className="flex min-h-13 items-center justify-between gap-4 px-3 lg:hidden">
+            <div className="min-w-0 flex-1 md:max-w-[400px]">
               <StatMeters meta={meta} />
             </div>
             <div className="flex shrink-0 items-center gap-1">
@@ -229,13 +222,13 @@ export default function StoryPage() {
           </div>
         </header>
 
-        <ChoiceFeedback message={currentFeedback?.message ?? null} canUndo={canUndo} onUndo={onUndo} deltas={currentFeedback?.deltas ?? []} />
+        <ChoiceFeedback message={currentFeedback?.message ?? null} canUndo={canUndo} onUndo={onUndo} />
 
-        <main className="flex min-h-0 flex-1 flex-col">
+        <main className="flex min-h-0 flex-1 flex-col lg:mx-auto lg:w-full lg:max-w-[1120px] lg:flex-row lg:gap-8 lg:px-8">
           <div className="relative min-h-0 flex-1">
             <div
               ref={scrollRef}
-              className="reading-scroll h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-10 pt-5 [touch-action:pan-y]"
+              className="reading-scroll h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-10 pt-5 [touch-action:pan-y] md:mx-auto md:w-full md:max-w-[680px] md:px-8 md:pt-7 lg:max-w-[720px] lg:px-4 lg:pt-5"
               onContextMenu={(event) => event.preventDefault()}
             >
             {readingMode === 'linear' ? (
@@ -338,7 +331,7 @@ export default function StoryPage() {
                 ))}
               </div>
             )}
-            <div className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden">
+            <div className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden md:mx-auto md:w-full md:max-w-[560px]">
               {showOptions && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -386,6 +379,48 @@ export default function StoryPage() {
             </div>
             </div>
           </div>
+
+          <aside className="hidden lg:flex lg:w-[300px] lg:shrink-0 lg:flex-col lg:gap-3 lg:pb-6 lg:pt-4">
+            <section className="rounded-[14px] border border-border bg-surface/70 p-4">
+              <h2 className="mb-3 text-[11px] tracking-[0.2em] text-text-dim">调查状态</h2>
+              <StatMeters meta={meta} />
+            </section>
+            <section className="rounded-[14px] border border-border bg-surface/70 p-4">
+              <h2 className="mb-3 text-[11px] tracking-[0.2em] text-text-dim">进度</h2>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <div className="tabular text-lg text-text-hi">{clues.length}<span className="text-xs text-text-dim">/{CLUES.length}</span></div>
+                  <div className="mt-0.5 text-[10px] text-text-dim">线索</div>
+                </div>
+                <div>
+                  <div className="tabular text-lg text-text-hi">{memories.length}<span className="text-xs text-text-dim">/{MEMORIES.length}</span></div>
+                  <div className="mt-0.5 text-[10px] text-text-dim">记忆</div>
+                </div>
+                <div>
+                  <div className="tabular text-lg text-text-hi">{solved.length}<span className="text-xs text-text-dim">/{RECIPES.length}</span></div>
+                  <div className="mt-0.5 text-[10px] text-text-dim">推演</div>
+                </div>
+              </div>
+            </section>
+            <section className="grid gap-2">
+              <button
+                type="button"
+                onClick={() => navigate('/archive')}
+                className="flex min-h-11 items-center gap-2 rounded-[18px] border border-border bg-surface px-4 text-sm text-text-secondary active:bg-surface-hover"
+              >
+                <Archive size={16} strokeWidth={1.8} />
+                档案库
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/settings')}
+                className="flex min-h-11 items-center gap-2 rounded-[18px] border border-border bg-surface px-4 text-sm text-text-secondary active:bg-surface-hover"
+              >
+                <Settings size={16} strokeWidth={1.8} />
+                设置
+              </button>
+            </section>
+          </aside>
         </main>
       </div>
 
@@ -404,7 +439,7 @@ export default function StoryPage() {
               animate={{ y: 0 }}
               exit={{ y: 40 }}
               transition={{ duration: 0.2 }}
-              className="w-full max-w-[430px] rounded-t-2xl border-t border-border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+              className="w-full max-w-[430px] rounded-t-2xl border-t border-border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:max-w-[620px] lg:max-w-[780px]"
               onClick={(event) => event.stopPropagation()}
             >
               <div className="flex items-baseline justify-between gap-3">

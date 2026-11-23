@@ -35,13 +35,13 @@ export default function TitlePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
-          className="flex w-full max-w-[360px] flex-col items-center text-center"
+          className="flex w-full max-w-[360px] flex-col items-center text-center md:max-w-[480px]"
         >
           <p className="mb-6 text-xs tracking-[0.4em] text-text-dim">2015 · 杭州</p>
           <SplitText
             text="沙漏停摆"
             tag="h1"
-            className="font-display text-4xl font-semibold text-text-hi"
+            className="font-display text-4xl font-semibold text-text-hi md:text-5xl"
             splitType="chars"
             effect="rise"
             mask
@@ -76,6 +76,7 @@ export default function TitlePage() {
               onClick={hasSave ? () => navigate('/story') : onStart}
               lineColor="var(--color-accent)"
               textColor="var(--color-text-hi)"
+              className="md:w-[260px]"
             >
               {hasSave ? '继续调查' : '开始调查'}
             </SpecularButton>
@@ -105,7 +106,7 @@ export default function TitlePage() {
               </button>
             </div>
           </div>
-          <p className="mt-12 max-w-[340px] text-[11px] leading-relaxed text-text-dim/80">
+          <p className="mt-12 max-w-[340px] text-[11px] leading-relaxed text-text-dim/80 md:max-w-[440px] md:text-xs">
             平行改编自《空相沙漏》（作者：初禾二）。故事、人物与机构均为虚构；真实地名仅作空间锚点。
             2015 年杭州地理与交通按当年实际情况描写。
           </p>
@@ -118,7 +119,7 @@ export default function TitlePage() {
           onClick={() => setConfirmOpen(false)}
         >
           <div
-            className="w-full max-w-[430px] rounded-t-2xl border-t border-border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+            className="w-full max-w-[430px] rounded-t-2xl border-t border-border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:max-w-[620px] lg:max-w-[780px]"
             onClick={(event) => event.stopPropagation()}
           >
             <h3 className="font-display text-lg text-text-hi">重新开始？</h3>

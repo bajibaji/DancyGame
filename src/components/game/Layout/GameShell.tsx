@@ -34,7 +34,7 @@ export default function GameShell({ children }: { children: ReactNode }) {
         )}
       </div>
       <Noise opacity={0.05} fps={12} fixed zIndex={1} blendMode="soft-light" />
-      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-[430px] flex-col border-x border-border-subtle/20">
+      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-[430px] flex-col border-x border-border-subtle/20 md:max-w-[620px] lg:max-w-[1120px]">
         {children}
       </div>
       <GradualBlur position="bottom" height="80px" strength={1.4} tint="#0a0e13" zIndex={2} />

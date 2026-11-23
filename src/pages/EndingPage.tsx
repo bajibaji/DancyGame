@@ -54,7 +54,7 @@ export default function EndingPage() {
 
   return (
     <GameShell>
-      <main className="flex w-full flex-1 flex-col items-center px-5 pb-16 pt-10">
+      <main className="flex w-full flex-1 flex-col items-center px-5 pb-16 pt-10 md:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -85,7 +85,7 @@ export default function EndingPage() {
               staggerFrom="center"
             />
           </div>
-          <div className="reading mt-6 w-full text-text">
+          <div className="reading mt-6 w-full text-text md:mx-auto md:max-w-[680px]">
             {[data.caseStatus[status], fallout, ENDING_MEMORY[memoryStatus(meta.memory)], data.body].filter(Boolean).join('\n\n').split(/\n\n+/).map((paragraph, index) => (
               <p key={index}>{paragraph}</p>
             ))}
@@ -94,7 +94,7 @@ export default function EndingPage() {
             ))}
           </div>
 
-          <div className="mt-8 grid w-full grid-cols-3 gap-3 rounded-lg border border-border bg-surface/80 p-4 text-center">
+          <div className="mt-8 grid w-full grid-cols-3 gap-3 rounded-lg border border-border bg-surface/80 p-4 text-center md:mx-auto md:max-w-[560px]">
             <div>
               <div className="tabular text-2xl text-text-hi">
                 <CountUp to={meta.clue} from={0} duration={1.1} trigger="load" />
@@ -128,7 +128,7 @@ export default function EndingPage() {
             </ol>
           </section>}
 
-          <section className="mt-8 w-full">
+          <section className="mt-8 w-full md:mx-auto md:max-w-[680px]">
             <h2 className="mb-3 text-xs tracking-[0.2em] text-text-dim">尾声 · 你的去留</h2>
             <div className="grid grid-cols-2 gap-3">
               {(Object.keys(data.epilogues) as Epilogue[]).map((key) => (

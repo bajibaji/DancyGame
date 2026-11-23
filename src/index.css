@@ -131,6 +131,20 @@ button {
   font-size: calc(22px * var(--fs-scale));
 }
 
+@media (min-width: 768px) {
+  .reading {
+    font-size: calc(18px * var(--fs-scale));
+  }
+
+  .option-label {
+    font-size: calc(16px * var(--fs-scale));
+  }
+
+  .scene-title {
+    font-size: calc(24px * var(--fs-scale));
+  }
+}
+
 .reading p:last-child {
   margin-bottom: 0;
 }
@@ -143,6 +157,30 @@ button {
     animation-iteration-count: 1 !important;
     transition-duration: 120ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@keyframes flash-good {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  30% {
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-success) 75%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes flash-bad {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  30% {
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--color-danger) 75%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
   }
 }
 
