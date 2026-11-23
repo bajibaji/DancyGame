@@ -221,6 +221,8 @@ export default function StoryPage() {
           </div>
         </header>
 
+        <ChoiceFeedback message={currentFeedback?.message ?? null} canUndo={canUndo} onUndo={onUndo} />
+
         <main className="flex min-h-0 flex-1 flex-col">
           <div className="relative min-h-0 flex-1">
             <div
@@ -378,8 +380,6 @@ export default function StoryPage() {
           </div>
         </main>
       </div>
-
-      <ChoiceFeedback message={currentFeedback?.message ?? null} canUndo={canUndo} onUndo={onUndo} />
 
       <AnimatePresence>
         {selectedCharacter && characterCard && (
