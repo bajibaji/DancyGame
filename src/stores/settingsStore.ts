@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export type TextSpeed = 'slow' | 'normal' | 'fast' | 'instant'
-export type FontSize = 'small' | 'medium' | 'large'
+export type FontSize = 'small' | 'medium' | 'large' | 'extra-large'
 export type ReadingMode = 'single' | 'linear'
 
 interface SettingsStore {
@@ -51,4 +51,5 @@ export const FONT_SCALE: Record<FontSize, number> = {
   small: 0.92,
   medium: 1,
   large: 1.1,
+  'extra-large': 1.5,
 }

@@ -12,6 +12,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.style.setProperty('--fs-scale', String(FONT_SCALE[fontSize]))
+    document.documentElement.dataset.readingSize = fontSize
   }, [fontSize])
 
   return (

@@ -87,6 +87,11 @@ button {
   word-break: break-word;
 }
 
+[data-reading-size='extra-large'] .reading {
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
 .reading-scroll {
   scrollbar-width: none;
   -ms-overflow-style: none;

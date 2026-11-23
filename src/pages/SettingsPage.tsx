@@ -18,6 +18,7 @@ const FONT_ITEMS = [
   { value: 'small', label: '小' },
   { value: 'medium', label: '中' },
   { value: 'large', label: '大' },
+  { value: 'extra-large', label: '特大' },
 ]
 
 const READING_ITEMS = [
