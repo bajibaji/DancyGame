@@ -196,7 +196,7 @@ export default function StoryPage() {
       <div className="flex h-dvh flex-col overflow-hidden">
         <header className="shrink-0 border-b border-border-subtle/50 bg-bg-deep/80">
           <LocationBar location={location} timeOfDay={scene.timeOfDay} chapter={scene.chapter} />
-          <div className="flex items-center justify-between gap-1 px-3 py-1">
+          <div className="flex min-h-13 items-center justify-between gap-4 px-3">
             <div className="min-w-0 flex-1">
               <StatMeters meta={meta} showMemory={meta.memory > 0 || scene.effects?.memories !== undefined} />
             </div>

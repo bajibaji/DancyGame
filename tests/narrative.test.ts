@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getScene, SCENES } from '../src/content/index'
+import { CHARACTERS, getScene, SCENES } from '../src/content/index'
 import { choose, createInitialState } from '../src/game/engine'
 import { resolveSceneBody, resolveSceneFollowUps, resolveSceneProgress } from '../src/game/narrative'
 import { RECIPES, solvePuzzle } from '../src/game/puzzle'
@@ -68,6 +68,17 @@ describe('选项在正文里的后果', () => {
     expect(opening.next).toBeUndefined()
     expect(opening.options?.map(({ key, next }) => [key, next])).toEqual([['A', 'p02'], ['B', 'p02'], ['C', 'p02']])
     expect([...SCENES.values()].filter((scene) => scene.chapter === 'prologue' && scene.options?.length).map(({ id }) => id)).toEqual(['p01', 'p04'])
+  })
+
+  it('第一次选择前先交代江嘉的身份、本地背景和与新娘的关系', () => {
+    const body = resolveSceneBody(getScene('p01')!, {})
+    const firstParagraph = body.split('\n\n')[0]
+    const note = CHARACTERS.find(({ id }) => id === 'jiangjia')?.note
+    expect(firstParagraph).toMatch(/江嘉.*刑警.*杭州拱墅区小河直街.*暂代刑侦一队队长/)
+    expect(body).toMatch(/叶小满[\s\S]*你的线人[\s\S]*女方亲友[\s\S]*交接/)
+    expect(body).not.toContain('宁波')
+    expect(note).toMatch(/杭州本地人.*拱墅区小河直街/)
+    expect(note).not.toContain('宁波')
   })
 
   it.each(['墓前', '台阶上', '车没有发动'])('扫墓有独立揭晓正文：%s', (location) => {
