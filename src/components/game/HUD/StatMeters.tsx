@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { RATIO, ratio, statCapsThrough, type StatCaps } from '../../../game/balance'
+import CountUp from '../../reactbits/CountUp/CountUp'
+import { RATIO, ratio, statCaps, statCapsThrough, type StatCaps } from '../../../game/balance'
 import { INITIAL_META } from '../../../game/engine'
 import type { GameMeta } from '../../../game/types'
 
@@ -61,7 +62,9 @@ function Meter({ label, value, max, color, tone, flash, revealed }: { label: str
               style={{ width: `${percent}%`, background: tone.color, opacity: 0.9 }}
             />
           </div>
-          <span aria-hidden className="tabular text-end text-text-secondary">{percent}%</span>
+          <span aria-hidden className="tabular relative flex justify-end text-text-secondary">
+            <CountUp to={percent} from={0} duration={0.8} mode="roll" suffix="%" trigger="load" />
+          </span>
         </>
       ) : (
         <>
@@ -74,7 +77,9 @@ function Meter({ label, value, max, color, tone, flash, revealed }: { label: str
 }
 
 export default function StatMeters({ meta, chapter }: StatMetersProps) {
-  const caps = statCapsThrough(chapter)
+  /* 百分比读全程上限，状态词读本章上限：前者是总进度，后者是本章够不够用 */
+  const caps = statCaps()
+  const toneCaps = statCapsThrough(chapter)
   const [revealed, setRevealed] = useState<Record<'clue' | 'relation' | 'danger', boolean>>({
     clue: meta.clue !== INITIAL_META.clue,
     relation: meta.relation !== INITIAL_META.relation,
@@ -109,9 +114,9 @@ export default function StatMeters({ meta, chapter }: StatMetersProps) {
 
   return (
     <div className="grid gap-y-[3px]">
-      <Meter label="线索" value={meta.clue} max={caps.clue} color="var(--color-clue)" tone={clueTone(meta.clue, caps)} flash={flashes.clue} revealed={revealed.clue} />
-      <Meter label="关系" value={meta.relation} max={caps.relation} color="var(--color-success)" tone={relationTone(meta.relation, caps)} flash={flashes.relation} revealed={revealed.relation} />
-      <Meter label="危险" value={meta.danger} max={caps.danger} color={dangerTone(meta.danger, caps).color} tone={dangerTone(meta.danger, caps)} flash={flashes.danger} revealed={revealed.danger} />
+      <Meter label="线索" value={meta.clue} max={caps.clue} color="var(--color-clue)" tone={clueTone(meta.clue, toneCaps)} flash={flashes.clue} revealed={revealed.clue} />
+      <Meter label="关系" value={meta.relation} max={caps.relation} color="var(--color-success)" tone={relationTone(meta.relation, toneCaps)} flash={flashes.relation} revealed={revealed.relation} />
+      <Meter label="危险" value={meta.danger} max={caps.danger} color={dangerTone(meta.danger, toneCaps).color} tone={dangerTone(meta.danger, toneCaps)} flash={flashes.danger} revealed={revealed.danger} />
     </div>
   )
 }

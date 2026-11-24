@@ -50,7 +50,8 @@ describe('调查状态条', () => {
   it('记忆是隐藏进度，不进入状态栏', () => {
     const html = renderToStaticMarkup(createElement(StatMeters, { meta }))
     expect(html).not.toContain('aria-label="记忆"')
-    expect(html).not.toContain('40%')
+    /* 只允许三条 meter；不再用 "40%" 字符串判断，CountUp 生成的 SVG width="140%" 会误命中 */
+    expect(html.match(/<meter/g) ?? []).toHaveLength(3)
   })
 
   it('数值变化前只显示名称和问号，状态词与进度条一起隐藏', () => {
