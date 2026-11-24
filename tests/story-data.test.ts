@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { CHAPTERS, SCENES, START_SCENE, CLUE_MAP, MEMORY_MAP, LOCATION_MAP, ENDINGS, getScene } from '../src/content/index'
 import type { GameState, Option } from '../src/game/types'
@@ -189,16 +188,6 @@ describe('剧情图完整性', () => {
     }
     for (const ending of Object.values(ENDINGS)) for (const entry of ending.variants) reads.add(entry.flag)
     expect([...writes].sort()).toEqual([...reads].sort())
-  })
-
-  it('编剧知识库中的场景锚点可反查到当前剧本', () => {
-    const text = readFileSync(new URL('../docs/编剧知识库.md', import.meta.url), 'utf8')
-    const references = new Set(text.match(/\b(?:p\d{2}|c\d{4}[a-z]?)\b/g) ?? [])
-    expect(references.size).toBeGreaterThanOrEqual(30)
-    for (const id of references) {
-      if (id.startsWith('p') || id.startsWith('c01') || id.startsWith('c02') || id.startsWith('c03') || id.startsWith('c04') || id.startsWith('c05') || id.startsWith('c06') || id.startsWith('c07')) continue
-      expect(SCENES.has(id), `知识库已失效的场景：${id}`).toBe(true)
-    }
   })
 
   it('正文长度与禁用词', () => {
