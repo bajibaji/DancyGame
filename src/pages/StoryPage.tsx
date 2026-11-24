@@ -15,7 +15,7 @@ import { RECIPES } from '../game/puzzle'
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
 import { useGameKeys } from '../lib/keyboard'
-import { CHOICE_UNDO_MS } from '../game/engine'
+import { CHOICE_UNDO_MS, worldLine } from '../game/engine'
 import { resolveSceneBody, resolveSceneFollowUps, resolveSceneProgress } from '../game/narrative'
 import type { Option, Scene } from '../game/types'
 
@@ -47,6 +47,7 @@ export default function StoryPage() {
   const [readScene, setReadScene] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<{ sceneId: string; message: string | null; canUndo: boolean } | null>(null)
   const [selectedCharacter, setSelectedCharacter] = useState<SelectedCharacter | null>(null)
+  const [demoNotice, setDemoNotice] = useState(false)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const latestRef = useRef<HTMLElement | null>(null)
 
@@ -59,7 +60,8 @@ export default function StoryPage() {
   const choiceEnabled = textReady && options.length > 0
   const showOptions = options.length > 0 && textReady
   const arrivals = useMemo(() => new Map(history.map((entry) => [entry.next, entry])), [history])
-  const resolveBody = (section: Scene) => resolveSceneBody(section, flags, arrivals.get(section.id))
+  const line = worldLine(meta)
+  const resolveBody = (section: Scene) => resolveSceneBody(section, flags, arrivals.get(section.id), line)
   const activeBody = scene ? resolveBody(scene) : ''
   const activeFollowUps = scene ? resolveSceneFollowUps(scene, solved) : []
   const currentFeedback = feedback?.sceneId === sceneId ? feedback : null
@@ -76,6 +78,14 @@ export default function StoryPage() {
   useEffect(() => {
     setSelectedCharacter(null)
   }, [sceneId])
+
+  useEffect(() => {
+    if (!scene) return
+    if (!['ch03', 'ch04', 'ch05', 'ch06', 'ch07'].includes(scene.chapter)) return
+    if (!history.some((entry) => entry.chapter === 'ch02')) return
+    if (sessionStorage.getItem('demo-notice-seen') === '1') return
+    setDemoNotice(true)
+  }, [scene, history])
 
   useEffect(() => {
     if (!scene) return
@@ -195,8 +205,23 @@ export default function StoryPage() {
   return (
     <GameShell>
       <div className="flex h-dvh flex-col overflow-hidden">
+        {demoNotice && (
+          <div className="flex shrink-0 items-start gap-3 border-b border-clue/40 bg-clue/10 px-4 py-2 text-xs leading-relaxed text-text-secondary md:px-6">
+            <span className="min-w-0 flex-1">试玩段落到此。第三章起仍是旧稿，节奏和写法都与前面不同；想停下可以从设置回到标题页。</span>
+            <button
+              type="button"
+              className="shrink-0 rounded-sm border border-clue/50 px-2 py-1 text-clue"
+              onClick={() => {
+                sessionStorage.setItem('demo-notice-seen', '1')
+                setDemoNotice(false)
+              }}
+            >
+              继续看旧稿
+            </button>
+          </div>
+        )}
         <header className="shrink-0 border-b border-border-subtle/50 bg-bg-deep/80">
-          <LocationBar location={location} timeOfDay={scene.timeOfDay} chapter={scene.chapter} />
+          <LocationBar location={location} timeOfDay={scene.timeOfDay} chapter={scene.chapter} line={line} />
           <div className="flex min-h-13 items-center justify-between gap-4 px-3 lg:hidden">
             <div className="min-w-0 flex-1 md:max-w-[400px]">
               <StatMeters meta={meta} />

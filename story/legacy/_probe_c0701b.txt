@@ -1,0 +1,1 @@
+{"id":"c0701b","chapter":"ch07","title":"t","locationId":"zhoushan-port","timeOfDay":"夜","body":"「住过。」老太太说，「三年前。」\n\n「住了多久？」\n\n「两个月。」\n\n「他一个人？」\n\n「一个人。」\n\n「他做什么？」\n\n「早上出去，晚上回来。」\n\n「去哪儿？」\n\n「海边。」\n\n她把菜放进盆里，水声很响。","next":"x"}

@@ -1,9 +1,10 @@
-import type { Effects, EndingId, GameMeta, GameState, Option, Scene, Snapshot } from './types'
+import type { Effects, EndingId, GameMeta, GameState, Option, Scene, Snapshot, WorldLine } from './types'
 import { captureStatus, memoryStatus } from './narrative'
+import { RATIO, ratio, statCaps } from './balance'
 
 export const CHOICE_UNDO_MS = 5000
 
-export const INITIAL_META: GameMeta = { clue: 5, relation: 4, danger: 2, memory: 0 }
+export const INITIAL_META: GameMeta = { world: 0, clue: 5, relation: 4, danger: 2, memory: 0 }
 
 export const INITIAL_RELATIONSHIP: Record<string, number> = {
   zhan: 3,
@@ -16,10 +17,11 @@ export const INITIAL_RELATIONSHIP: Record<string, number> = {
 }
 
 export const LIMITS = {
-  clue: [0, 30],
-  relation: [0, 30],
-  danger: [0, 20],
-  memory: [0, 10],
+  world: [-6, 6],
+  clue: [0, 200],
+  relation: [0, 200],
+  danger: [0, 100],
+  memory: [0, 50],
 } as const
 
 export const GOOD_CLUE = 18
@@ -53,6 +55,7 @@ export function applyEffects(state: GameState, effects?: Effects): GameState {
   const memories = effects.memories ? Array.from(new Set([...state.memories, ...effects.memories])) : state.memories
   const gainedMemories = memories.length - state.memories.length
   const meta: GameMeta = {
+    world: clamp(state.meta.world + (effects.world ?? 0), LIMITS.world[0], LIMITS.world[1]),
     clue: clamp(state.meta.clue + (effects.clue ?? 0), LIMITS.clue[0], LIMITS.clue[1]),
     relation: clamp(state.meta.relation + (effects.relation ?? 0), LIMITS.relation[0], LIMITS.relation[1]),
     danger: clamp(state.meta.danger + (effects.danger ?? 0), LIMITS.danger[0], LIMITS.danger[1]),
@@ -61,6 +64,12 @@ export function applyEffects(state: GameState, effects?: Effects): GameState {
   const flags = { ...state.flags }
   for (const flag of effects.flags ?? []) flags[flag] = true
   return { ...state, meta, flags, clues, memories }
+}
+
+export function worldLine(meta: GameMeta): WorldLine {
+  if (meta.world >= 2) return 'order'
+  if (meta.world <= -2) return 'loss'
+  return 'neutral'
 }
 
 export function makeSnapshot(state: GameState): Snapshot {
@@ -116,18 +125,20 @@ export function choose(state: GameState, scene: Scene, option: Option): GameStat
 }
 
 export function breakdownCause(meta: GameMeta): 'exposure' | 'isolation' | undefined {
-  if (meta.danger >= BAD_EXPOSURE) return 'exposure'
-  if (meta.relation <= BAD_ISOLATION) return 'isolation'
+  const caps = statCaps()
+  if (ratio(meta.danger, caps.danger) >= RATIO.bad.danger) return 'exposure'
+  if (ratio(meta.relation, caps.relation) <= RATIO.bad.relation) return 'isolation'
 }
 
 export function decideEnding(state: GameState): EndingId {
+  const caps = statCaps()
   const { clue, relation, danger, memory } = state.meta
   if (breakdownCause(state.meta)) return 'bad'
   const good =
-    clue >= GOOD_CLUE &&
+    ratio(clue, caps.clue) >= RATIO.good.clue &&
+    ratio(relation, caps.relation) >= RATIO.good.relation &&
+    ratio(danger, caps.danger) <= RATIO.good.danger &&
     memoryStatus(memory) === 'recovered' &&
-    relation >= GOOD_RELATION &&
-    danger <= GOOD_DANGER &&
     captureStatus(state.flags) === 'caught' &&
     Boolean(state.flags.F61_XIE_XIAOLONG_TRUTH) &&
     Boolean(state.flags.F62_MEMORY_TRUTH)

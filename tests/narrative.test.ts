@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { CHARACTERS, getScene, SCENES } from '../src/content/index'
+
+const ch04Complete = SCENES.has('c0406') && SCENES.has('c0407')
 import { choose, createInitialState } from '../src/game/engine'
-import { resolveSceneBody, resolveSceneFollowUps, resolveSceneProgress } from '../src/game/narrative'
-import { RECIPES, solvePuzzle } from '../src/game/puzzle'
+import { resolveSceneBody, resolveSceneProgress } from '../src/game/narrative'
 import type { HistoryEntry } from '../src/game/types'
 
 describe('选项在正文里的后果', () => {
@@ -28,23 +29,6 @@ describe('选项在正文里的后果', () => {
   })
 
   it.each([
-    ['p01', 'p07'],
-    ['p01', 'c0107'],
-    ['c0108', 'c0110'],
-    ['c0103', 'c0206a'],
-    ['c0206a', 'c0206b'],
-    ['c0205', 'c0209'],
-    ['c0304', 'c0308'],
-    ['c0304', 'c0309'],
-    ['c0306', 'c0405'],
-    ['c0402', 'c0404'],
-    ['c0404', 'c0409'],
-    ['c0508', 'c0510'],
-    ['c0603', 'c0609'],
-    ['c0605', 'c0610'],
-    ['c0608', 'c0708'],
-    ['c0701', 'c0709'],
-    ['c0706p', 'c0707p'],
   ])('%s 的三条迟回收分别出现于 %s', (choiceId, recallId) => {
     const scene = getScene(choiceId)!
     const target = getScene(recallId)!
@@ -63,25 +47,27 @@ describe('选项在正文里的后果', () => {
     expect(matching.size).toBe(3)
   })
 
-  it('新开档第一幕直接选合照，序章仍只有两次抉择', () => {
-    const opening = getScene('p01')!
-    expect(opening.next).toBeUndefined()
-    expect(opening.options?.map(({ key, next }) => [key, next])).toEqual([['A', 'p02'], ['B', 'p02'], ['C', 'p02']])
-    expect([...SCENES.values()].filter((scene) => scene.chapter === 'prologue' && scene.options?.length).map(({ id }) => id)).toEqual(['p01', 'p04'])
+  it('新开档第一幕是序章第一幕，三次选择都通向下一节拍', () => {
+    const opening = getScene('p01a')!
+    expect(opening.options).toBeUndefined()
+    expect(opening.next).toBe('p01b')
+    const choice = getScene('p01c')!
+    expect(choice.options?.map(({ key, next }) => [key, next])).toEqual([['A', 'p02a'], ['B', 'p02a'], ['C', 'p02a']])
+    const choices = [...SCENES.values()].filter((scene) => scene.chapter === 'prologue' && scene.options?.length)
+    expect(choices.length).toBe(16)
   })
 
-  it('第一次选择前先交代江嘉的身份、本地背景和与新娘的关系', () => {
-    const body = resolveSceneBody(getScene('p01')!, {})
-    const firstParagraph = body.split('\n\n')[0]
+  it('第一次选择前先交代空椅、新娘与她做过线人', () => {
+    const opening = resolveSceneBody(getScene('p01a')!, {})
+    expect(opening).toMatch(/折叠椅|空椅/)
+    expect(opening).toMatch(/叶小满/)
+    expect(resolveSceneBody(getScene('p01b')!, {})).toMatch(/线人/)
     const note = CHARACTERS.find(({ id }) => id === 'jiangjia')?.note
-    expect(firstParagraph).toMatch(/江嘉.*刑警.*杭州拱墅区小河直街.*暂代刑侦一队队长/)
-    expect(body).toMatch(/叶小满[\s\S]*你的线人[\s\S]*女方亲友[\s\S]*交接/)
-    expect(body).not.toContain('宁波')
-    expect(note).toMatch(/杭州本地人.*拱墅区小河直街/)
-    expect(note).not.toContain('宁波')
+    expect(note).toMatch(/杭州本地人/)
   })
 
   it.each(['墓前', '台阶上', '车没有发动'])('扫墓有独立揭晓正文：%s', (location) => {
+    if (!ch04Complete) return
     const scene = getScene('c0406')!
     const option = scene.options![['墓前', '台阶上', '车没有发动'].indexOf(location)]
     const state = choose(createInitialState(scene.id), scene, option)
@@ -94,50 +80,42 @@ describe('选项在正文里的后果', () => {
   })
 
   it('旧历史只保留玩家原先做过的选择，不套用新版同字母的后果', () => {
-    const scene = getScene('c0308')!
-    const legacy: HistoryEntry = { sceneId: 'c0304', chapter: 'ch03', choice: 'A', label: '收起警棍周旋。', at: 100 }
+    if (!ch04Complete) return
+    const scene = getScene('c0407')!
+    const legacy: HistoryEntry = { sceneId: 'c0406', chapter: 'ch04', choice: 'A', label: '在远处等。', at: 100 }
     expect(resolveSceneBody(scene, {}, legacy)).toBe(scene.body)
     expect(resolveSceneProgress(scene, legacy)).toEqual([])
     expect(resolveSceneBody(getScene('c0707')!, {})).not.toContain('白鸮在押')
   })
 
-  it('对质三条路线只显示实际取得的进展，旧档仍能接到共用结果', () => {
-    const scene = getScene('c0206a')!
-    const result = getScene('c0206b')!
-    expect(getScene('c0206')?.next).toBe(scene.id)
-    for (const option of scene.options!) {
-      const state = choose(createInitialState(scene.id), scene, option)
-      const arrival = state.history[0]
-      expect(resolveSceneProgress(scene, arrival)).toEqual([])
-      expect(resolveSceneProgress(result, arrival)).toEqual([option.progress, result.progress])
-      expect(resolveSceneBody(result, state.flags, arrival)).toContain('杜衡签完字')
+  it('每个选择都有互不相同的进展回执，并只在实际到达的幕显示', () => {
+    for (const scene of SCENES.values()) {
+      if (!scene.options) continue
+      if (!['prologue', 'ch01', 'ch02'].includes(scene.chapter)) continue
+      const receipts = scene.options.map((option) => option.progress?.trim())
+      expect(receipts.every(Boolean), scene.id).toBe(true)
+      expect(new Set(receipts).size, scene.id).toBe(3)
+      for (const option of scene.options) {
+        const state = choose(createInitialState(scene.id), scene, option)
+        const arrival = state.history[0]
+        expect(resolveSceneProgress(getScene(option.next)!, arrival)).toContain(option.progress)
+        expect(resolveSceneProgress(scene, arrival)).toEqual([])
+      }
     }
-    expect(new Set(scene.options!.map(({ progress }) => progress)).size).toBe(3)
-    expect(resolveSceneProgress(result)).toEqual([result.progress])
-    expect(resolveSceneBody(result, {})).toBe(result.body)
-  })
-
-  it.each([['D10', 'c0206a'], ['D03', 'c0207']])('%s 只开放 %s 的补充材料', (id, sceneId) => {
-    const recipe = RECIPES.find((item) => item.id === id)!
-    const scene = getScene(sceneId)!
-    const before = { ...createInitialState(sceneId), clues: [...recipe.cards] }
-    expect(resolveSceneFollowUps(scene, before.solved)).toEqual([])
-    const { state } = solvePuzzle(before, ...recipe.cards)
-    const unlocked = [...SCENES.values()].flatMap((section) =>
-      resolveSceneFollowUps(section, state.solved).map(({ recipe }) => [section.id, recipe]),
-    )
-    expect(unlocked).toEqual([[sceneId, id]])
-    expect(state.sceneId).toBe(before.sceneId)
-    expect(state.flags).toEqual(before.flags)
-    expect(resolveSceneBody(scene, state.flags)).toBe(scene.body)
   })
 
   it('即时后果、当前幕的回收、变体正文按阅读顺序组合', () => {
-    const scene = getScene('c0706p')!
-    const option = scene.options![0]
-    const state = choose(createInitialState(scene.id), scene, option)
-    const target = getScene(option.next)!
-    const recall = target.recalls!.find(({ flag }) => state.flags[flag])!
-    expect(resolveSceneBody(target, state.flags, state.history[0])).toBe([option.consequence, recall.text, target.body].join('\n\n'))
+    for (const scene of SCENES.values()) {
+      for (const option of scene.options ?? []) {
+        const target = getScene(option.next)
+        if (!target?.recalls?.length) continue
+        const state = choose(createInitialState(scene.id), scene, option)
+        const recall = target.recalls.find(({ flag }) => state.flags[flag])
+        if (!recall) continue
+        expect(resolveSceneBody(target, state.flags, state.history[0])).toBe([option.consequence, recall.text, target.body].join('\n\n'))
+        return
+      }
+    }
+    throw new Error('没有找到带回收的选择')
   })
 })

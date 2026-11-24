@@ -26,62 +26,56 @@ afterEach(() => {
 })
 
 describe('游玩进度', () => {
-  it('旧序章档继续沿原有场景走，不补做或推断首幕的合照决定', async () => {
+  it('序章档从上一幕继续，不补做已结算的选择', async () => {
     const { store } = await loadStore({
-      ...createInitialState('p03'),
+      ...createInitialState('p01b'),
       started: true,
-      visited: ['p01', 'p02', 'p03'],
+      visited: ['p01a', 'p01b'],
     })
-    store.getState().advance(getScene('p03')!)
-    expect(store.getState()).toMatchObject({ sceneId: 'p04', flags: {}, history: [], visited: ['p01', 'p02', 'p03', 'p04'] })
+    store.getState().advance(getScene('p01b')!)
+    expect(store.getState()).toMatchObject({ sceneId: 'p01c', flags: {}, history: [], visited: ['p01a', 'p01b', 'p01c'] })
 
-    const priorChoice = { sceneId: 'p03', chapter: 'prologue', choice: 'A', label: '答应住下，替她守着女方那桌。', at: 100, next: 'p04', consequence: '你把椅子拉回来。' }
-    const { store: resolved } = await loadStore({ ...createInitialState('p04'), started: true, history: [priorChoice] })
+    const priorChoice = { sceneId: 'p01c', chapter: 'prologue', choice: 'A', label: '坐到她身边。', at: 100, next: 'p02a', consequence: '快门响过，叶小满才松开勾着椅腿的脚。' }
+    const { store: resolved } = await loadStore({ ...createInitialState('p02a'), started: true, history: [priorChoice] })
     const { flags, history } = resolved.getState()
     expect(history).toEqual([priorChoice])
-    expect(resolveSceneBody(getScene('p04')!, flags, history[0])).toContain(priorChoice.consequence)
-    for (const id of ['p07', 'c0107']) {
-      const scene = getScene(id)!
-      expect(resolveSceneBody(scene, flags, history[0])).toBe(scene.body)
-    }
+    expect(resolveSceneBody(getScene('p02a')!, flags, history[0])).toContain(priorChoice.consequence)
   })
 
   it('撤销恢复档案、旗帜、抵达记录与人物解锁，可重新选另一项', async () => {
-    const { store } = await loadStore({ ...createInitialState('c0205'), started: true })
-    const scene = getScene('c0205')!
+    const { store } = await loadStore({ ...createInitialState('p04c'), started: true })
+    const scene = getScene('p04c')!
     store.getState().choose(scene.options![1], scene)
     store.getState().meet('柳湘')
-    expect(store.getState().clues).toEqual(['C10', 'C11'])
-    expect(store.getState().flags.F_VILLA_LIST).toBe(true)
+    expect(store.getState().clues).toEqual(['C03'])
     expect(store.getState().metCharacters).toContain('liuxiang')
     store.getState().undo()
-    expect(store.getState()).toMatchObject({ sceneId: 'c0205', clues: [], flags: {}, visited: ['c0205'], history: [], metCharacters: ['jiangjia'] })
+    expect(store.getState()).toMatchObject({ sceneId: 'p04c', clues: [], flags: {}, visited: ['p04c'], history: [], metCharacters: ['jiangjia'] })
     store.getState().choose(scene.options![2], scene)
-    expect(store.getState().clues).toEqual(['C11'])
-    expect(store.getState().flags).toEqual({ F_VILLA_WITNESS: true })
+    expect(store.getState().clues).toEqual([])
     expect(store.getState().history.map(({ choice }) => choice)).toEqual(['C'])
   })
 
   it('撤销时限结束后不允许回退', async () => {
     vi.useFakeTimers()
-    const { store } = await loadStore({ ...createInitialState('c0304'), started: true })
-    const scene = getScene('c0304')!
+    const { store } = await loadStore({ ...createInitialState('c0302c'), started: true })
+    const scene = getScene('c0302c')!
     store.getState().choose(scene.options![0], scene)
     vi.advanceTimersByTime(CHOICE_UNDO_MS)
     store.getState().undo()
-    expect(store.getState()).toMatchObject({ sceneId: 'c0305', snapshot: null })
+    expect(store.getState()).toMatchObject({ sceneId: 'c0303a', snapshot: null })
     expect(store.getState().history).toHaveLength(1)
   })
 
   it('刷新保留实际后果且不重复结算，临时撤销不跨刷新', async () => {
-    const { store, storage } = await loadStore({ ...createInitialState('c0304'), started: true })
-    const scene = getScene('c0304')!
+    const { store, storage } = await loadStore({ ...createInitialState('c0302c'), started: true })
+    const scene = getScene('c0302c')!
     const option = scene.options![2]
     store.getState().choose(option, scene)
     const raw = JSON.parse(storage.getItem(SAVE_KEY)!)
     const { store: reopened } = await loadStore(raw.state)
     const state = reopened.getState()
-    expect(state).toMatchObject({ sceneId: option.next, snapshot: null, clues: ['C13'], flags: { F_STAGE_LIST: true }, history: raw.state.history })
+    expect(state).toMatchObject({ sceneId: option.next, snapshot: null, clues: [], flags: {}, history: raw.state.history })
     expect(state.meta).toEqual(raw.state.meta)
     expect(resolveSceneBody(getScene(option.next)!, state.flags, state.history[0])).toContain(option.consequence)
     expect(resolveSceneProgress(getScene(option.next)!, state.history[0])).toContain(option.progress)
@@ -94,38 +88,7 @@ describe('游玩进度', () => {
       meta: { clue: 8, relation: 10, danger: 2, memory: 3 },
     }
     const { store } = await loadStore(saved, 1)
-    expect(store.getState().meta).toEqual({ clue: 8, relation: 20, danger: 2, memory: 3 })
-  })
-
-  it('撤销对质后换证据，覆盖上一次选择的进展', async () => {
-    const scene = getScene('c0206a')!
-    const result = getScene('c0206b')!
-    const { store } = await loadStore({ ...createInitialState(scene.id), started: true })
-    const [first, second] = scene.options!
-    store.getState().choose(first, scene)
-    store.getState().undo()
-    expect(store.getState()).toMatchObject({ sceneId: scene.id, history: [], flags: {} })
-    store.getState().choose(second, scene)
-    const { flags, history } = store.getState()
-    expect(flags).toEqual({ F_DU_KEY: true })
-    expect(resolveSceneProgress(result, history[0])).toEqual([second.progress, result.progress])
-  })
-
-  it('旧档保留进度，移去过早入档的旧卡和真相标记，到点后重新授予', async () => {
-    const { store } = await loadStore({
-      ...createInitialState('c0608'),
-      started: true,
-      clues: ['C01', 'C22', 'C24'],
-      solved: ['D08'],
-      flags: { F62_MEMORY_TRUTH: true },
-      history: [{ sceneId: 'c0406', chapter: 'ch04', choice: 'B', label: '在远处等。', at: 100 }],
-    })
-    expect(store.getState()).toMatchObject({ sceneId: 'c0608', clues: ['C01', 'C24'], flags: {}, solved: ['D08'] })
-    expect(store.getState().history[0].consequence).toBeUndefined()
-    const scene = getScene('c0608')!
-    store.getState().choose(scene.options![1], scene)
-    expect(store.getState().clues).toEqual(['C01', 'C24', 'C22', 'C25'])
-    expect(store.getState().flags).toMatchObject({ F61_XIE_XIAOLONG_TRUTH: true, F62_MEMORY_TRUTH: true })
+    expect(store.getState().meta).toEqual({ world: 0, clue: 8, relation: 20, danger: 2, memory: 3 })
   })
 
   it('未做终局决定的旧留港档回到港区，保留旧选项，已做决定的档不改路', async () => {

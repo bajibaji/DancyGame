@@ -8,6 +8,9 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss()],
-  server: { port: 5173 },
+  server: {
+    port: 5173,
+    watch: { ignored: ['**/node_modules/**', '**/.*.tmpdir/**', '**/.*.tmp'] },
+  },
   define: { __APP_VERSION__: JSON.stringify(pkg.version) },
 })

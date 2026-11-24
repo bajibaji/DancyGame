@@ -3,7 +3,10 @@ export type Risk = 'low' | 'medium' | 'high'
 export type EndingId = 'good' | 'bad' | 'neutral'
 export type Epilogue = 'stay' | 'leave'
 
+export type WorldLine = 'order' | 'loss' | 'neutral'
+
 export interface Effects {
+  world?: number
   clue?: number
   relation?: number
   danger?: number
@@ -32,6 +35,7 @@ export interface Scene {
   timeOfDay: string
   body: string
   variants?: { flag: string; body: string }[]
+  worldVariants?: { line: WorldLine; body: string }[]
   recalls?: { flag: string; text: string }[]
   followUps?: { recipe: string; label: string; text: string }[]
   progress?: string
@@ -49,6 +53,7 @@ export interface Chapter {
 }
 
 export interface GameMeta {
+  world: number
   clue: number
   relation: number
   danger: number

@@ -4,7 +4,7 @@ import type { EndingId, Epilogue, GameMeta, HistoryEntry, Option, Scene, Snapsho
 import { applyEffects, CHOICE_UNDO_MS, choose as engineChoose, createInitialState, decideEnding, LIMITS, makeSnapshot, restoreSnapshot } from '../game/engine'
 import { solvePuzzle as engineSolvePuzzle } from '../game/puzzle'
 import type { Recipe } from '../game/puzzle'
-import { getScene } from '../content/index'
+import { getScene, START_SCENE } from '../content/index'
 import { characterIdsInText } from '../game/characterNames'
 
 interface GameStore {
@@ -50,7 +50,11 @@ function migrateSave(persisted: unknown, version: number): GameStore {
   } as GameStore
 }
 
-function mergeSave(saved: unknown, current: GameStore): GameStore {  const state = { ...current, ...(saved as Partial<GameStore>) }
+function mergeSave(saved: unknown, current: GameStore): GameStore {
+  const merged = { ...current, ...(saved as Partial<GameStore>) }
+  const state: GameStore = merged.meta
+    ? { ...merged, meta: { ...merged.meta, world: merged.meta.world ?? 0 } }
+    : merged
   const portChoice = state.history.find((entry) => entry.sceneId === 'c0704')
   const awaitingBorderDecision = state.sceneId === 'c0705' || state.sceneId === 'c0706'
   if (awaitingBorderDecision && portChoice?.choice === 'A' && !portChoice.next) {
@@ -125,7 +129,7 @@ export const useGameStore = create<GameStore>()(
       epilogue: null,
       snapshot: null,
       start: () => {
-        const fresh = createInitialState('p01')
+        const fresh = createInitialState(START_SCENE)
         set({
           ...fresh,
           screen: 'story',

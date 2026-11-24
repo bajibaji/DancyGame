@@ -68,7 +68,7 @@ for (const chapter of CHAPTERS) {
   }
 }
 
-export const START_SCENE = 'p01'
+export const START_SCENE = 'p01a'
 
 export function getScene(id: string): Scene | undefined {
   return SCENES.get(id)

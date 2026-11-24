@@ -1,0 +1,1 @@
+{"id":"c0701c","chapter":"ch07","title":"问什么","locationId":"zhoushan-port","timeOfDay":"傍晚","body":"巷子里有人在收网，竹竿拖在地上。\n\n老太太把盆端起来，要往屋里走。","options":[{"key":"A","label":"问她方舟走的时候说了什么。","tendency":"empathy","risk":"low","effects":{"relation":1,"world":1,"flags":["F_FANG_LEAVE"]},"consequence":"「他说，」老太太想了想，「他说，等一个人来。」\n\n「等谁？」\n\n「他说，等姓江的。」","progress":"方舟说等一个姓江的。","next":"c0702a"}]}
