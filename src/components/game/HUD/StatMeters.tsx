@@ -45,7 +45,7 @@ const flashClass = (flash: Flash) =>
       : ''
 
 function Meter({ label, value, max, color, icon, tone, flash }: { label: string; value: number; max: number; color: string; icon: ReactNode; tone: Tone; flash: Flash }) {
-  const percent = Math.round((value / max) * 100)
+  const percent = Math.round(Math.min(1, ratio(value, max)) * 100)
   const display = `${percent}%`
   return (
     <div className="relative grid grid-cols-[max-content_minmax(0,1fr)_3em] items-center gap-x-1.5 text-[0.6875rem]/[0.75rem]">

@@ -34,7 +34,7 @@
      "tendency": "empathy",
      "risk": "medium",
      "effects": {
-      "relation": 1,
+      "relation": 2,
       "world": 1
      },
      "consequence": "摄影师叫后排让出位置。你把自己的椅子挪过去，空椅留在你们两个中间。快门响过，叶小满才松开勾着椅腿的脚。\n\n「师傅，刚才那张发我一份。」她说完碰了碰你的膝盖。手机还在震。",
@@ -48,6 +48,7 @@
      "risk": "low",
      "effects": {
       "relation": 1,
+      "clue": 1,
       "world": 1
      },
      "consequence": "叶小满把门帘放下来，隔开一棚等拍照的人。\n\n「那个人不是自己不来的。」她说完听了一会儿里面的动静，「我跟别人说这句，他们都叫我算了。」\n\n司仪喊她回去。她掀帘前又叫了你一声：「这句话，你替我记着。」",
@@ -60,7 +61,8 @@
      "tendency": "evidence",
      "risk": "low",
      "effects": {
-      "clue": 1,
+      "clue": 2,
+      "relation": -1,
       "world": -1
      },
      "consequence": "傅铮刚说完明早交接的时间，马宏图就从你身后过去。停车往左，他却拐进后厨旁的小巷。\n\n回到席上，叶小满身边的椅子已被叠走。她把扣在桌上的席卡翻给你：「我以为你不回来了。」",
@@ -114,7 +116,7 @@
      "tendency": "evidence",
      "risk": "medium",
      "effects": {
-      "clue": 1,
+      "clue": 2,
       "danger": 1,
       "world": -1
      },

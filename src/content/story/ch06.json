@@ -107,7 +107,8 @@
      "tendency": "evidence",
      "risk": "low",
      "effects": {
-      "clue": 1,
+      "clue": 2,
+      "danger": 1,
       "world": 1
      },
      "consequence": "你把两本本子装进袋子，编号。\n\n周组长看着你封口，没有说话。\n\n「这两本，」她说，「你们拿走了，她就知道了。」",
@@ -133,7 +134,7 @@
      "tendency": "evidence",
      "risk": "medium",
      "effects": {
-      "danger": 1,
+      "danger": -1,
       "world": -1,
       "clue": 1
      },
@@ -471,7 +472,7 @@
      "tendency": "evidence",
      "risk": "low",
      "effects": {
-      "clue": 1,
+      "danger": -2,
       "world": 1
      },
      "consequence": "你把箱子装进证物袋，编号。\n\n方恬看着袋子，忽然说：「他等这个箱子，等了三年。」",

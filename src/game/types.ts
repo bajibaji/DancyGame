@@ -4,6 +4,7 @@ export type EndingId = 'good' | 'bad' | 'neutral'
 export type Epilogue = 'stay' | 'leave'
 
 export type WorldLine = 'order' | 'loss' | 'neutral'
+export type ChoiceKey = 'A' | 'B' | 'C'
 
 export interface Effects {
   world?: number
@@ -17,7 +18,7 @@ export interface Effects {
 }
 
 export interface Option {
-  key: 'A' | 'B' | 'C'
+  key: ChoiceKey
   label: string
   tendency: Tendency
   risk: Risk
@@ -41,7 +42,7 @@ export interface Scene {
   progress?: string
   options?: Option[]
   next?: string
-  ending?: 'auto'
+  ending?: 'auto' | EndingId
   puzzle?: boolean
   effects?: Effects
 }
@@ -63,16 +64,18 @@ export interface GameMeta {
 export interface HistoryEntry {
   sceneId: string
   chapter: string
-  choice: 'A' | 'B' | 'C'
+  choice: ChoiceKey
   label: string
   at: number
   next?: string
   consequence?: string
   progress?: string
+  pressed?: boolean
 }
 
 export interface GameState {
   sceneId: string
+  runSeed: number
   meta: GameMeta
   relationship: Record<string, number>
   flags: Record<string, boolean>
@@ -88,6 +91,7 @@ export interface GameState {
 
 export interface Snapshot {
   sceneId: string
+  runSeed: number
   meta: GameMeta
   relationship: Record<string, number>
   flags: Record<string, boolean>

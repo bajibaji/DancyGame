@@ -15,9 +15,10 @@ import { RECIPES } from '../game/puzzle'
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
 import { useGameKeys } from '../lib/keyboard'
-import { CHOICE_UNDO_MS, worldLine } from '../game/engine'
+import { CHOICE_UNDO_MS, choiceImpact, worldLine } from '../game/engine'
+import { choiceOffers } from '../game/choices'
 import { resolveSceneBody, resolveSceneFollowUps, resolveSceneProgress } from '../game/narrative'
-import type { Option, Scene } from '../game/types'
+import type { ChoiceKey, Scene } from '../game/types'
 
 interface SelectedCharacter {
   id: string
@@ -26,6 +27,7 @@ interface SelectedCharacter {
 export default function StoryPage() {
   const navigate = useNavigate()
   const sceneId = useGameStore((s) => s.sceneId)
+  const runSeed = useGameStore((s) => s.runSeed)
   const meta = useGameStore((s) => s.meta)
   const flags = useGameStore((s) => s.flags)
   const ending = useGameStore((s) => s.ending)
@@ -58,7 +60,7 @@ export default function StoryPage() {
   const instant = textSpeed === 'instant' || reducedMotion
   const textReady = instant || readScene === sceneId
   const showMemoryTag = Boolean(scene?.effects?.memories?.length)
-  const options = scene?.options ?? []
+  const options = useMemo(() => scene ? choiceOffers(scene, runSeed, flags) : [], [scene, runSeed, flags])
   const choiceEnabled = textReady && options.length > 0
   const showOptions = options.length > 0 && textReady
   const arrivals = useMemo(() => new Map(history.map((entry) => [entry.next, entry])), [history])
@@ -152,9 +154,9 @@ export default function StoryPage() {
     [selectedCharacter],
   )
 
-  const onChoose = useCallback((option: Option) => {
+  const onChoose = useCallback((key: ChoiceKey) => {
     if (!scene || !choiceEnabled) return
-    choose(option, scene)
+    choose(key, scene.id)
   }, [scene, choiceEnabled, choose])
 
   const revealText = useCallback(() => {
@@ -179,15 +181,12 @@ export default function StoryPage() {
 
   const keys = useMemo(
     () => ({
-      onChoice: (key: 'A' | 'B' | 'C') => {
-        const option = options.find((o) => o.key === key)
-        if (option && choiceEnabled) onChoose(option)
-      },
+      onChoice: onChoose,
       onAdvance,
       onUndo,
       onEscape: () => selectedCharacter ? setSelectedCharacter(null) : navigate('/settings'),
     }),
-    [options, choiceEnabled, onChoose, onAdvance, onUndo, navigate, selectedCharacter],
+    [onChoose, onAdvance, onUndo, navigate, selectedCharacter],
   )
   useGameKeys(keys, true)
 
@@ -368,37 +367,54 @@ export default function StoryPage() {
             <div className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden md:mx-auto md:w-full md:max-w-[560px]">
               {showOptions && (
                 <motion.div
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: reducedMotion ? 0 : 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: reducedMotion ? 0.12 : 0.3 }}
                   className="flex flex-col gap-2"
                 >
-                  {options.map((option) => (
+                  {options.map(({ key, option, opportunity }) => {
+                    const impact = choiceImpact({ meta, history }, option)
+                    return (
                     <StarBorder
-                      key={option.key}
+                      key={key}
                       as="button"
-                      onClick={() => onChoose(option)}
+                      onClick={() => onChoose(key)}
                       disabled={!choiceEnabled}
-                      className="w-full text-left active:scale-[0.99] disabled:cursor-not-allowed"
+                      className="min-h-11 w-full text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent motion-safe:active:scale-[0.96] disabled:cursor-not-allowed"
                       color="var(--color-accent)"
                       trailColor="var(--color-clue)"
                       backgroundColor="var(--color-surface-raised)"
                       textColor="var(--color-text)"
                       borderColor="var(--color-border)"
                       hover="reveal"
-                      clickPulse
+                      clickPulse={!reducedMotion}
                       stars={1}
                       radius={18}
                       thickness={1}
                     >
-                      <span className="flex w-full items-center gap-3 px-4 py-3">
+                      <span className="flex w-full items-start gap-3 px-4 py-3">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border-strong font-display text-sm text-accent">
-                          {option.key}
+                          {key}
                         </span>
-                        <span className="option-label min-w-0 flex-1">{option.label}</span>
+                        <span className="flex min-w-0 flex-1 flex-col gap-1">
+                          {opportunity && <span className="text-xs leading-relaxed text-clue">{opportunity}</span>}
+                          <span className="option-label">{option.label}</span>
+                          <span className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs leading-relaxed text-text-secondary">
+                            {([['clue', '线索'], ['relation', '关系'], ['danger', '危险']] as const).map(([stat, label]) => {
+                              const value = impact[stat]
+                              return value !== 0 && (
+                                <span key={stat} className={stat === 'danger' && value > 0 || stat === 'relation' && value < 0 ? 'text-warning' : undefined}>
+                                  {label} {value > 0 ? `+${value}` : `−${-value}`}
+                                  {stat === 'danger' && impact.pressured ? '（连续冒险）' : ''}
+                                </span>
+                              )
+                            })}
+                          </span>
+                        </span>
                       </span>
                     </StarBorder>
-                  ))}
+                    )
+                  })}
                 </motion.div>
               )}
               {options.length === 0 && textReady && (
@@ -407,7 +423,7 @@ export default function StoryPage() {
                   onClick={onAdvance}
                   className="w-full rounded-[18px] border border-border-strong bg-surface-raised py-3.5 text-[15px] text-text active:scale-[0.99] active:border-accent/60 active:text-accent"
                 >
-                  {scene.ending === 'auto' ? '查看结局' : scene.puzzle ? '继续下一章' : '继续'}
+                  {scene.ending ? '查看结局' : scene.puzzle ? '继续下一章' : '继续'}
                 </button>
               )}
             </div>

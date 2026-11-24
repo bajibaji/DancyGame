@@ -1,4 +1,5 @@
 import recipesData from '../content/recipes.json'
+import { applyEffects } from './engine'
 import type { GameState } from './types'
 
 export interface Recipe {
@@ -32,9 +33,8 @@ export function solvePuzzle(state: GameState, a: string, b: string): { state: Ga
   }
   return {
     state: {
-      ...state,
+      ...applyEffects(state, { clue: 2 }),
       solved: [...state.solved, recipe.id],
-      meta: { ...state.meta, clue: Math.min(30, state.meta.clue + 2) },
     },
     result: recipe,
   }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CHAPTERS, SCENES, START_SCENE, CLUE_MAP, MEMORY_MAP, LOCATION_MAP, ENDINGS, getScene } from '../src/content/index'
+import { OPPORTUNITIES } from '../src/content/opportunities'
 import type { GameState, Option } from '../src/game/types'
 import { applyEffects, choose, createInitialState, decideEnding } from '../src/game/engine'
 import { RECIPES, availableRecipes, solvePuzzle } from '../src/game/puzzle'
@@ -172,6 +173,7 @@ describe('剧情图完整性', () => {
       expect(result.result).toBe(recipe)
       expect(result.state.flags).toEqual(state.flags)
       expect(result.state.meta.clue).toBe(state.meta.clue + 2)
+      expect(solvePuzzle({ ...state, meta: { ...state.meta, clue: 60 } }, ...recipe.cards).state.meta.clue).toBe(62)
       expect(solvePuzzle(result.state, ...recipe.cards).state).toBe(result.state)
       expect(solvePuzzle({ ...state, clues: [] }, ...recipe.cards).result).toBeNull()
     }
@@ -185,6 +187,10 @@ describe('剧情图完整性', () => {
         for (const flag of effects?.flags ?? []) writes.add(flag)
       }
       for (const entry of [...(scene.recalls ?? []), ...(scene.variants ?? [])]) reads.add(entry.flag)
+    }
+    for (const opportunities of Object.values(OPPORTUNITIES)) for (const { action, requires } of opportunities) {
+      for (const flag of action.effects.flags ?? []) writes.add(flag)
+      if (requires) reads.add(requires)
     }
     for (const ending of Object.values(ENDINGS)) for (const entry of ending.variants) reads.add(entry.flag)
     expect([...writes].sort()).toEqual([...reads].sort())

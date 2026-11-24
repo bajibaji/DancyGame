@@ -1,6 +1,7 @@
-import type { Effects, EndingId, GameMeta, GameState, Option, Scene, Snapshot, WorldLine } from './types'
+import type { ChoiceKey, Effects, EndingId, GameMeta, GameState, Option, Scene, Snapshot, WorldLine } from './types'
 import { captureStatus, memoryStatus } from './narrative'
 import { RATIO, ratio, statCaps } from './balance'
+import { choiceEffects } from './choices'
 
 export const CHOICE_UNDO_MS = 5000
 
@@ -34,9 +35,10 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
-export function createInitialState(sceneId: string): GameState {
+export function createInitialState(sceneId: string, runSeed = 0): GameState {
   return {
     sceneId,
+    runSeed,
     meta: { ...INITIAL_META },
     relationship: { ...INITIAL_RELATIONSHIP },
     flags: {},
@@ -66,6 +68,21 @@ export function applyEffects(state: GameState, effects?: Effects): GameState {
   return { ...state, meta, flags, clues, memories }
 }
 
+export function choiceImpact(state: Pick<GameState, 'meta' | 'history'>, option: Option) {
+  const effects = choiceEffects(state.history, option)
+  const delta = (key: 'clue' | 'relation' | 'danger', points = effects[key] ?? 0) => {
+    const value = state.meta[key]
+    const [min, max] = LIMITS[key]
+    return clamp(value + points, min, max) - value
+  }
+  return {
+    clue: delta('clue'),
+    relation: delta('relation'),
+    danger: delta('danger'),
+    pressured: delta('danger') > delta('danger', option.effects.danger ?? 0),
+  }
+}
+
 export function worldLine(meta: GameMeta): WorldLine {
   if (meta.world >= 2) return 'order'
   if (meta.world <= -2) return 'loss'
@@ -75,6 +92,7 @@ export function worldLine(meta: GameMeta): WorldLine {
 export function makeSnapshot(state: GameState): Snapshot {
   return {
     sceneId: state.sceneId,
+    runSeed: state.runSeed,
     meta: { ...state.meta },
     relationship: { ...state.relationship },
     flags: { ...state.flags },
@@ -91,6 +109,7 @@ export function makeSnapshot(state: GameState): Snapshot {
 export function restoreSnapshot(snapshot: Snapshot): GameState {
   return {
     sceneId: snapshot.sceneId,
+    runSeed: snapshot.runSeed,
     meta: { ...snapshot.meta },
     relationship: { ...snapshot.relationship },
     flags: { ...snapshot.flags },
@@ -103,8 +122,8 @@ export function restoreSnapshot(snapshot: Snapshot): GameState {
   }
 }
 
-export function choose(state: GameState, scene: Scene, option: Option): GameState {
-  const next = applyEffects(state, option.effects)
+export function choose(state: GameState, scene: Scene, option: Option, key: ChoiceKey = option.key): GameState {
+  const next = applyEffects(state, choiceEffects(state.history, option))
   return {
     ...next,
     sceneId: option.next,
@@ -113,12 +132,13 @@ export function choose(state: GameState, scene: Scene, option: Option): GameStat
       {
         sceneId: scene.id,
         chapter: scene.chapter,
-        choice: option.key,
+        choice: key,
         label: option.label,
         at: Date.now(),
         next: option.next,
         consequence: option.consequence,
         progress: option.progress,
+        pressed: (option.effects.danger ?? 0) > 0,
       },
     ],
   }

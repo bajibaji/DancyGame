@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getScene } from '../src/content/index'
 import { CHOICE_UNDO_MS, createInitialState } from '../src/game/engine'
+import { choiceOffers } from '../src/game/choices'
 import { resolveSceneBody, resolveSceneProgress } from '../src/game/narrative'
 
 const SAVE_KEY = 'jiangjia.save.v1'
@@ -61,22 +62,25 @@ describe('游玩进度', () => {
   it('撤销恢复档案、旗帜、抵达记录与人物解锁，可重新选另一项', async () => {
     const { store } = await loadStore({ ...createInitialState('p04c'), started: true })
     const scene = getScene('p04c')!
-    store.getState().choose(scene.options![1], scene)
+    const offers = choiceOffers(scene, store.getState().runSeed, {})
+    const collect = offers.find(({ option }) => option.key === 'B')!
+    const alternate = offers.find(({ option }) => option.key === 'C')!
+    store.getState().choose(collect.key, scene.id)
     store.getState().meet('柳湘')
     expect(store.getState().clues).toEqual(['C03'])
     expect(store.getState().metCharacters).toContain('liuxiang')
     store.getState().undo()
     expect(store.getState()).toMatchObject({ sceneId: 'p04c', clues: [], flags: {}, visited: ['p04c'], history: [], metCharacters: ['jiangjia'] })
-    store.getState().choose(scene.options![2], scene)
+    store.getState().choose(alternate.key, scene.id)
     expect(store.getState().clues).toEqual([])
-    expect(store.getState().history.map(({ choice }) => choice)).toEqual(['C'])
+    expect(store.getState().history.map(({ choice }) => choice)).toEqual([alternate.key])
   })
 
   it('撤销时限结束后不允许回退', async () => {
     vi.useFakeTimers()
     const { store } = await loadStore({ ...createInitialState('c0302c'), started: true })
     const scene = getScene('c0302c')!
-    store.getState().choose(scene.options![0], scene)
+    store.getState().choose('A', scene.id)
     vi.advanceTimersByTime(CHOICE_UNDO_MS)
     store.getState().undo()
     expect(store.getState()).toMatchObject({ sceneId: 'c0303a', snapshot: null })
@@ -86,8 +90,8 @@ describe('游玩进度', () => {
   it('刷新保留实际后果且不重复结算，临时撤销不跨刷新', async () => {
     const { store, storage } = await loadStore({ ...createInitialState('c0302c'), started: true })
     const scene = getScene('c0302c')!
-    const option = scene.options![2]
-    store.getState().choose(option, scene)
+    const { option, key } = choiceOffers(scene, store.getState().runSeed, {})[2]
+    store.getState().choose(key, scene.id)
     const raw = JSON.parse(storage.getItem(SAVE_KEY)!)
     const { store: reopened } = await loadStore(raw.state)
     const state = reopened.getState()
@@ -95,6 +99,31 @@ describe('游玩进度', () => {
     expect(state.meta).toEqual(raw.state.meta)
     expect(resolveSceneBody(getScene(option.next)!, state.flags, state.history[0])).toContain(option.consequence)
     expect(resolveSceneProgress(getScene(option.next)!, state.history[0])).toContain(option.progress)
+  })
+
+  it('同幕刷新和撤销不换牌，结算记录保存所按字母和实际行动', async () => {
+    const scene = getScene('p01c')!
+    const seed = Array.from({ length: 128 }, (_, i) => i).find((i) => choiceOffers(scene, i, {}).some(({ opportunity }) => opportunity))!
+    const initial = { ...createInitialState(scene.id, seed), started: true }
+    const { store, storage } = await loadStore(initial, 3)
+    const offers = choiceOffers(scene, seed, {})
+    const offer = offers.find(({ opportunity }) => opportunity)!
+    store.getState().choose(offer.key, 'p03c')
+    expect(store.getState().history).toEqual([])
+    store.getState().choose(offer.key, scene.id)
+    expect(store.getState().history[0]).toMatchObject({ choice: offer.key, label: offer.option.label, consequence: offer.option.consequence })
+    store.getState().undo()
+    const saved = JSON.parse(storage.getItem(SAVE_KEY)!)
+    const { store: reopened } = await loadStore(saved.state, saved.version)
+    expect(reopened.getState()).toMatchObject({ sceneId: scene.id, runSeed: seed, history: [], flags: {} })
+    expect(choiceOffers(scene, reopened.getState().runSeed, reopened.getState().flags)).toEqual(offers)
+  })
+
+  it('终幕能进入结案，带回证据的路线仍受调查数值影响', async () => {
+    const { store } = await loadStore({ ...createInitialState('c0715c'), started: true })
+    store.getState().choose('A', 'c0715c')
+    store.getState().advance(getScene('c0716a')!)
+    expect(store.getState()).toMatchObject({ ending: 'bad', screen: 'ending' })
   })
 
   it('旧版本关系值翻倍到新刻度，其他数值不动', async () => {

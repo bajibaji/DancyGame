@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { EndingId, Epilogue, GameMeta, HistoryEntry, Option, Scene, Snapshot } from '../game/types'
+import type { ChoiceKey, EndingId, Epilogue, GameMeta, HistoryEntry, Scene, Snapshot } from '../game/types'
 import { applyEffects, CHOICE_UNDO_MS, choose as engineChoose, createInitialState, decideEnding, LIMITS, makeSnapshot, restoreSnapshot } from '../game/engine'
+import { choiceOffers } from '../game/choices'
 import { solvePuzzle as engineSolvePuzzle } from '../game/puzzle'
 import type { Recipe } from '../game/puzzle'
 import { getScene, START_SCENE } from '../content/index'
@@ -10,6 +11,7 @@ import { characterIdsInText } from '../game/characterNames'
 interface GameStore {
   screen: string
   sceneId: string
+  runSeed: number
   meta: GameMeta
   relationship: Record<string, number>
   flags: Record<string, boolean>
@@ -25,7 +27,7 @@ interface GameStore {
   epilogue: Epilogue | null
   snapshot: (Snapshot & { metCharacters: string[] }) | null
   start: () => void
-  choose: (option: Option, scene: Scene) => void
+  choose: (key: ChoiceKey, sceneId: string) => void
   advance: (scene: Scene) => void
   solvePuzzle: (a: string, b: string) => Recipe | null
   finishAutoEnding: () => void
@@ -61,9 +63,11 @@ function validSceneId(state: GameStore): string {
 
 function mergeRaw(saved: unknown, current: GameStore): GameStore {
   const merged = { ...current, ...(saved as Partial<GameStore>) }
-  const state: GameStore = merged.meta
-    ? { ...merged, meta: { ...merged.meta, world: merged.meta.world ?? 0 } }
-    : merged
+  const state: GameStore = {
+    ...merged,
+    meta: { ...merged.meta, world: merged.meta?.world ?? 0 },
+    runSeed: Number.isInteger(merged.runSeed) && merged.runSeed >= 0 && merged.runSeed <= 0xffffffff ? merged.runSeed : 0,
+  }
   if (state.sceneId === 'c0609' || state.visited.includes('c0609')) return state
   if (!state.clues.includes('C22') && !state.flags.F62_MEMORY_TRUTH) return state
   const flags = { ...state.flags }
@@ -95,6 +99,7 @@ function withSceneEffects(state: GameStore, sceneId: string): Partial<GameStore>
   const applied = applyEffects(
     {
       sceneId: state.sceneId,
+      runSeed: state.runSeed,
       meta: state.meta,
       relationship: state.relationship,
       flags: state.flags,
@@ -123,6 +128,7 @@ export const useGameStore = create<GameStore>()(
     (set, get) => ({
       screen: 'title',
       sceneId: initial.sceneId,
+      runSeed: initial.runSeed,
       meta: initial.meta,
       relationship: initial.relationship,
       flags: initial.flags,
@@ -138,7 +144,7 @@ export const useGameStore = create<GameStore>()(
       epilogue: null,
       snapshot: null,
       start: () => {
-        const fresh = createInitialState(START_SCENE)
+        const fresh = createInitialState(START_SCENE, Math.floor(Math.random() * 0x100000000))
         set({
           ...fresh,
           screen: 'story',
@@ -149,9 +155,14 @@ export const useGameStore = create<GameStore>()(
           snapshot: null,
         })
       },
-      choose: (option, scene) => {
+      choose: (key, sceneId) => {
         const state = get()
-        if (scene.id !== state.sceneId || !scene.options?.includes(option)) return
+        if (sceneId !== state.sceneId) return
+        const scene = getScene(sceneId)
+        if (!scene) return
+        const offer = choiceOffers(scene, state.runSeed, state.flags).find((candidate) => candidate.key === key)
+        if (!offer) return
+        const { option } = offer
         const snapshot = {
           ...makeSnapshot({ ...state, ending: undefined, epilogue: undefined }),
           metCharacters: state.metCharacters,
@@ -159,6 +170,7 @@ export const useGameStore = create<GameStore>()(
         const next = engineChoose(
           {
             sceneId: state.sceneId,
+            runSeed: state.runSeed,
             meta: state.meta,
             relationship: state.relationship,
             flags: state.flags,
@@ -171,6 +183,7 @@ export const useGameStore = create<GameStore>()(
           },
           scene,
           option,
+          key,
         )
         const base = { ...state, ...next, snapshot }
         const entered = withSceneEffects(base, option.next)
@@ -178,8 +191,9 @@ export const useGameStore = create<GameStore>()(
       },
       advance: (scene) => {
         if (scene.id !== get().sceneId || scene.options?.length) return
-        if (scene.ending === 'auto') {
-          get().finishAutoEnding()
+        if (scene.ending) {
+          if (scene.ending === 'auto' || scene.ending === 'good') get().finishAutoEnding()
+          else set({ ending: scene.ending, screen: 'ending', snapshot: null })
           return
         }
         if (scene.next) {
@@ -192,6 +206,7 @@ export const useGameStore = create<GameStore>()(
         const result = engineSolvePuzzle(
           {
             sceneId: state.sceneId,
+            runSeed: state.runSeed,
             meta: state.meta,
             relationship: state.relationship,
             flags: state.flags,
@@ -212,6 +227,7 @@ export const useGameStore = create<GameStore>()(
         const state = get()
         const ending = decideEnding({
           sceneId: state.sceneId,
+          runSeed: state.runSeed,
           meta: state.meta,
           relationship: state.relationship,
           flags: state.flags,
@@ -273,6 +289,7 @@ export const useGameStore = create<GameStore>()(
       partialize: (state) => ({
         screen: state.screen,
         sceneId: state.sceneId,
+        runSeed: state.runSeed,
         meta: state.meta,
         relationship: state.relationship,
         flags: state.flags,

@@ -132,7 +132,7 @@
      "tendency": "evidence",
      "risk": "medium",
      "effects": {
-      "clue": 1,
+      "clue": 2,
       "danger": 1,
       "world": -1
      },
@@ -543,7 +543,7 @@
      "tendency": "evidence",
      "risk": "low",
      "effects": {
-      "clue": 1,
+      "danger": -2,
       "world": -1
      },
      "consequence": "你把信封交给陆晚，登记编号。\n\n顾淮看着你做完，才闭上眼。\n\n「别弄丢。」他说。",

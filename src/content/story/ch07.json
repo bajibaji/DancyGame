@@ -461,7 +461,7 @@
      "tendency": "intuition",
      "risk": "medium",
      "effects": {
-      "clue": 1,
+      "clue": 2,
       "danger": 1,
       "world": -1
      },

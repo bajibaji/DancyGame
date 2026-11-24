@@ -127,6 +127,7 @@
      "risk": "low",
      "effects": {
       "clue": 1,
+      "relation": 1,
       "world": 1
      },
      "consequence": "你在送检单上签了名。顾淮把袋子封好，叫了车。\n\n「三天。」他说，「三天之内，我盯着。」",
@@ -154,7 +155,7 @@
      "effects": {
       "danger": 1,
       "world": -1,
-      "clue": 1
+      "clue": 2
      },
      "consequence": "林子里白天也阴。你在废熏灶旁边蹲下，用手机的手电贴着地面照。\n\n砖缝里有一小块凝固的蜡。",
      "progress": "现场砖缝里找到一块蜡。",
