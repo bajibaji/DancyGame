@@ -45,6 +45,7 @@ for (const name of strictChapters) {
       if (!choiceExempt.has(name)) {
         const lastParagraph = scene.body.split(/\n\n+/).filter(Boolean).at(-1) ?? ''
         if (!lastParagraph.includes('？') || !lastParagraph.includes('你')) errors.push(id + ' 选择幕最后一段缺少交给玩家的问句')
+        if ((lastParagraph.match(/也许/g) || []).length >= 2) errors.push(id + ' 选择幕最后一段句式重复（也许…也许…）')
       }
       const worlds = scene.options.map((option) => option.effects.world ?? 0)
       if (Math.min(...worlds) > 0) errors.push(id + ' 三个选项都不加逆线，世界线无法摆荡')
