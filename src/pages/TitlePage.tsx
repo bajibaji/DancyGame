@@ -50,7 +50,7 @@ export default function TitlePage() {
               duration={0.7}
               staggerFrom="center"
             />
-            <span className="tabular absolute left-full top-0 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
+            <span className="tabular absolute left-full top-1 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
               v{APP_VERSION}
             </span>
           </div>
