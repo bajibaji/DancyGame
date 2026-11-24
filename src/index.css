@@ -11,6 +11,7 @@
   --color-border-strong: #3a4b5f;
   --color-text-hi: #e8edf2;
   --color-text: #c7d1db;
+  --color-text-strong: #d6dee6;
   --color-text-secondary: #93a1b0;
   --color-text-dim: #75839b;
   --color-accent: #67c7d8;
@@ -46,6 +47,22 @@ html {
   overscroll-behavior-y: none;
 }
 
+/* 页面级滚动条一律不显示：内容仍可滚动，只是不画轨道与滑块 */
+html,
+body {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
 body {
   margin: 0;
   background-color: var(--color-bg-deep);
@@ -78,12 +95,15 @@ button {
 
 .tabular {
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 .reading {
   font-size: calc(17.5px * var(--fs-scale));
-  line-height: 1.9;
-  letter-spacing: 0.02em;
+  line-height: 1.88;
+  letter-spacing: 0.008em;
+  font-feature-settings: 'palt' 1;
+  hanging-punctuation: allow-end;
   word-break: break-word;
 }
 
@@ -94,15 +114,19 @@ button {
 
 .reading-scroll {
   scrollbar-width: none;
+  scrollbar-color: transparent transparent;
   -ms-overflow-style: none;
 }
 
 .reading-scroll::-webkit-scrollbar {
   display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
 }
 
 .reading p {
-  margin: 0 0 0.9em;
+  margin: 0 0 0.72em;
   text-indent: 2em;
 }
 
@@ -119,8 +143,16 @@ button {
 
 .reading p.dialogue-paragraph,
 .reading p:not(.dialogue-paragraph) > .dialogue {
-  padding-inline-start: 0.9em;
-  border-inline-start: 2px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+  padding-inline-start: 1em;
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-accent) 52%, transparent) 0,
+    color-mix(in srgb, var(--color-accent) 42%, transparent) calc(100% - 9px),
+    transparent 100%
+  );
+  background-size: 1px 100%;
+  background-position: 0 0;
+  background-repeat: no-repeat;
 }
 
 .reading .dialogue-inline {
@@ -128,8 +160,101 @@ button {
 }
 
 .option-label {
-  font-size: calc(15px * var(--fs-scale));
-  line-height: 1.55;
+  font-size: calc(17px * var(--fs-scale));
+  line-height: 1.66;
+  letter-spacing: 0.012em;
+  color: var(--color-text-strong);
+}
+
+/* 选项卡片：与继续按钮同一套材质，半透明让背景光透一点 */
+.option-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(26, 37, 50, 0.68) 0%, rgba(20, 29, 39, 0.72) 100%);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.085),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    inset 0 16px 24px -19px color-mix(in srgb, var(--color-accent-strong) 8%, transparent),
+    0 10px 24px -16px rgba(0, 0, 0, 0.9);
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.option-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 26%);
+}
+
+/* 左侧编号槽：半透明暗区，把序号和正文分开 */
+.option-index {
+  background: rgba(0, 0, 0, 0.12);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.option-card:active {
+  background: linear-gradient(180deg, #17212d 0%, #111922 100%);
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 12px -8px rgba(0, 0, 0, 0.7);
+}
+
+/* 左侧编号槽：半透明暗区，把序号和正文分开 */
+.option-index {
+  background: rgba(0, 0, 0, 0.12);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.option-card:active {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 46%),
+    linear-gradient(180deg, rgba(20, 30, 42, 0.72) 0%, rgba(14, 21, 30, 0.76) 100%);
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* 顶部状态栏：半透明深底 + 背景模糊，底部一道玻璃边 */
+.glass-header {
+  background: color-mix(in srgb, var(--color-bg-deep) 42%, transparent);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 255, 255, 0.055),
+    0 12px 28px -24px rgba(0, 0, 0, 0.9);
+}
+
+/* 继续按钮：半透明冷玻璃，模糊背后的背景流光 */
+.glass-slab {
+  position: relative;
+  background: linear-gradient(180deg, #1a2532 0%, #141d27 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    inset 0 16px 24px -19px rgba(255, 255, 255, 0.07),
+    0 10px 24px -16px rgba(0, 0, 0, 0.9);
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.glass-slab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 26%);
+}
+
+.glass-slab:active {
+  background: linear-gradient(180deg, #17212d 0%, #111922 100%);
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 12px -8px rgba(0, 0, 0, 0.7);
 }
 
 .scene-title {

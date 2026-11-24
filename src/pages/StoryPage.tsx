@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { Archive, Settings } from 'lucide-react'
+import { Archive, ChevronDown, Settings } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
 import LocationBar from '../components/game/HUD/LocationBar'
 import StatMeters from '../components/game/HUD/StatMeters'
@@ -212,27 +212,27 @@ function ReleasedStoryPage() {
   return (
     <GameShell>
       <div className="flex h-dvh flex-col overflow-hidden">
-        <header className="shrink-0 border-b border-border-subtle/50 bg-bg-deep/80">
+        <header className="glass-header shrink-0 border-b border-border-subtle/40 pt-[env(safe-area-inset-top)]">
           <LocationBar location={location} timeOfDay={scene.timeOfDay} chapter={scene.chapter} line={line} />
-          <div className="flex min-h-13 items-center justify-between gap-4 px-3 lg:hidden">
+          <div className="flex min-h-13 items-center justify-between gap-3 px-3 lg:hidden">
             <div className="min-w-0 flex-1 md:max-w-[400px]">
               <StatMeters key={runSeed} meta={meta} chapter={scene.chapter} />
             </div>
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex shrink-0 items-center">
               <button
                 type="button"
                 onClick={() => navigate('/archive')}
-                className="flex h-11 min-w-11 flex-col items-center justify-center rounded-[18px] px-2 text-[10px] leading-tight text-text-dim active:bg-surface"
+                className="flex h-11 w-11 flex-col items-center justify-center gap-[3px] rounded-[12px] text-[10px] leading-none tracking-[0.1em] text-text-dim active:bg-surface/70"
               >
-                <span aria-hidden><Archive size={16} strokeWidth={1.8} /></span>
+                <span aria-hidden><Archive size={15} strokeWidth={1.5} /></span>
                 档案库
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/settings')}
-                className="flex h-11 min-w-11 flex-col items-center justify-center rounded-[18px] px-2 text-[10px] leading-tight text-text-dim active:bg-surface"
+                className="flex h-11 w-11 flex-col items-center justify-center gap-[3px] rounded-[12px] text-[10px] leading-none tracking-[0.1em] text-text-dim active:bg-surface/70"
               >
-                <span aria-hidden><Settings size={16} strokeWidth={1.8} /></span>
+                <span aria-hidden><Settings size={15} strokeWidth={1.5} /></span>
                 设置
               </button>
             </div>
@@ -242,10 +242,10 @@ function ReleasedStoryPage() {
         <ChoiceFeedback message={currentFeedback?.message ?? null} canUndo={canUndo} onUndo={onUndo} />
 
         <main className="flex min-h-0 flex-1 flex-col lg:mx-auto lg:w-full lg:max-w-[1120px] lg:flex-row lg:gap-8 lg:px-8">
-          <div className="relative min-h-0 flex-1">
+          <div className="relative min-h-0 flex-1 overflow-hidden">
             <div
               ref={scrollRef}
-              className="reading-scroll h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain px-5 pb-10 pt-5 [touch-action:pan-y] md:mx-auto md:w-full md:max-w-[680px] md:px-8 md:pt-7 lg:max-w-[720px] lg:px-4 lg:pt-5"
+              className="reading-scroll -mr-4 h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain pb-[calc(1.75rem+env(safe-area-inset-bottom))] pl-5 pr-[calc(1.25rem+1rem)] pt-[18px] [touch-action:pan-y] md:mx-auto md:mr-0 md:w-full md:max-w-[680px] md:px-8 md:pt-6 lg:max-w-[720px] lg:px-4 lg:pt-5"
               onContextMenu={(event) => event.preventDefault()}
             >
             {readingMode === 'linear' ? (
@@ -314,9 +314,10 @@ function ReleasedStoryPage() {
                     exit={{ opacity: 0, y: -6 }}
                     transition={{ duration: reducedMotion ? 0.12 : 0.22 }}
                   >
-                    <h2 className="scene-title mb-4 flex items-center gap-3 font-display tracking-wide text-text-hi">
-                      <span aria-hidden className="h-4 w-[3px] shrink-0 rounded-sm bg-clue/80" />
-                      {scene.title}
+                    <h2 className="scene-title mb-5 flex items-center gap-3 font-display tracking-[0.06em] text-text-hi">
+                      <span aria-hidden className="h-[13px] w-[2px] shrink-0 bg-clue/70" />
+                      <span className="shrink-0">{scene.title}</span>
+                      <span aria-hidden className="mb-[7px] h-px min-w-4 flex-1 self-end bg-gradient-to-r from-border/80 to-transparent" />
                     </h2>
                     <div
                       className="reading text-text"
@@ -348,7 +349,7 @@ function ReleasedStoryPage() {
                 ))}
               </div>
             )}
-            <div className="mt-6 flex min-w-0 flex-col gap-2 overflow-x-hidden md:mx-auto md:w-full md:max-w-[560px]">
+            <div className="mt-7 flex min-w-0 flex-col gap-2 overflow-x-hidden md:mx-auto md:w-full md:max-w-[560px]">
               {showOptions && (
                 <motion.div
                   initial={{ opacity: 0, y: reducedMotion ? 0 : 8 }}
@@ -362,24 +363,28 @@ function ReleasedStoryPage() {
                       as="button"
                       onClick={() => onChoose(key)}
                       disabled={!choiceEnabled}
-                      className="min-h-11 w-full text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent motion-safe:active:scale-[0.96] disabled:cursor-not-allowed"
-                      color="var(--color-accent)"
-                      trailColor="var(--color-clue)"
-                      backgroundColor="var(--color-surface-raised)"
+                      style={{ padding: 0 }}
+                      className="option-card min-h-[92px] w-full text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed"
+                      color="var(--color-clue)"
+                      trailColor="var(--color-accent)"
+                      backgroundColor="transparent"
                       textColor="var(--color-text)"
                       borderColor="var(--color-border)"
                       hover="reveal"
                       clickPulse={!reducedMotion}
-                      stars={1}
-                      radius={18}
+                      sparkle={false}
+                      glow={0}
+                      radius={12}
                       thickness={1}
                     >
-                      <span className="flex w-full items-center gap-3 px-4 py-3">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border-strong font-display text-sm text-accent">
-                          {key}
+                      <span className="flex w-full items-stretch self-stretch">
+                        <span className="option-index flex w-12 shrink-0 items-center justify-center">
+                          <span className="font-display text-[14px] tracking-[0.1em] text-accent/85">
+                            {key}
+                          </span>
                         </span>
-                        <span className="flex min-w-0 flex-1 flex-col gap-1">
-                          {opportunity && <span className="text-xs leading-relaxed text-clue">{opportunity}</span>}
+                        <span className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-4 pl-4 pr-5">
+                          {opportunity && <span className="text-[13px] leading-relaxed tracking-[0.02em] text-clue/85">{opportunity}</span>}
                           <span className="option-label">{option.label}</span>
                         </span>
                       </span>
@@ -391,9 +396,12 @@ function ReleasedStoryPage() {
                 <button
                   type="button"
                   onClick={onAdvance}
-                  className="w-full rounded-[18px] border border-border-strong bg-surface-raised py-3.5 text-[15px] text-text active:scale-[0.99] active:border-accent/60 active:text-accent"
+                  className="glass-slab group flex min-h-14 w-full items-center justify-center gap-2.5 rounded-[12px] px-4 py-3"
                 >
-                  {scene.ending ? '查看结局' : scene.puzzle ? '继续下一章' : '继续'}
+                  <span className="pl-[0.14em] text-[15px] tracking-[0.14em] text-text">
+                    {scene.ending ? '查看结局' : scene.puzzle ? '继续下一章' : '继续'}
+                  </span>
+                  <ChevronDown size={16} strokeWidth={1.6} className="shrink-0 opacity-70 group-active:translate-y-px" aria-hidden />
                 </button>
               )}
             </div>
@@ -459,7 +467,7 @@ function ReleasedStoryPage() {
               animate={{ y: 0 }}
               exit={{ y: 40 }}
               transition={{ duration: 0.2 }}
-              className="w-full max-w-[430px] rounded-t-2xl border-t border-border bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:max-w-[620px] lg:max-w-[780px]"
+              className="w-full max-w-[430px] rounded-t-[16px] border-t border-border bg-surface px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-4 md:max-w-[620px] lg:max-w-[780px]"
               onClick={(event) => event.stopPropagation()}
             >
               <div className="flex items-baseline justify-between gap-3">
