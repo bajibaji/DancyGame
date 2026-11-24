@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getScene } from '../src/content/index'
 import { CHOICE_UNDO_MS, createInitialState } from '../src/game/engine'
 import { choiceOffers } from '../src/game/choices'
-import { resolveSceneBody, resolveSceneProgress } from '../src/game/narrative'
+import { resolveSceneBody, resolveSceneFollowUps, resolveSceneProgress } from '../src/game/narrative'
+import { PUZZLES, assistFor, judgePuzzle, puzzleStatus } from '../src/game/puzzles'
+import type { ChoiceKey } from '../src/game/types'
 
 const SAVE_KEY = 'jiangjia.save.v1'
 
@@ -24,6 +26,92 @@ async function loadStore(saved?: unknown, version = 2) {
 afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
+})
+
+describe('序章两次查证与跨章交接', () => {
+  const puzzle = PUZZLES.find(({ id }) => id === 'pz11')!
+  const directions = ['A', 'B', 'C'] as const
+  const routes = directions.flatMap((search) => directions.map((handoff) => ({ search, handoff })))
+
+  it.each(routes)('搜寻 $search、交接 $handoff：两张材料按时开放，解题或跳过均可进第一章', async ({ search, handoff }) => {
+    const { store, storage } = await loadStore({ ...createInitialState('p01a', 11), started: true }, 3)
+    const pick = (id: string): ChoiceKey => id === 'p03f' || id === 'p04f' ? search : id === 'p08f' ? handoff : 'A'
+    const seen = new Set<string>()
+    const answer = handoff !== 'B'
+
+    while (store.getState().sceneId !== 'c0101c') {
+      const state = store.getState()
+      const scene = getScene(state.sceneId)!
+      expect(seen.has(scene.id), scene.id).toBe(false)
+      seen.add(scene.id)
+
+      if (scene.id === 'p04d') expect(state.clues).not.toContain('C27')
+      if (scene.id === 'p04e') expect(state.clues).toContain('C27')
+      if (scene.id === 'p09a') expect(puzzleStatus(puzzle, scene.chapter, state.clues, state.solved)).toBe('locked-clues')
+      if (scene.id === 'p09b') {
+        expect(state.clues).toEqual(expect.arrayContaining(['C27', 'C28']))
+        expect(puzzleStatus(puzzle, scene.chapter, state.clues, state.solved)).toBe('ready')
+        expect(judgePuzzle(puzzle, ['A'])).toBe(false)
+        expect(assistFor(puzzle, 2).excluded).toEqual(['A', 'B'])
+        expect(assistFor(puzzle, 3).excluded).not.toContain('C')
+        expect(judgePuzzle(puzzle, ['C'])).toBe(true)
+        if (answer) expect(state.solvePuzzle('C27', 'C28')?.id).toBe('D11')
+      }
+      if (scene.id === 'c0101a') {
+        expect(resolveSceneFollowUps(scene, state.solved)).toHaveLength(answer ? 1 : 0)
+        for (const id of ['C27', 'C28']) expect(state.clues.filter((card) => card === id)).toHaveLength(1)
+      }
+
+      if (scene.options) {
+        const offers = choiceOffers(scene, state.runSeed, state.flags)
+        if (scene.id === 'p04c') expect(offers.some(({ opportunity }) => opportunity?.includes('乘客'))).toBe(search === 'C')
+        const offer = offers.find(({ option }) => option.key === pick(scene.id))!
+        state.choose(offer.key, scene.id)
+      } else {
+        expect(scene.next, scene.id).toBeDefined()
+        state.advance(scene)
+      }
+    }
+
+    expect(seen.size).toBe(62)
+    expect(store.getState().history).toHaveLength(20)
+    const saved = JSON.parse(storage.getItem(SAVE_KEY)!)
+    const { store: reloaded } = await loadStore(saved.state, saved.version)
+    expect(reloaded.getState()).toMatchObject({ sceneId: 'c0101c', runSeed: 11, clues: saved.state.clues, solved: answer ? ['D11'] : [], history: saved.state.history })
+  })
+
+  it.each([
+    ['p04c', 'p05a', '沿马宏图离席的方向找人。'],
+    ['p08c', 'p09a', '先跟叶小满说，现在不能认人。'],
+    ['p16c', 'c0101a', '去老厂，找竖井。'],
+  ])('旧档已选 %s 后从 %s 原地续读', async (before, current, label) => {
+    const choice = { sceneId: before, chapter: 'prologue', choice: 'A', label, at: 100, next: current }
+    const saved = { ...createInitialState(current, 11), started: true, visited: [before, current], appliedScenes: [before, current], history: [choice] }
+    const { store } = await loadStore(saved, 3)
+    expect(store.getState()).toMatchObject({ sceneId: current, history: [choice], runSeed: 11, meta: saved.meta })
+    store.getState().advance(getScene(current)!)
+    expect(store.getState().sceneId).toBe(getScene(current)!.next)
+    expect(store.getState().history).toEqual([choice])
+  })
+
+  it.each(['c0101a', 'c0101b', 'c0205a'])('已过交接的旧档 %s 只补材料，不补分、不重新结算', async (current) => {
+    const saved = {
+      ...createInitialState(current, 11), started: true, clues: ['C03', 'C27'], memories: ['M01'],
+      visited: ['p16c', 'c0101a', current], appliedScenes: ['p16c', 'c0101a'], flags: { F_TO_OLDFACTORY: true },
+    }
+    const { store } = await loadStore(saved, 3)
+    expect(store.getState()).toMatchObject({ ...saved, clues: ['C03', 'C27', 'C28'], history: [], solved: [] })
+  })
+
+  it('尚未交接的旧档不提前解锁推理，已结案档不补材料', async () => {
+    const { store: pending } = await loadStore({ ...createInitialState('p16c', 11), started: true }, 3)
+    expect(pending.getState().clues).toEqual([])
+    pending.getState().choose('A', 'p16c')
+    expect(pending.getState()).toMatchObject({ sceneId: 'c0101a', clues: ['C27', 'C28'] })
+
+    const { store: ended } = await loadStore({ ...createInitialState('c0716a'), started: true, screen: 'ending', ending: 'bad', visited: ['c0101a', 'c0716a'] }, 3)
+    expect(ended.getState()).toMatchObject({ sceneId: 'c0716a', screen: 'ending', ending: 'bad', clues: [] })
+  })
 })
 
 describe('游玩进度', () => {

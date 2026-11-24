@@ -11,7 +11,9 @@ const seeds = Array.from({ length: 48 }, (_, i) => i)
 function endingRun(seed: number, policy: 'balanced' | 'reckless' | 'compromise') {
   let scene: Scene | undefined = getScene(START_SCENE)
   let state = createInitialState(START_SCENE, seed)
-  for (let step = 0; scene && step < 385; step++) {
+  const visited = new Set<string>()
+  while (scene && !visited.has(scene.id)) {
+    visited.add(scene.id)
     state = applyEffects(state, scene.effects)
     if (scene.ending) return { state, ending: scene.ending === 'good' || scene.ending === 'auto' ? decideEnding(state) : scene.ending }
     const offers = choiceOffers(scene, seed, state.flags)
@@ -31,7 +33,7 @@ function endingRun(seed: number, policy: 'balanced' | 'reckless' | 'compromise')
     state = choose(state, scene, offer.option, offer.key)
     scene = getScene(offer.option.next)
   }
-  throw new Error('没有抵达终幕')
+  throw new Error(`没有抵达终幕：${seed}/${policy}，停在 ${scene?.id ?? '无后继场景'}`)
 }
 
 describe('每局的调查选项', () => {

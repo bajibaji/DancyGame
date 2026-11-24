@@ -80,10 +80,13 @@ function mergeSave(saved: unknown, current: GameStore): GameStore {
   const sceneId = validSceneId(state)
   const visited = state.visited.filter((id) => Boolean(getScene(id)))
   const appliedScenes = state.appliedScenes.filter((id) => Boolean(getScene(id)))
-  if (sceneId === state.sceneId && visited.length === state.visited.length && appliedScenes.length === state.appliedScenes.length) {
+  const handoffClues = !state.ending && (sceneId === 'c0101a' || visited.includes('c0101a') || appliedScenes.includes('c0101a'))
+    ? (getScene('c0101a')?.effects?.clues ?? []).filter((id) => !state.clues.includes(id))
+    : []
+  if (sceneId === state.sceneId && visited.length === state.visited.length && appliedScenes.length === state.appliedScenes.length && !handoffClues.length) {
     return state
   }
-  return { ...state, sceneId, visited, appliedScenes }
+  return { ...state, sceneId, visited, appliedScenes, clues: [...state.clues, ...handoffClues] }
 }
 
 function withSceneEffects(state: GameStore, sceneId: string): Partial<GameStore> {

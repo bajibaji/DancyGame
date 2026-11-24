@@ -203,7 +203,7 @@ export default function PuzzleBoard() {
         <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start lg:gap-6">
           <div className={`${open ? 'hidden lg:block' : 'block'} lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:pr-1`}>
             <p className="mb-3 text-[11px] leading-relaxed text-text-dim">
-              每章一道推理题。选错会先给方向，两次之后标出保底线索；推演成功会在后续剧情里留下回应。
+              收齐材料后可复核。判断有误时，档案会标出需要重看的地方。
             </p>
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-[11px] tracking-[0.2em] text-text-dim">推理题（{solvedCount}/{PUZZLES.length}）</h2>

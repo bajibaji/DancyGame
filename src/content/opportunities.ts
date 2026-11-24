@@ -40,12 +40,22 @@ export const OPPORTUNITIES: Readonly<Record<string, readonly Opportunity[]>> = {
       progress: '你和叶小满私下对过了后厨的席位。',
     },
   }],
+  p04c: [{
+    insteadOf: 'C', requires: 'F_P_WITNESS_VAN',
+    context: '司机认出传话的那位乘客，他还在路边等车。',
+    action: {
+      label: '找后排乘客，当面核对他是怎么认出伴郎的。',
+      tendency: 'evidence', risk: 'low', effects: { relation: 1, world: 1, flags: ['F_P_PASSENGER_CHECK'] },
+      consequence: '乘客一开始说看到了胸花。你请他站回等车的位置，他才指着自己的手机说，胸花是从婚宴的照片上认出来的。真正经过巷口时，他没看清那人穿什么。',
+      progress: '乘客认出的是婚宴照片里的人，不是巷口经过的人。',
+    },
+  }],
   p08c: [{
     insteadOf: 'A', context: '刘琼的妹妹每问一句收不收，就把袋口捏得更紧一点。',
     action: {
       label: '请她自己把东西拿出来，当面写一张接收单。',
-      tendency: 'empathy', risk: 'low', effects: { clue: 1, relation: 1, world: 1 },
-      consequence: '她先放下身份证，旧手机放到桌面时还攥着一角塑料袋。陆晚把接收时间念给她听，你撕下留存联递过去。她看完才松手，临走时指了指手机：「背壳也别丢，那是他自己换的。」',
+      tendency: 'empathy', risk: 'low', effects: { clue: 1, relation: 1, world: 1, flags: ['F_P_FAMILY_RECEIPT'] },
+      consequence: '她跟你走到车旁，把身份证和旧手机一样样搁在后备厢边沿。陆晚记下接收时间，撕下留存联。她接过来，还险些把手机又揣回去：「背壳也别丢，那是他自己换的。」',
       progress: '当面核对了手机和身份证，家属带走了接收单。',
     },
   }],

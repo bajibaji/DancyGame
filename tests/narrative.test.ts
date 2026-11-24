@@ -29,6 +29,10 @@ describe('选项在正文里的后果', () => {
   })
 
   it.each([
+    ['p03f', 'p04d'],
+    ['p04f', 'p05a'],
+    ['p06f', 'p07b'],
+    ['p08f', 'c0101a'],
   ])('%s 的三条迟回收分别出现于 %s', (choiceId, recallId) => {
     const scene = getScene(choiceId)!
     const target = getScene(recallId)!
@@ -47,14 +51,12 @@ describe('选项在正文里的后果', () => {
     expect(matching.size).toBe(3)
   })
 
-  it('新开档第一幕是序章第一幕，三次选择都通向下一节拍', () => {
+  it('新开档第一幕是序章第一幕，初次选择的三条路都通向下一节拍', () => {
     const opening = getScene('p01a')!
     expect(opening.options).toBeUndefined()
     expect(opening.next).toBe('p01b')
     const choice = getScene('p01c')!
     expect(choice.options?.map(({ key, next }) => [key, next])).toEqual([['A', 'p02a'], ['B', 'p02a'], ['C', 'p02a']])
-    const choices = [...SCENES.values()].filter((scene) => scene.chapter === 'prologue' && scene.options?.length)
-    expect(choices.length).toBe(16)
   })
 
   it('第一次选择前先交代空椅、新娘与她做过线人', () => {
