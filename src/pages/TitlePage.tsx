@@ -42,7 +42,7 @@ export default function TitlePage() {
             <SplitText
               text="沙漏停摆"
               tag="h1"
-              className="font-display text-4xl font-semibold text-text-hi md:text-5xl"
+              className="relative z-10 font-display text-4xl font-semibold text-text-hi md:text-5xl"
               splitType="chars"
               effect="rise"
               mask
@@ -51,8 +51,8 @@ export default function TitlePage() {
               duration={0.7}
               staggerFrom="center"
             />
-            <Sandglass className="pointer-events-none absolute left-1/2 top-1/2 z-10 h-14 w-auto -translate-x-1/2 -translate-y-1/2 text-text-hi opacity-70 md:h-16" />
-            <span className="tabular absolute left-full top-1 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
+            <Sandglass className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-24 w-auto -translate-x-1/2 -translate-y-1/2 text-text-hi opacity-25 md:h-32" />
+            <span className="tabular absolute left-full top-1 z-10 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
               v{APP_VERSION}
             </span>
           </div>

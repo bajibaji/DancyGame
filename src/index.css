@@ -252,7 +252,6 @@ button {
 
 .sandglass {
   filter: drop-shadow(0 0 1.2px rgba(10, 14, 19, 0.95));
-  animation: sandglass-appear 0.7s ease-out 0.35s both;
 }
 
 .sandglass-spin {

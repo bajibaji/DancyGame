@@ -19,16 +19,8 @@ export default function Sandglass({ className = '' }: { className?: string }) {
         <path
           d="M3 2h12l-5.4 16v4L15 38H3l5.4-16v-4z"
           fill="none"
-          stroke="var(--color-bg-deep)"
-          strokeWidth="3.4"
-          strokeLinejoin="round"
-          opacity="0.9"
-        />
-        <path
-          d="M3 2h12l-5.4 16v4L15 38H3l5.4-16v-4z"
-          fill="none"
           stroke="currentColor"
-          strokeWidth="1.6"
+          strokeWidth="0.9"
           strokeLinejoin="round"
         />
         <g clipPath={`url(#${topClip})`}>
@@ -47,8 +39,8 @@ export default function Sandglass({ className = '' }: { className?: string }) {
           strokeWidth="1"
           strokeLinecap="round"
         />
-        <rect x="5" y="0.8" width="8" height="1.6" rx="0.8" fill="currentColor" opacity="0.9" />
-        <rect x="5" y="37.6" width="8" height="1.6" rx="0.8" fill="currentColor" opacity="0.9" />
+        <rect x="5" y="0.8" width="8" height="1.2" rx="0.6" fill="currentColor" opacity="0.9" />
+        <rect x="5" y="38" width="8" height="1.2" rx="0.6" fill="currentColor" opacity="0.9" />
       </g>
     </svg>
   )
