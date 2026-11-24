@@ -13,10 +13,8 @@ export default function TitlePage() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const start = useGameStore((s) => s.start)
   const history = useGameStore((s) => s.history)
-  const sceneId = useGameStore((s) => s.sceneId)
   const started = useGameStore((s) => s.started)
-  const metCharacters = useGameStore((s) => s.metCharacters)
-  const hasSave = started || history.length > 0 || sceneId !== 'p01' || metCharacters.length > 1
+  const hasSave = started || history.length > 0
 
   const onStart = () => {
     start()

@@ -26,6 +26,22 @@ afterEach(() => {
 })
 
 describe('游玩进度', () => {
+  it('修复动作会把失效场景换回最近一个有效场景', async () => {
+    const { store } = await loadStore({ ...createInitialState('p01a'), started: true }, 3)
+    store.setState({ sceneId: 'c9999', visited: ['p01a', 'c9999'] })
+    store.getState().repairScene()
+    expect(store.getState()).toMatchObject({ sceneId: 'p01a', visited: ['p01a'] })
+  })
+
+  it('存档指向已删除的场景时回到最近一个有效场景', async () => {
+    const { store } = await loadStore(
+      { ...createInitialState('c9999'), started: true, visited: ['p01a', 'c9999'], appliedScenes: ['p01a'] },
+      3,
+    )
+    expect(store.getState()).toMatchObject({ sceneId: 'p01a', started: true })
+  })
+
+
   it('序章档从上一幕继续，不补做已结算的选择', async () => {
     const { store } = await loadStore({
       ...createInitialState('p01b'),
@@ -91,28 +107,4 @@ describe('游玩进度', () => {
     expect(store.getState().meta).toEqual({ world: 0, clue: 8, relation: 20, danger: 2, memory: 3 })
   })
 
-  it('未做终局决定的旧留港档回到港区，保留旧选项，已做决定的档不改路', async () => {
-    const portChoice = { sceneId: 'c0704', chapter: 'ch07', choice: 'A', label: '服从指挥部，留在舟山港。', at: 100 }
-    const { store } = await loadStore({
-      ...createInitialState('c0706'),
-      started: true,
-      visited: ['c0704', 'c0705', 'c0706'],
-      appliedScenes: ['c0704', 'c0705', 'c0706'],
-      history: [portChoice],
-    })
-    expect(store.getState()).toMatchObject({
-      sceneId: 'c0706p',
-      visited: ['c0704', 'c0705p', 'c0706p'],
-      appliedScenes: ['c0704', 'c0705p', 'c0706p'],
-      history: [portChoice],
-    })
-    const borderChoice = { sceneId: 'c0706', chapter: 'ch07', choice: 'B', label: '先救人质。', at: 200 }
-    const { store: resolved } = await loadStore({
-      ...createInitialState('c0707'),
-      started: true,
-      history: [portChoice, borderChoice],
-      flags: { F76_ESCAPED: true },
-    })
-    expect(resolved.getState()).toMatchObject({ sceneId: 'c0707', history: [portChoice, borderChoice], flags: { F76_ESCAPED: true } })
-  })
 })

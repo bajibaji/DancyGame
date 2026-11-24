@@ -32,11 +32,12 @@ interface GameStore {
   setEpilogue: (epilogue: Epilogue) => void
   meet: (text: string) => void
   undo: () => void
+  repairScene: () => void
   reset: () => void
   setScreen: (screen: string) => void
 }
 
-const initial = createInitialState('p01')
+const initial = createInitialState(START_SCENE)
 
 function migrateSave(persisted: unknown, version: number): GameStore {
   const state = (persisted ?? {}) as Partial<GameStore>
@@ -50,27 +51,35 @@ function migrateSave(persisted: unknown, version: number): GameStore {
   } as GameStore
 }
 
-function mergeSave(saved: unknown, current: GameStore): GameStore {
+function validSceneId(state: GameStore): string {
+  if (getScene(state.sceneId)) return state.sceneId
+  for (let i = state.visited.length - 1; i >= 0; i--) {
+    if (getScene(state.visited[i])) return state.visited[i]
+  }
+  return START_SCENE
+}
+
+function mergeRaw(saved: unknown, current: GameStore): GameStore {
   const merged = { ...current, ...(saved as Partial<GameStore>) }
   const state: GameStore = merged.meta
     ? { ...merged, meta: { ...merged.meta, world: merged.meta.world ?? 0 } }
     : merged
-  const portChoice = state.history.find((entry) => entry.sceneId === 'c0704')
-  const awaitingBorderDecision = state.sceneId === 'c0705' || state.sceneId === 'c0706'
-  if (awaitingBorderDecision && portChoice?.choice === 'A' && !portChoice.next) {
-    const toPort = (id: string) => id === 'c0705' || id === 'c0706' ? `${id}p` : id
-    return {
-      ...state,
-      sceneId: toPort(state.sceneId),
-      visited: state.visited.map(toPort),
-      appliedScenes: state.appliedScenes.map(toPort),
-    }
-  }
   if (state.sceneId === 'c0609' || state.visited.includes('c0609')) return state
   if (!state.clues.includes('C22') && !state.flags.F62_MEMORY_TRUTH) return state
   const flags = { ...state.flags }
   delete flags.F62_MEMORY_TRUTH
   return { ...state, clues: state.clues.filter((id) => id !== 'C22'), flags }
+}
+
+function mergeSave(saved: unknown, current: GameStore): GameStore {
+  const state = mergeRaw(saved, current)
+  const sceneId = validSceneId(state)
+  const visited = state.visited.filter((id) => Boolean(getScene(id)))
+  const appliedScenes = state.appliedScenes.filter((id) => Boolean(getScene(id)))
+  if (sceneId === state.sceneId && visited.length === state.visited.length && appliedScenes.length === state.appliedScenes.length) {
+    return state
+  }
+  return { ...state, sceneId, visited, appliedScenes }
 }
 
 function withSceneEffects(state: GameStore, sceneId: string): Partial<GameStore> {
@@ -233,8 +242,17 @@ export const useGameStore = create<GameStore>()(
         const restored = restoreSnapshot(state.snapshot)
         set({ ...restored, metCharacters: state.snapshot.metCharacters, snapshot: null, screen: 'story' })
       },
+      repairScene: () => {
+        const state = get()
+        const sceneId = validSceneId(state)
+        const visited = state.visited.filter((id) => Boolean(getScene(id)))
+        const appliedScenes = state.appliedScenes.filter((id) => Boolean(getScene(id)))
+        if (sceneId !== state.sceneId || visited.length !== state.visited.length || appliedScenes.length !== state.appliedScenes.length) {
+          set({ sceneId, visited, appliedScenes })
+        }
+      },
       reset: () => {
-        const fresh = createInitialState('p01')
+        const fresh = createInitialState(START_SCENE)
         set({
           ...fresh,
           screen: 'title',
@@ -249,7 +267,7 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: 'jiangjia.save.v1',
-      version: 2,
+      version: 3,
       migrate: migrateSave,
       merge: mergeSave,
       partialize: (state) => ({

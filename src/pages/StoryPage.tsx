@@ -31,6 +31,8 @@ export default function StoryPage() {
   const ending = useGameStore((s) => s.ending)
   const screen = useGameStore((s) => s.screen)
   const choose = useGameStore((s) => s.choose)
+  const start = useGameStore((s) => s.start)
+  const repairScene = useGameStore((s) => s.repairScene)
   const advance = useGameStore((s) => s.advance)
   const undo = useGameStore((s) => s.undo)
   const meet = useGameStore((s) => s.meet)
@@ -189,12 +191,19 @@ export default function StoryPage() {
   )
   useGameKeys(keys, true)
 
+  useEffect(() => {
+    if (!scene) repairScene()
+  }, [scene, repairScene])
+
   if (!scene) {
     return (
       <GameShell>
         <div className="flex flex-1 flex-col items-center justify-center gap-4">
-          <p className="text-text-secondary">没有进行中的调查。</p>
-          <button type="button" className="min-h-11 text-accent" onClick={() => navigate('/')}>
+          <p className="text-text-secondary">存档里的这一幕已经不在当前版本里了。</p>
+          <button type="button" className="min-h-11 text-accent" onClick={() => { start(); navigate('/story') }}>
+            重新开始调查
+          </button>
+          <button type="button" className="min-h-11 text-text-dim" onClick={() => navigate('/')}>
             返回标题
           </button>
         </div>
