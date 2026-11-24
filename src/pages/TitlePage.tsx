@@ -7,6 +7,7 @@ import DecryptedText from '../components/reactbits/DecryptedText/DecryptedText'
 import SpecularButton from '../components/reactbits/SpecularButton/SpecularButton'
 import GameShell from '../components/game/Layout/GameShell'
 import { useGameStore } from '../stores/gameStore'
+import { APP_VERSION } from '../lib/version'
 
 export default function TitlePage() {
   const navigate = useNavigate()
@@ -36,18 +37,23 @@ export default function TitlePage() {
           className="flex w-full max-w-[360px] flex-col items-center text-center md:max-w-[480px]"
         >
           <p className="mb-6 text-xs tracking-[0.4em] text-text-dim">2015 · 杭州</p>
-          <SplitText
-            text="沙漏停摆"
-            tag="h1"
-            className="font-display text-4xl font-semibold text-text-hi md:text-5xl"
-            splitType="chars"
-            effect="rise"
-            mask
-            trigger="load"
-            accentColor="var(--color-clue)"
-            duration={0.7}
-            staggerFrom="center"
-          />
+          <div className="relative inline-block">
+            <SplitText
+              text="沙漏停摆"
+              tag="h1"
+              className="font-display text-4xl font-semibold text-text-hi md:text-5xl"
+              splitType="chars"
+              effect="rise"
+              mask
+              trigger="load"
+              accentColor="var(--color-clue)"
+              duration={0.7}
+              staggerFrom="center"
+            />
+            <span className="tabular absolute left-full top-0 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
+              v{APP_VERSION}
+            </span>
+          </div>
           <div className="mt-5 text-base text-text-secondary">
             <BlurText text="杭州 · 失忆刑侦档案" animateBy="letters" effect="blur" trigger="load" delay={120} className="justify-center" />
           </div>
