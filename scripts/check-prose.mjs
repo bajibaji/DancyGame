@@ -22,10 +22,14 @@ for (const name of strictChapters) {
   let gap = 0
   let chars = 0
   let variants = 0
+  const seenTitles = new Map()
   for (const scene of chapter.scenes) {
     const id = scene.id
     chars += scene.body.length
     gap++
+    const sameTitle = seenTitles.get(scene.title)
+    if (sameTitle) errors.push(id + ' 本章标题与 ' + sameTitle + ' 重复：' + scene.title)
+    else seenTitles.set(scene.title, id)
     const start = text.indexOf(`"id": "${id}"`)
     const end = text.indexOf('"id": "', start + 10)
     const slice = text.slice(start, end === -1 ? text.length : end)
