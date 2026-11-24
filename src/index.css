@@ -200,11 +200,11 @@ button {
 
 @keyframes sandglass-spin {
   0%,
-  72% {
+  66% {
     transform: rotate(0deg);
   }
   100% {
-    transform: rotate(360deg);
+    transform: rotate(180deg);
   }
 }
 
@@ -213,7 +213,7 @@ button {
   4% {
     transform: scaleY(1);
   }
-  68%,
+  66%,
   100% {
     transform: scaleY(0);
   }
@@ -224,7 +224,7 @@ button {
   4% {
     transform: scaleY(0);
   }
-  68%,
+  66%,
   100% {
     transform: scaleY(1);
   }

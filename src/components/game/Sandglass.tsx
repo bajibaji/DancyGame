@@ -6,7 +6,7 @@ export default function Sandglass({ className = '' }: { className?: string }) {
   const bottomClip = `${id}-bottom`
 
   return (
-    <svg viewBox="0 0 18 40" className={`sandglass ${className}`} aria-hidden="true" focusable="false">
+    <svg viewBox="-11 0 40 40" className={`sandglass ${className}`} aria-hidden="true" focusable="false">
       <defs>
         <clipPath id={topClip}>
           <path d="M3 2h12l-5.4 16H8.4z" />
