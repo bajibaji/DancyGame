@@ -6,6 +6,7 @@ import BlurText from '../components/reactbits/BlurText/BlurText'
 import DecryptedText from '../components/reactbits/DecryptedText/DecryptedText'
 import SpecularButton from '../components/reactbits/SpecularButton/SpecularButton'
 import GameShell from '../components/game/Layout/GameShell'
+import Sandglass from '../components/game/Sandglass'
 import { useGameStore } from '../stores/gameStore'
 import { APP_VERSION } from '../lib/version'
 
@@ -50,6 +51,7 @@ export default function TitlePage() {
               duration={0.7}
               staggerFrom="center"
             />
+            <Sandglass className="pointer-events-none absolute left-1/2 top-1/2 z-10 h-14 w-auto -translate-x-1/2 -translate-y-1/2 text-text-hi opacity-70 md:h-16" />
             <span className="tabular absolute left-full top-1 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
               v{APP_VERSION}
             </span>
