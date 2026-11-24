@@ -14,6 +14,7 @@ const MAX_CHOICE_GAP = 3
 const errors = []
 const lines = []
 const shortBodies = []
+const choiceExempt = new Set(JSON.parse(readFileSync(join(root, 'scripts', 'choice-ending-exemptions.json'), 'utf8')))
 
 for (const name of strictChapters) {
   const text = readFileSync(join(root, 'src', 'content', 'story', name + '.json'), 'utf8')
@@ -41,6 +42,10 @@ for (const name of strictChapters) {
     if (compactLength < 180) shortBodies.push(id + ':' + compactLength)
     if (scene.body.length > MAX_BODY) errors.push(id + ' 正文 ' + scene.body.length + ' 字，超过 ' + MAX_BODY)
     if (scene.options) {
+      if (!choiceExempt.has(name)) {
+        const lastParagraph = scene.body.split(/\n\n+/).filter(Boolean).at(-1) ?? ''
+        if (!lastParagraph.includes('？') || !lastParagraph.includes('你')) errors.push(id + ' 选择幕最后一段缺少交给玩家的问句')
+      }
       const worlds = scene.options.map((option) => option.effects.world ?? 0)
       if (Math.min(...worlds) > 0) errors.push(id + ' 三个选项都不加逆线，世界线无法摆荡')
       if (scene.body.length < CHOICE_MIN) errors.push(id + ' 选择幕正文 ' + scene.body.length + ' 字，低于 ' + CHOICE_MIN)
