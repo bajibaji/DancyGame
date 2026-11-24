@@ -15,7 +15,7 @@ import { RECIPES } from '../game/puzzle'
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
 import { useGameKeys } from '../lib/keyboard'
-import { CHOICE_UNDO_MS, choiceImpact, worldLine } from '../game/engine'
+import { CHOICE_UNDO_MS, worldLine } from '../game/engine'
 import { choiceOffers } from '../game/choices'
 import { resolveSceneBody, resolveSceneFollowUps, resolveSceneProgress } from '../game/narrative'
 import type { ChoiceKey, Scene } from '../game/types'
@@ -372,9 +372,7 @@ export default function StoryPage() {
                   transition={{ duration: reducedMotion ? 0.12 : 0.3 }}
                   className="flex flex-col gap-2"
                 >
-                  {options.map(({ key, option, opportunity }) => {
-                    const impact = choiceImpact({ meta, history }, option)
-                    return (
+                  {options.map(({ key, option, opportunity }) => (
                     <StarBorder
                       key={key}
                       as="button"
@@ -392,29 +390,17 @@ export default function StoryPage() {
                       radius={18}
                       thickness={1}
                     >
-                      <span className="flex w-full items-start gap-3 px-4 py-3">
+                      <span className="flex w-full items-center gap-3 px-4 py-3">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border-strong font-display text-sm text-accent">
                           {key}
                         </span>
                         <span className="flex min-w-0 flex-1 flex-col gap-1">
                           {opportunity && <span className="text-xs leading-relaxed text-clue">{opportunity}</span>}
                           <span className="option-label">{option.label}</span>
-                          <span className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs leading-relaxed text-text-secondary">
-                            {([['clue', '线索'], ['relation', '关系'], ['danger', '危险']] as const).map(([stat, label]) => {
-                              const value = impact[stat]
-                              return value !== 0 && (
-                                <span key={stat} className={stat === 'danger' && value > 0 || stat === 'relation' && value < 0 ? 'text-warning' : undefined}>
-                                  {label} {value > 0 ? `+${value}` : `−${-value}`}
-                                  {stat === 'danger' && impact.pressured ? '（连续冒险）' : ''}
-                                </span>
-                              )
-                            })}
-                          </span>
                         </span>
                       </span>
                     </StarBorder>
-                    )
-                  })}
+                  ))}
                 </motion.div>
               )}
               {options.length === 0 && textReady && (
