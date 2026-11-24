@@ -3,8 +3,9 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import StatMeters from '../src/components/game/HUD/StatMeters'
 import { RATIO, ratio, statCaps } from '../src/game/balance'
+import { INITIAL_META } from '../src/game/engine'
 
-const meta = { world: 0, clue: 5, relation: 10, danger: 0, memory: 4 }
+const meta = { world: 0, clue: 6, relation: 10, danger: 3, memory: 4 }
 const caps = statCaps()
 const pct = (value: number, cap: number) => Math.round((value / cap) * 100) + '%'
 
@@ -30,7 +31,7 @@ function dangerLabel(value: number) {
 }
 
 describe('调查状态条', () => {
-  it('三项状态按上限比例给出一致的百分比读数与状态标签', () => {
+  it('三项状态按当前章节上限给出一致的百分比读数与状态标签', () => {
     const html = renderToStaticMarkup(createElement(StatMeters, { meta }))
     const meters = Array.from(html.matchAll(/<meter[^>]+aria-label="([^"]+)"[^>]+aria-valuetext="([^"]+)"/g), ([, label, value]) => [label, value])
     expect(meters).toEqual([
@@ -50,5 +51,17 @@ describe('调查状态条', () => {
     const html = renderToStaticMarkup(createElement(StatMeters, { meta }))
     expect(html).not.toContain('aria-label="记忆"')
     expect(html).not.toContain('40%')
+  })
+
+  it('数值变化前只显示名称和问号，状态词与进度条一起隐藏', () => {
+    const initial = renderToStaticMarkup(createElement(StatMeters, { meta: INITIAL_META }))
+    expect(initial.match(/？？/g)).toHaveLength(3)
+    for (const label of ['不足', '磨合', '稳定']) expect(initial).not.toContain(label)
+    expect(initial).not.toContain('style="width:')
+    expect(initial).not.toContain('aria-label="线索"')
+    const changed = renderToStaticMarkup(createElement(StatMeters, { meta: { ...INITIAL_META, clue: 6 } }))
+    expect(changed.match(/？？/g)).toHaveLength(2)
+    expect(changed).toContain(pct(6, caps.clue))
+    expect(changed).toContain(clueLabel(6))
   })
 })

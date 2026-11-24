@@ -104,6 +104,15 @@ describe('序章两次查证与跨章交接', () => {
     expect(new Set(store.getState().clues).size).toBe(store.getState().clues.length)
   })
 
+  it('越过交接点的旧档补回记忆碎片', async () => {
+    const saved = {
+      ...createInitialState('c0101a', 11), started: true, clues: ['C03', 'C27', 'C28'], memories: [],
+      visited: ['p16c', 'c0101a'], appliedScenes: ['p16c', 'c0101a'],
+    }
+    const { store } = await loadStore(saved, 3)
+    expect(store.getState().memories).toContain('M01')
+  })
+
   it('尚未交接的旧档不提前解锁推理，已结案档不补材料', async () => {
     const { store: pending } = await loadStore({ ...createInitialState('p16c', 11), started: true }, 3)
     expect(pending.getState().clues).toEqual([])

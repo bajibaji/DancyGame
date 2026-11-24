@@ -92,8 +92,10 @@ function mergeSave(saved: unknown, current: GameStore): GameStore {
     if (passed(id)) grantSources.push(id)
   }
   const missingClues = state.ending ? [] : Array.from(new Set(grantSources.flatMap((id) => getScene(id)?.effects?.clues ?? []))).filter((id) => !state.clues.includes(id))
-  if (sceneId === state.sceneId && visited.length === state.visited.length && appliedScenes.length === state.appliedScenes.length && !missingClues.length) return state
-  return { ...state, sceneId, visited, appliedScenes, clues: [...state.clues, ...missingClues] }
+  const ownedMemories = state.memories ?? []
+  const missingMemories = state.ending ? [] : Array.from(new Set(grantSources.flatMap((id) => getScene(id)?.effects?.memories ?? []))).filter((id) => !ownedMemories.includes(id))
+  if (sceneId === state.sceneId && visited.length === state.visited.length && appliedScenes.length === state.appliedScenes.length && !missingClues.length && !missingMemories.length) return state
+  return { ...state, sceneId, visited, appliedScenes, clues: [...state.clues, ...missingClues], memories: [...ownedMemories, ...missingMemories] }
 }
 
 function withSceneEffects(state: GameStore, sceneId: string): Partial<GameStore> {

@@ -112,8 +112,8 @@ export const OPPORTUNITIES: Readonly<Record<string, readonly Opportunity[]>> = {
     insteadOf: 'B', context: '送检单的备注栏还空着，顾淮正等你落笔。',
     action: {
       label: '把暂未排除的来源也写进送检单，由你签名。',
-      tendency: 'evidence', risk: 'medium', effects: { clue: 2, danger: 1 },
-      consequence: '你把三种说法并排写在备注里，只在能确认的那一条下划线。顾淮看完，问要不要把另外两条擦掉。你在备注下面签了名。他把纸折好，折痕正好避开那三行。',
+      tendency: 'evidence', risk: 'medium', effects: { clue: 2, danger: 1, flags: ['F_MISSING_LIST'] },
+      consequence: '你把三种说法并排写在备注里，只在能确认的那一条下划线。顾淮看完，问要不要把另外两条擦掉。你在备注下面签了名。陆晚把失踪人口名单另存一页，等你回来再核。',
       progress: '保存了三种待查的来源，送检记录由你负责。',
     },
   }],
@@ -121,7 +121,7 @@ export const OPPORTUNITIES: Readonly<Record<string, readonly Opportunity[]>> = {
     insteadOf: 'A', context: '战远没再往井口挪。贺川手里的封条还是完整的。',
     action: {
       label: '先封井，请战远在封条背面写下他非看不可的地方。',
-      tendency: 'empathy', risk: 'low', effects: { clue: 1, danger: -2, world: 1 },
+      tendency: 'empathy', risk: 'low', effects: { clue: 1, danger: -2, world: 1, flags: ['F_TEN_MIN'] },
       consequence: '战远接了笔，却没有往井边去。他托着封条写了「第二级踏板」，又把笔还给贺川。你们在井口把这四个字一块儿记下来。封条贴上以后，他最后一个从车间出去。',
       progress: '井口先封起来了，第二级踏板留待复核。',
     },

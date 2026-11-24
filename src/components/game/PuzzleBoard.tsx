@@ -6,7 +6,15 @@ import { useGameStore } from '../../stores/gameStore'
 import { RECIPES } from '../../game/puzzle'
 import { PUZZLES, assistFor, judgePuzzle, puzzleStatus } from '../../game/puzzles'
 import type { Puzzle } from '../../game/puzzles'
-import { isReleasedChapter, isReleasedRecipe, RELEASED_CLUES } from '../../content/release'
+import { isReleasedChapter, isReleasedRecipe } from '../../content/release'
+
+const CLUE_CHAPTER = new Map<string, number>()
+CHAPTERS.forEach((chapter, index) => {
+  for (const scene of chapter.scenes) {
+    for (const id of scene.effects?.clues ?? []) if (!CLUE_CHAPTER.has(id)) CLUE_CHAPTER.set(id, index)
+    for (const option of scene.options ?? []) for (const id of option.effects.clues ?? []) if (!CLUE_CHAPTER.has(id)) CLUE_CHAPTER.set(id, index)
+  }
+})
 
 export default function PuzzleBoard() {
   const navigate = useNavigate()
@@ -26,7 +34,10 @@ export default function PuzzleBoard() {
   const statuses = useMemo(
     () =>
       PUZZLES.filter((puzzle) => isReleasedChapter(puzzle.chapter) && isReleasedRecipe(puzzle.kind === 'pair' ? puzzle.answer : puzzle.materials)).map((entry) => {
-        const puzzle = entry.kind === 'pair' ? { ...entry, choices: entry.choices.filter((id) => RELEASED_CLUES.some((card) => card.id === id)) } : entry
+        const chapterIndex = CHAPTERS.findIndex(({ chapter }) => chapter === entry.chapter)
+        const puzzle = entry.kind === 'pair'
+          ? { ...entry, choices: entry.choices.filter((id) => clues.includes(id) || (CLUE_CHAPTER.get(id) ?? Number.POSITIVE_INFINITY) <= chapterIndex) }
+          : entry
         return {
         puzzle,
         status: puzzleStatus(puzzle, currentChapter, clues, solved),
@@ -100,7 +111,11 @@ export default function PuzzleBoard() {
     if (!open || successRecipe) return
     if (judgePuzzle(open, picked)) {
       const recipe = RECIPES.find(({ id }) => id === open.recipe)
-      if (recipe) solvePuzzle(recipe.cards[0], recipe.cards[1])
+      const result = recipe ? solvePuzzle(recipe.cards[0], recipe.cards[1]) : null
+      if (!result) {
+        setNotice('这两张材料还没有同时入档，暂时不能推演。')
+        return
+      }
       setSuccessRecipe(open.recipe)
       setNotice(null)
       return
@@ -210,7 +225,7 @@ export default function PuzzleBoard() {
               收齐材料后可复核。判断有误时，档案会标出需要重看的地方。
             </p>
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-[11px] tracking-[0.2em] text-text-dim">推理题（{solvedCount}/{PUZZLES.length}）</h2>
+              <h2 className="text-[11px] tracking-[0.2em] text-text-dim">推理题（{solvedCount}/{statuses.length}）</h2>
             </div>
             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-1">
               {statuses.map(({ puzzle, status }) => {

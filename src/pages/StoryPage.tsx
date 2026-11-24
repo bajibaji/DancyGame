@@ -216,7 +216,7 @@ function ReleasedStoryPage() {
           <LocationBar location={location} timeOfDay={scene.timeOfDay} chapter={scene.chapter} line={line} />
           <div className="flex min-h-13 items-center justify-between gap-4 px-3 lg:hidden">
             <div className="min-w-0 flex-1 md:max-w-[400px]">
-              <StatMeters meta={meta} />
+              <StatMeters key={runSeed} meta={meta} chapter={scene.chapter} />
             </div>
             <div className="flex shrink-0 items-center gap-1">
               <button
@@ -403,7 +403,7 @@ function ReleasedStoryPage() {
           <aside className="hidden lg:flex lg:w-[300px] lg:shrink-0 lg:flex-col lg:gap-3 lg:pb-6 lg:pt-4">
             <section className="rounded-[14px] border border-border bg-surface/70 p-4">
               <h2 className="mb-3 text-[11px] tracking-[0.2em] text-text-dim">调查状态</h2>
-              <StatMeters meta={meta} />
+              <StatMeters key={runSeed} meta={meta} chapter={scene.chapter} />
             </section>
             <section className="rounded-[14px] border border-border bg-surface/70 p-4">
               <h2 className="mb-3 text-[11px] tracking-[0.2em] text-text-dim">进度</h2>

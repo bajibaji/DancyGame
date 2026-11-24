@@ -13,9 +13,11 @@ const MAX_CHOICE_GAP = 3
 
 const errors = []
 const lines = []
+const shortBodies = []
 
 for (const name of strictChapters) {
-  const chapter = JSON.parse(readFileSync(join(root, 'src', 'content', 'story', name + '.json'), 'utf8'))
+  const text = readFileSync(join(root, 'src', 'content', 'story', name + '.json'), 'utf8')
+  const chapter = JSON.parse(text)
   let gap = 0
   let chars = 0
   let variants = 0
@@ -23,6 +25,20 @@ for (const name of strictChapters) {
     const id = scene.id
     chars += scene.body.length
     gap++
+    const start = text.indexOf(`"id": "${id}"`)
+    const end = text.indexOf('"id": "', start + 10)
+    const slice = text.slice(start, end === -1 ? text.length : end)
+    const keys = [...slice.matchAll(/^ {3}"([A-Za-z]+)":/gm)].map((match) => match[1])
+    const duplicates = keys.filter((key, index) => keys.indexOf(key) !== index)
+    if (duplicates.length) errors.push(id + ' 重复顶层字段：' + Array.from(new Set(duplicates)).join('、'))
+    const sentences = scene.body.split(/[。！？\n]/).map((part) => part.replace(/[，、；：""''「」『』（）()\s]/g, '')).filter((part) => part.length >= 12)
+    const seenSentences = new Set()
+    for (const sentence of sentences) {
+      if (seenSentences.has(sentence)) errors.push(id + ' 同一幕重复句子：' + sentence.slice(0, 16) + '…')
+      seenSentences.add(sentence)
+    }
+    const compactLength = scene.body.replace(/\s/g, '').length
+    if (compactLength < 180) shortBodies.push(id + ':' + compactLength)
     if (scene.body.length > MAX_BODY) errors.push(id + ' 正文 ' + scene.body.length + ' 字，超过 ' + MAX_BODY)
     if (scene.options) {
       const worlds = scene.options.map((option) => option.effects.world ?? 0)
@@ -54,6 +70,10 @@ for (const name of strictChapters) {
 }
 
 console.log(lines.join('\n'))
+if (shortBodies.length) {
+  console.log('')
+  console.log('去空白偏短 ' + shortBodies.length + ' 幕（低于 180，先提示不阻断）：' + shortBodies.slice(0, 10).join(' ') + (shortBodies.length > 10 ? ' …' : ''))
+}
 if (errors.length) {
   console.log('')
   console.log('不合规 ' + errors.length + ' 处：')
