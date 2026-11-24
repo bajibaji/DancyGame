@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CLUE_MAP } from '../src/content/index'
+import { CHAPTERS, CLUE_MAP } from '../src/content/index'
 import { RECIPES } from '../src/game/puzzle'
 import { PUZZLES, assistFor, judgePuzzle, puzzleStatus } from '../src/game/puzzles'
 
@@ -18,7 +18,7 @@ describe('推理题库', () => {
     for (const puzzle of PUZZLES) {
       const recipe = recipeById.get(puzzle.recipe)
       expect(recipe, puzzle.id).toBeDefined()
-      expect(['prologue', 'ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07']).toContain(puzzle.chapter)
+      expect(CHAPTERS.some(({ chapter }) => chapter === puzzle.chapter)).toBe(true)
       expect(puzzle.prompt.length).toBeGreaterThan(8)
       expect(puzzle.reward.text.length).toBeGreaterThan(30)
       if (puzzle.kind === 'pair') {

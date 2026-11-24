@@ -23,7 +23,7 @@ npm run check
 
 ## 结构
 
-- `src/content/story/`：序章到第七章，8 章 × 48 幕，共 384 幕
+- `src/content/story/`：当前开放序章与第一至第五章，共 438 幕；后段原稿暂时隐藏，第五章结束显示「敬请期待」
 - `src/content/`：线索卡、记忆、人物、地点、结局文本
 - `src/game/`：状态机、数值、结局判定、推理板
 - `src/pages/`、`src/components/`：界面

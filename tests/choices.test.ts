@@ -44,7 +44,7 @@ describe('每局的调查选项', () => {
       chapters.add(scene.chapter)
       for (const { action, context, insteadOf, requires } of options) {
         const original = scene.options!.find(({ key }) => key === insteadOf)!
-        expect(original.effects.flags ?? [], id).toEqual([])
+        for (const flag of original.effects.flags ?? []) expect(action.effects.flags ?? [], id).toContain(flag)
         expect(original.effects.clues ?? [], id).toEqual([])
         expect(original.effects.memories ?? [], id).toEqual([])
         expect(action.effects.clue ?? 0, id).toBeGreaterThanOrEqual(0)

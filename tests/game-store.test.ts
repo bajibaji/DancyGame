@@ -100,7 +100,8 @@ describe('序章两次查证与跨章交接', () => {
       visited: ['p16c', 'c0101a', current], appliedScenes: ['p16c', 'c0101a'], flags: { F_TO_OLDFACTORY: true },
     }
     const { store } = await loadStore(saved, 3)
-    expect(store.getState()).toMatchObject({ ...saved, clues: ['C03', 'C27', 'C28'], history: [], solved: [] })
+    expect(store.getState()).toMatchObject({ ...saved, clues: expect.arrayContaining(['C03', 'C27', 'C28']), history: [], solved: [] })
+    expect(new Set(store.getState().clues).size).toBe(store.getState().clues.length)
   })
 
   it('尚未交接的旧档不提前解锁推理，已结案档不补材料', async () => {
@@ -115,6 +116,58 @@ describe('序章两次查证与跨章交接', () => {
 })
 
 describe('游玩进度', () => {
+  it('第五章结束停在敬请期待，刷新不结算第六章，仍可撤销最后选择', async () => {
+    const { store, storage } = await loadStore({ ...createInitialState('festivalbridgec', 19), started: true }, 3)
+    const before = store.getState()
+    const option = choiceOffers(getScene(before.sceneId)!, 19, before.flags)[0]
+    before.choose(option.key, before.sceneId)
+    expect(store.getState().sceneId).toBe('c0304a')
+    expect(store.getState().appliedScenes).not.toContain('c0304a')
+    expect(store.getState().ending).toBeNull()
+    expect(store.getState().history).toHaveLength(1)
+    store.getState().undo()
+    expect(store.getState().sceneId).toBe('festivalbridgec')
+    store.getState().choose(option.key, before.sceneId)
+    const raw = JSON.parse(storage.getItem(SAVE_KEY)!)
+    const { store: reopened } = await loadStore(raw.state, raw.version)
+    const state = reopened.getState()
+    state.advance(getScene(state.sceneId)!)
+    state.choose('A', state.sceneId)
+    expect(reopened.getState()).toMatchObject({ sceneId: 'c0304a', ending: null, meta: raw.state.meta, history: raw.state.history })
+    expect(reopened.getState().appliedScenes).not.toContain('c0304a')
+  })
+
+  it('后段旧档原位置与已有资料保留，无法继续后段但可复核开放材料', async () => {
+    const saved = { ...createInitialState('c0614c', 8), started: true, clues: ['C22', 'C25'], memories: ['M09'], solved: ['D09'], visited: ['c0614b', 'c0614c'], appliedScenes: ['c0614b'], flags: { F62_MEMORY_TRUTH: true } }
+    const { store } = await loadStore(saved, 3)
+    expect(store.getState()).toMatchObject({ sceneId: saved.sceneId, runSeed: 8, flags: saved.flags, memories: saved.memories, solved: saved.solved })
+    expect(store.getState().clues).toEqual(expect.arrayContaining(saved.clues))
+    store.getState().advance(getScene(saved.sceneId)!)
+    expect(store.getState().sceneId).toBe(saved.sceneId)
+    expect(store.getState().solvePuzzle('C22', 'C25')).toBeNull()
+  })
+
+  it('已过新增竖井段的旧档补齐材料但不重放、不加分，已结案不补', async () => {
+    const saved = { ...createInitialState('c0203a', 3), started: true, visited: ['c0202a', 'c0202b', 'c0202c', 'c0203a'], appliedScenes: ['c0202a'], clues: ['C07'] }
+    const { store } = await loadStore(saved, 3)
+    expect(store.getState()).toMatchObject({ sceneId: saved.sceneId, meta: saved.meta, clues: expect.arrayContaining(['C07', 'C29', 'C30', 'C31', 'C32']) })
+    const { store: ended } = await loadStore({ ...saved, ending: 'bad', screen: 'ending' }, 3)
+    expect(ended.getState()).toMatchObject({ ending: 'bad', clues: ['C07'] })
+  })
+
+  it('笔记本核验后刷新保留材料与结局旗标，过早的旧卡单独清理', async () => {
+    const saved = { ...createInitialState('c0614c', 9), started: true, clues: ['C22'], visited: ['c0614b', 'c0614c'], appliedScenes: ['c0614b'], flags: { F62_MEMORY_TRUTH: true } }
+    const { store, storage } = await loadStore(saved, 3)
+    expect(store.getState()).toMatchObject({ clues: expect.arrayContaining(['C22']), flags: saved.flags })
+    store.getState().setScreen('story')
+    const raw = JSON.parse(storage.getItem(SAVE_KEY)!)
+    const { store: reloaded } = await loadStore(raw.state, raw.version)
+    expect(reloaded.getState()).toMatchObject({ clues: store.getState().clues, flags: saved.flags })
+    const { store: early } = await loadStore({ ...createInitialState('c0408a'), clues: ['C22'], flags: { F62_MEMORY_TRUTH: true } }, 3)
+    expect(early.getState().clues).toContain('C22')
+    expect(early.getState().flags).toEqual({ F62_MEMORY_TRUTH: true })
+  })
+
   it('修复动作会把失效场景换回最近一个有效场景', async () => {
     const { store } = await loadStore({ ...createInitialState('p01a'), started: true }, 3)
     store.setState({ sceneId: 'c9999', visited: ['p01a', 'c9999'] })
@@ -171,7 +224,7 @@ describe('游玩进度', () => {
     store.getState().choose('A', scene.id)
     vi.advanceTimersByTime(CHOICE_UNDO_MS)
     store.getState().undo()
-    expect(store.getState()).toMatchObject({ sceneId: 'c0303a', snapshot: null })
+    expect(store.getState()).toMatchObject({ sceneId: 'crowd01a', snapshot: null })
     expect(store.getState().history).toHaveLength(1)
   })
 
@@ -183,7 +236,7 @@ describe('游玩进度', () => {
     const raw = JSON.parse(storage.getItem(SAVE_KEY)!)
     const { store: reopened } = await loadStore(raw.state)
     const state = reopened.getState()
-    expect(state).toMatchObject({ sceneId: option.next, snapshot: null, clues: [], flags: {}, history: raw.state.history })
+    expect(state).toMatchObject({ sceneId: option.next, snapshot: null, clues: raw.state.clues, flags: {}, history: raw.state.history })
     expect(state.meta).toEqual(raw.state.meta)
     expect(resolveSceneBody(getScene(option.next)!, state.flags, state.history[0])).toContain(option.consequence)
     expect(resolveSceneProgress(getScene(option.next)!, state.history[0])).toContain(option.progress)
@@ -207,11 +260,13 @@ describe('游玩进度', () => {
     expect(choiceOffers(scene, reopened.getState().runSeed, reopened.getState().flags)).toEqual(offers)
   })
 
-  it('终幕能进入结案，带回证据的路线仍受调查数值影响', async () => {
+  it('暂未开放的终幕不能推进或结算，旧进度保持原位置', async () => {
     const { store } = await loadStore({ ...createInitialState('c0715c'), started: true })
     store.getState().choose('A', 'c0715c')
     store.getState().advance(getScene('c0716a')!)
-    expect(store.getState()).toMatchObject({ ending: 'bad', screen: 'ending' })
+    expect(store.getState()).toMatchObject({ sceneId: 'c0715c', ending: null, history: [] })
+    store.getState().finishAutoEnding()
+    expect(store.getState().ending).toBeNull()
   })
 
   it('旧版本关系值翻倍到新刻度，其他数值不动', async () => {

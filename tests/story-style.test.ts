@@ -63,8 +63,7 @@ describe('文风约束（去 AI 腔）', () => {
   it('正文长度在可读区间', () => {
     for (const scene of SCENES.values()) {
       for (const body of bodiesOf(scene)) {
-        const strict = ['prologue', 'ch01', 'ch02', 'ch03'].includes(scene.chapter)
-        const min = strict ? (scene.options?.length ? 160 : 200) : 100
+        const min = scene.options?.length ? 160 : 200
         expect(body.length, `${scene.id} 正文过短`).toBeGreaterThanOrEqual(min)
         expect(body.length, `${scene.id} 正文过长`).toBeLessThanOrEqual(460)
       }

@@ -8,6 +8,12 @@ import ch04Json from './story/ch04.json'
 import ch05Json from './story/ch05.json'
 import ch06Json from './story/ch06.json'
 import ch07Json from './story/ch07.json'
+import ch08Json from './story/ch08.json'
+import ch09Json from './story/ch09.json'
+import ch10Json from './story/ch10.json'
+import ch11Json from './story/ch11.json'
+import ch12Json from './story/ch12.json'
+import ch13Json from './story/ch13.json'
 import cluesJson from './clues.json'
 import memoriesJson from './memories.json'
 import locationsJson from './hz-locations.json'
@@ -59,6 +65,12 @@ export const CHAPTERS = [
   ch05Json,
   ch06Json,
   ch07Json,
+  ch08Json,
+  ch09Json,
+  ch10Json,
+  ch11Json,
+  ch12Json,
+  ch13Json,
 ] as unknown as Chapter[]
 
 export const SCENES = new Map<string, Scene>()

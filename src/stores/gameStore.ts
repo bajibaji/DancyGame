@@ -5,8 +5,9 @@ import { applyEffects, CHOICE_UNDO_MS, choose as engineChoose, createInitialStat
 import { choiceOffers } from '../game/choices'
 import { solvePuzzle as engineSolvePuzzle } from '../game/puzzle'
 import type { Recipe } from '../game/puzzle'
-import { getScene, START_SCENE } from '../content/index'
+import { CHAPTERS, getScene, START_SCENE } from '../content/index'
 import { characterIdsInText } from '../game/characterNames'
+import { isReleasedRecipe, isReleasedScene } from '../content/release'
 
 interface GameStore {
   screen: string
@@ -68,11 +69,10 @@ function mergeRaw(saved: unknown, current: GameStore): GameStore {
     meta: { ...merged.meta, world: merged.meta?.world ?? 0 },
     runSeed: Number.isInteger(merged.runSeed) && merged.runSeed >= 0 && merged.runSeed <= 0xffffffff ? merged.runSeed : 0,
   }
-  if (state.sceneId === 'c0609' || state.visited.includes('c0609')) return state
-  if (!state.clues.includes('C22') && !state.flags.F62_MEMORY_TRUTH) return state
-  const flags = { ...state.flags }
-  delete flags.F62_MEMORY_TRUTH
-  return { ...state, clues: state.clues.filter((id) => id !== 'C22'), flags }
+  if (!isReleasedScene(state.sceneId) || state.ending || state.sceneId === 'c0609' || state.visited.includes('c0609')) return state
+  const notebookSource = state.sceneId === 'c0614b' || state.visited.includes('c0614b') || state.appliedScenes.includes('c0614b')
+  if (notebookSource || !state.clues.includes('C22')) return state
+  return { ...state, clues: state.clues.filter((id) => id !== 'C22') }
 }
 
 function mergeSave(saved: unknown, current: GameStore): GameStore {
@@ -80,16 +80,24 @@ function mergeSave(saved: unknown, current: GameStore): GameStore {
   const sceneId = validSceneId(state)
   const visited = state.visited.filter((id) => Boolean(getScene(id)))
   const appliedScenes = state.appliedScenes.filter((id) => Boolean(getScene(id)))
-  const handoffClues = !state.ending && (sceneId === 'c0101a' || visited.includes('c0101a') || appliedScenes.includes('c0101a'))
-    ? (getScene('c0101a')?.effects?.clues ?? []).filter((id) => !state.clues.includes(id))
-    : []
-  if (sceneId === state.sceneId && visited.length === state.visited.length && appliedScenes.length === state.appliedScenes.length && !handoffClues.length) {
-    return state
+  const ordered = CHAPTERS.flatMap((chapter) => chapter.scenes)
+  const currentIndex = ordered.findIndex((scene) => scene.id === sceneId)
+  const reached = (id: string) => sceneId === id || visited.includes(id) || appliedScenes.includes(id)
+  const passed = (id: string) => {
+    const index = ordered.findIndex((scene) => scene.id === id)
+    return index >= 0 && currentIndex >= index
   }
-  return { ...state, sceneId, visited, appliedScenes, clues: [...state.clues, ...handoffClues] }
+  const grantSources = reached('c0101a') ? ['c0101a'] : []
+  for (const id of ['lab02b', 'money02b', 'clock01b', 'ring01b', 'yuan04a', 'yuan04b', 'key02a', 'well03a', 'shaftreview01a', 'hill03a', 'hospital01b', 'video02b', 'list01b', 'identity01a']) {
+    if (passed(id)) grantSources.push(id)
+  }
+  const missingClues = state.ending ? [] : Array.from(new Set(grantSources.flatMap((id) => getScene(id)?.effects?.clues ?? []))).filter((id) => !state.clues.includes(id))
+  if (sceneId === state.sceneId && visited.length === state.visited.length && appliedScenes.length === state.appliedScenes.length && !missingClues.length) return state
+  return { ...state, sceneId, visited, appliedScenes, clues: [...state.clues, ...missingClues] }
 }
 
 function withSceneEffects(state: GameStore, sceneId: string): Partial<GameStore> {
+  if (!isReleasedScene(sceneId)) return { sceneId }
   const scene = getScene(sceneId)
   const visited =
     state.visited[state.visited.length - 1] === sceneId ? state.visited : [...state.visited, sceneId]
@@ -160,6 +168,7 @@ export const useGameStore = create<GameStore>()(
       },
       choose: (key, sceneId) => {
         const state = get()
+        if (!isReleasedScene(state.sceneId)) return
         if (sceneId !== state.sceneId) return
         const scene = getScene(sceneId)
         if (!scene) return
@@ -193,6 +202,7 @@ export const useGameStore = create<GameStore>()(
         set({ ...next, ...entered, snapshot, screen: 'story' })
       },
       advance: (scene) => {
+        if (!isReleasedScene(get().sceneId)) return
         if (scene.id !== get().sceneId || scene.options?.length) return
         if (scene.ending) {
           if (scene.ending === 'auto' || scene.ending === 'good') get().finishAutoEnding()
@@ -206,6 +216,7 @@ export const useGameStore = create<GameStore>()(
       },
       solvePuzzle: (a, b) => {
         const state = get()
+        if (!isReleasedRecipe([a, b])) return null
         const result = engineSolvePuzzle(
           {
             sceneId: state.sceneId,
@@ -228,6 +239,7 @@ export const useGameStore = create<GameStore>()(
       },
       finishAutoEnding: () => {
         const state = get()
+        if (!isReleasedScene(state.sceneId)) return
         const ending = decideEnding({
           sceneId: state.sceneId,
           runSeed: state.runSeed,

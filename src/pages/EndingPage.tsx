@@ -11,6 +11,7 @@ import { useGameStore } from '../stores/gameStore'
 import { breakdownCause } from '../game/engine'
 import { captureStatus, memoryStatus } from '../game/narrative'
 import type { Epilogue } from '../game/types'
+import ComingSoon from '../components/game/ComingSoon'
 
 const KEY_DECISIONS = new Set(['c0304', 'c0508', 'c0610', 'c0704', 'c0706', 'c0706p'])
 
@@ -20,6 +21,10 @@ function endingArt(name: string, accent: string, bg: string): string {
 }
 
 export default function EndingPage() {
+  return <ComingSoon />
+}
+
+export function FullEndingPage() {
   const navigate = useNavigate()
   const ending = useGameStore((s) => s.ending)
   const epilogue = useGameStore((s) => s.epilogue)

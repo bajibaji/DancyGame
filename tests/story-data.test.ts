@@ -7,8 +7,6 @@ import { RECIPES, availableRecipes, solvePuzzle } from '../src/game/puzzle'
 
 type Policy = (options: Option[], sceneId: string) => 'A' | 'B' | 'C'
 
-const ch04Complete = (CHAPTERS.find((chapter) => chapter.chapter === 'ch04')?.scenes.length ?? 0) >= 40
-
 function play(policy: Policy, solveAll = false): GameState {
   let state = createInitialState(START_SCENE)
   let scene = getScene(START_SCENE)
@@ -148,13 +146,11 @@ describe('剧情图完整性', () => {
     const sources = (clue: string) => [...SCENES.values()].filter((scene) =>
       scene.effects?.clues?.includes(clue) || scene.options?.some((o) => o.effects.clues?.includes(clue)),
     ).map(({ id }) => id)
-    if (SCENES.has('c0609')) expect(sources('C22')).toEqual(['c0609'])
-    if (SCENES.has('c0408')) expect(sources('C24')).toEqual(['c0408'])
-    if (SCENES.has('c0609')) expect(sources('C25')).toEqual(['c0609'])
-    if (SCENES.has('c0708')) expect(sources('C26')).toEqual(['c0708'])
-    // 序章至第二章已重写，线索发放表待重排；本项先只守第三至第七章。
+    expect(sources('C22')).toEqual(['c0614b'])
+    expect(sources('C24')).toEqual(['c0408c'])
+    expect(sources('C25')).toEqual(['c0612a'])
+    expect(sources('C26')).toEqual(['c0509b'])
     const essential = ['C22', 'C24', 'C25', 'C26']
-    if (!ch04Complete || !SCENES.has('c0408')) return
     for (const policy of [safePolicy, neutralPolicy, recklessPolicy, () => 'B', () => 'C'] satisfies Policy[]) {
       expect(play(policy).clues).toEqual(expect.arrayContaining(essential))
     }

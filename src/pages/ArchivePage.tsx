@@ -6,7 +6,7 @@ import PuzzleBoard from '../components/game/PuzzleBoard'
 import RubberSegment from '../components/reactbits/RubberSegment/RubberSegment'
 import SpotlightCard from '../components/reactbits/SpotlightCard/SpotlightCard'
 import ChromaGrid from '../components/reactbits/ChromaGrid/ChromaGrid'
-import { CHARACTERS, CLUES, MEMORIES } from '../content/index'
+import { RELEASED_CHARACTERS as CHARACTERS, RELEASED_CLUES as CLUES, RELEASED_MEMORIES as MEMORIES, isReleasedRecipe } from '../content/release'
 import { RECIPES } from '../game/puzzle'
 import { useGameStore } from '../stores/gameStore'
 
@@ -56,6 +56,8 @@ export default function ArchivePage() {
   const memories = useGameStore((s) => s.memories)
   const metCharacters = useGameStore((s) => s.metCharacters)
   const solved = useGameStore((s) => s.solved)
+  const releasedRecipes = RECIPES.filter(({ cards }) => isReleasedRecipe(cards))
+  const solvedCount = releasedRecipes.filter(({ id }) => solved.includes(id)).length
   const [tab, setTab] = useState(readTab)
 
   const changeTab = (value: string) => {
@@ -85,7 +87,7 @@ export default function ArchivePage() {
     [ownedMemories],
   )
   const counts: Record<string, string> = {
-    puzzle: `${solved.length}/${RECIPES.length}`,
+    puzzle: `${solvedCount}/${releasedRecipes.length}`,
     clues: `${ownedClues.length}/${CLUES.length}`,
     memories: `${ownedMemories.length}/${MEMORIES.length}`,
     people: `${visiblePeople.length}`,
@@ -102,7 +104,7 @@ export default function ArchivePage() {
           <span aria-hidden />
         </div>
         <div className="mt-1 text-[11px] text-text-dim">
-          线索 {ownedClues.length}/{CLUES.length} · 记忆 {ownedMemories.length}/{MEMORIES.length} · 推演 {solved.length}/{RECIPES.length}
+          线索 {ownedClues.length}/{CLUES.length} · 记忆 {ownedMemories.length}/{MEMORIES.length} · 推演 {solvedCount}/{releasedRecipes.length}
         </div>
       </header>
 

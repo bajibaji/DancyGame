@@ -10,7 +10,7 @@ import RichText from '../components/game/Scene/RichText'
 import TypedRichText from '../components/game/Scene/TypedRichText'
 import StarBorder from '../components/reactbits/StarBorder/StarBorder'
 import GlitchText from '../components/reactbits/GlitchText/GlitchText'
-import { CHARACTERS, CLUES, MEMORIES, chapterTitle, CLUE_MAP, getScene, LOCATION_MAP, MEMORY_MAP } from '../content/index'
+import { chapterTitle, CLUE_MAP, getScene, LOCATION_MAP, MEMORY_MAP } from '../content/index'
 import { RECIPES } from '../game/puzzle'
 import { useGameStore } from '../stores/gameStore'
 import { SPEED_MS, useSettingsStore } from '../stores/settingsStore'
@@ -19,12 +19,20 @@ import { CHOICE_UNDO_MS, worldLine } from '../game/engine'
 import { choiceOffers } from '../game/choices'
 import { resolveSceneBody, resolveSceneFollowUps, resolveSceneProgress } from '../game/narrative'
 import type { ChoiceKey, Scene } from '../game/types'
+import { RELEASED_CHARACTERS, RELEASED_CLUES, RELEASED_MEMORIES, isReleasedScene, isReleasedRecipe } from '../content/release'
+import ComingSoon from '../components/game/ComingSoon'
 
 interface SelectedCharacter {
   id: string
   alias: string
 }
 export default function StoryPage() {
+  const sceneId = useGameStore((state) => state.sceneId)
+  if (getScene(sceneId) && !isReleasedScene(sceneId)) return <ComingSoon />
+  return <ReleasedStoryPage />
+}
+
+function ReleasedStoryPage() {
   const navigate = useNavigate()
   const sceneId = useGameStore((s) => s.sceneId)
   const runSeed = useGameStore((s) => s.runSeed)
@@ -51,7 +59,6 @@ export default function StoryPage() {
   const [readScene, setReadScene] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<{ sceneId: string; message: string | null; canUndo: boolean } | null>(null)
   const [selectedCharacter, setSelectedCharacter] = useState<SelectedCharacter | null>(null)
-  const [demoNotice, setDemoNotice] = useState(false)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const latestRef = useRef<HTMLElement | null>(null)
 
@@ -75,21 +82,13 @@ export default function StoryPage() {
     [visited, sceneId],
   )
   const visitedScenes = useMemo(
-    () => pathIds.map((id) => getScene(id)).filter((s): s is Scene => Boolean(s)),
+    () => pathIds.filter(isReleasedScene).map((id) => getScene(id)).filter((s): s is Scene => Boolean(s)),
     [pathIds],
   )
 
   useEffect(() => {
     setSelectedCharacter(null)
   }, [sceneId])
-
-  useEffect(() => {
-    if (!scene) return
-    if (!['ch03', 'ch04', 'ch05', 'ch06', 'ch07'].includes(scene.chapter)) return
-    if (!history.some((entry) => entry.chapter === 'ch02')) return
-    if (sessionStorage.getItem('demo-notice-seen') === '1') return
-    setDemoNotice(true)
-  }, [scene, history])
 
   useEffect(() => {
     if (!scene) return
@@ -150,7 +149,7 @@ export default function StoryPage() {
   }, [autoAdvance, scene, textReady, advance, snapshot, solved])
 
   const characterCard = useMemo(
-    () => (selectedCharacter ? CHARACTERS.find((c) => c.id === selectedCharacter.id) : undefined),
+    () => (selectedCharacter ? RELEASED_CHARACTERS.find((c) => c.id === selectedCharacter.id) : undefined),
     [selectedCharacter],
   )
 
@@ -213,21 +212,6 @@ export default function StoryPage() {
   return (
     <GameShell>
       <div className="flex h-dvh flex-col overflow-hidden">
-        {demoNotice && (
-          <div className="flex shrink-0 items-start gap-3 border-b border-clue/40 bg-clue/10 px-4 py-2 text-xs leading-relaxed text-text-secondary md:px-6">
-            <span className="min-w-0 flex-1">试玩段落到此。第三章起仍是旧稿，节奏和写法都与前面不同；想停下可以从设置回到标题页。</span>
-            <button
-              type="button"
-              className="shrink-0 rounded-sm border border-clue/50 px-2 py-1 text-clue"
-              onClick={() => {
-                sessionStorage.setItem('demo-notice-seen', '1')
-                setDemoNotice(false)
-              }}
-            >
-              继续看旧稿
-            </button>
-          </div>
-        )}
         <header className="shrink-0 border-b border-border-subtle/50 bg-bg-deep/80">
           <LocationBar location={location} timeOfDay={scene.timeOfDay} chapter={scene.chapter} line={line} />
           <div className="flex min-h-13 items-center justify-between gap-4 px-3 lg:hidden">
@@ -425,15 +409,15 @@ export default function StoryPage() {
               <h2 className="mb-3 text-[11px] tracking-[0.2em] text-text-dim">进度</h2>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <div className="tabular text-lg text-text-hi">{clues.length}<span className="text-xs text-text-dim">/{CLUES.length}</span></div>
+                  <div className="tabular text-lg text-text-hi">{RELEASED_CLUES.filter(({ id }) => clues.includes(id)).length}<span className="text-xs text-text-dim">/{RELEASED_CLUES.length}</span></div>
                   <div className="mt-0.5 text-[10px] text-text-dim">线索</div>
                 </div>
                 <div>
-                  <div className="tabular text-lg text-text-hi">{memories.length}<span className="text-xs text-text-dim">/{MEMORIES.length}</span></div>
+                  <div className="tabular text-lg text-text-hi">{RELEASED_MEMORIES.filter(({ id }) => memories.includes(id)).length}<span className="text-xs text-text-dim">/{RELEASED_MEMORIES.length}</span></div>
                   <div className="mt-0.5 text-[10px] text-text-dim">记忆</div>
                 </div>
                 <div>
-                  <div className="tabular text-lg text-text-hi">{solved.length}<span className="text-xs text-text-dim">/{RECIPES.length}</span></div>
+                  <div className="tabular text-lg text-text-hi">{RECIPES.filter(({ id, cards }) => solved.includes(id) && isReleasedRecipe(cards)).length}<span className="text-xs text-text-dim">/{RECIPES.filter(({ cards }) => isReleasedRecipe(cards)).length}</span></div>
                   <div className="mt-0.5 text-[10px] text-text-dim">推演</div>
                 </div>
               </div>

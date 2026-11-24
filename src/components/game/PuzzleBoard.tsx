@@ -6,6 +6,7 @@ import { useGameStore } from '../../stores/gameStore'
 import { RECIPES } from '../../game/puzzle'
 import { PUZZLES, assistFor, judgePuzzle, puzzleStatus } from '../../game/puzzles'
 import type { Puzzle } from '../../game/puzzles'
+import { isReleasedChapter, isReleasedRecipe, RELEASED_CLUES } from '../../content/release'
 
 export default function PuzzleBoard() {
   const navigate = useNavigate()
@@ -24,10 +25,13 @@ export default function PuzzleBoard() {
 
   const statuses = useMemo(
     () =>
-      PUZZLES.map((puzzle) => ({
+      PUZZLES.filter((puzzle) => isReleasedChapter(puzzle.chapter) && isReleasedRecipe(puzzle.kind === 'pair' ? puzzle.answer : puzzle.materials)).map((entry) => {
+        const puzzle = entry.kind === 'pair' ? { ...entry, choices: entry.choices.filter((id) => RELEASED_CLUES.some((card) => card.id === id)) } : entry
+        return {
         puzzle,
         status: puzzleStatus(puzzle, currentChapter, clues, solved),
-      })),
+        }
+      }),
     [currentChapter, clues, solved],
   )
   const solvedCount = statuses.filter(({ status }) => status === 'solved').length
