@@ -59,6 +59,7 @@ function ReleasedStoryPage() {
   const [readScene, setReadScene] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<{ sceneId: string; message: string | null; canUndo: boolean } | null>(null)
   const [selectedCharacter, setSelectedCharacter] = useState<SelectedCharacter | null>(null)
+  const [atBottom, setAtBottom] = useState(true)
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const latestRef = useRef<HTMLElement | null>(null)
 
@@ -140,6 +141,22 @@ function ReleasedStoryPage() {
   useEffect(() => {
     if (ending && screen === 'ending') navigate('/ending')
   }, [ending, screen, navigate])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const check = () => {
+      setAtBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - 24)
+    }
+    check()
+    el.addEventListener('scroll', check, { passive: true })
+    const observer = new ResizeObserver(check)
+    observer.observe(el)
+    return () => {
+      el.removeEventListener('scroll', check)
+      observer.disconnect()
+    }
+  }, [sceneId, readingMode, activeBody])
 
   useEffect(() => {
     if (!autoAdvance || !scene || scene.options?.length || !textReady || resolveSceneFollowUps(scene, solved).length) return
@@ -245,7 +262,7 @@ function ReleasedStoryPage() {
           <div className="relative min-h-0 flex-1 overflow-hidden">
             <div
               ref={scrollRef}
-              className="reading-scroll -mr-4 h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain pb-[calc(7rem+env(safe-area-inset-bottom))] pl-5 pr-[calc(1.25rem+1rem)] pt-[18px] [touch-action:pan-y] md:mx-auto md:mr-0 md:w-full md:max-w-[680px] md:px-8 md:pt-6 lg:max-w-[720px] lg:px-4 lg:pt-5"
+              className="reading-scroll -mr-4 h-full select-none overflow-y-auto overflow-x-hidden overscroll-contain pb-[calc(1.75rem+env(safe-area-inset-bottom))] pl-5 pr-[calc(1.25rem+1rem)] pt-[18px] [touch-action:pan-y] md:mx-auto md:mr-0 md:w-full md:max-w-[680px] md:px-8 md:pt-6 lg:max-w-[720px] lg:px-4 lg:pt-5"
               onContextMenu={(event) => event.preventDefault()}
             >
             {readingMode === 'linear' ? (
@@ -392,20 +409,23 @@ function ReleasedStoryPage() {
                   ))}
                 </motion.div>
               )}
-            </div>
-            </div>
-            {options.length === 0 && textReady && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-bg-deep via-bg-deep/85 to-transparent px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-8 md:px-8">
+              {options.length === 0 && textReady && (
                 <button
                   type="button"
                   onClick={onAdvance}
-                  className="glass-slab pointer-events-auto group flex min-h-14 w-full items-center justify-center gap-2.5 rounded-[12px] px-4 py-3"
+                  className="glass-slab group flex min-h-14 w-full items-center justify-center gap-2.5 rounded-[12px] px-4 py-3"
                 >
                   <span className="pl-[0.14em] text-[15px] tracking-[0.14em] text-text">
                     {scene.ending ? '查看结局' : scene.puzzle ? '继续下一章' : '继续'}
                   </span>
                   <ChevronDown size={16} strokeWidth={1.6} className="shrink-0 opacity-70 group-active:translate-y-px" aria-hidden />
                 </button>
+              )}
+            </div>
+            </div>
+            {!atBottom && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center pb-1" aria-hidden>
+                <ChevronDown size={16} className="text-text-dim/60 motion-safe:animate-pulse" />
               </div>
             )}
           </div>
