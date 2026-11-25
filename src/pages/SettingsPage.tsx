@@ -1,8 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
 import HoldButton from '../components/reactbits/HoldButton/HoldButton'
+import SpecularButton from '../components/reactbits/SpecularButton/SpecularButton'
+import Switch from '../components/ui/Switch'
+import Segmented from '../components/ui/Segmented'
 import { FONT_SCALE, useSettingsStore } from '../stores/settingsStore'
 import { useGameStore } from '../stores/gameStore'
 import { APP_VERSION } from '../lib/version'
@@ -26,42 +29,32 @@ const READING_ITEMS = [
   { value: 'linear', label: '连续' },
 ]
 
-function SettingToggle({ checked, onChange, label }: { checked: boolean; onChange: (value: boolean) => void; label: string }) {
+function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={`flex min-h-11 min-w-[76px] shrink-0 items-center justify-center rounded-[18px] border px-4 text-sm transition-colors active:opacity-80 ${
-        checked
-          ? 'border-accent bg-accent text-bg-deep'
-          : 'border-border bg-surface text-text-secondary active:bg-surface-hover'
-      }`}
-    >
-      {checked ? '开启' : '关闭'}
-    </button>
+    <section className="border-b border-border-subtle/40 pb-4 last:border-0">
+      <h2 className="mb-1 text-[10px] tracking-[0.24em] text-text-dim">{title}</h2>
+      {children}
+    </section>
   )
 }
 
-function SettingSegment({ items, value, onChange, label }: { items: { value: string; label: string }[]; value: string; onChange: (value: string) => void; label: string }) {
+function SegmentRow({ label, items, value, onChange, name }: { label: string; items: { value: string; label: string }[]; value: string; onChange: (value: string) => void; name: string }) {
   return (
-    <div role="radiogroup" aria-label={label} className="grid grid-flow-col auto-cols-fr gap-1 rounded-[18px] border border-border bg-surface p-1">
-      {items.map((item) => (
-        <button
-          key={item.value}
-          type="button"
-          role="radio"
-          aria-checked={value === item.value}
-          onClick={() => onChange(item.value)}
-          className={`flex min-h-11 items-center justify-center rounded-[14px] px-2 text-sm transition-colors ${
-            value === item.value ? 'bg-accent font-medium text-bg-deep' : 'text-text-secondary active:bg-surface-hover'
-          }`}
-        >
-          {item.label}
-        </button>
-      ))}
+    <div className="border-b border-border-subtle/40 py-3.5 last:border-0">
+      <p className="mb-2 text-[13px] text-text">{label}</p>
+      <Segmented items={items} value={value} onChange={onChange} label={name} />
+    </div>
+  )
+}
+
+function ToggleRow({ label, description, checked, onChange }: { label: string; description?: string; checked: boolean; onChange: (value: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-border-subtle/40 py-3.5 last:border-0">
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] text-text">{label}</p>
+        {description && <p className="mt-0.5 text-[11px] leading-relaxed text-text-dim">{description}</p>}
+      </div>
+      <Switch checked={checked} onChange={onChange} label={label} />
     </div>
   )
 }
@@ -93,85 +86,42 @@ export default function SettingsPage() {
 
   return (
     <GameShell>
-      <header className="sticky top-0 z-20 border-b border-border-subtle/50 bg-bg-deep/80 px-4 py-3 backdrop-blur md:px-6 lg:mx-auto lg:w-full lg:max-w-[1000px]">
-        <div className="flex items-center justify-between">
-          <button type="button" onClick={() => navigate(-1)} className="flex min-h-11 items-center rounded-[18px] pl-1 pr-3 text-sm text-accent active:opacity-70">
-            <ArrowLeft size={16} strokeWidth={1.8} /> 返回
-          </button>
-          <h1 className="font-display text-lg text-text-hi">设置</h1>
-          <span className="w-12" />
+      <header className="glass-header sticky top-0 z-20 pt-[env(safe-area-inset-top)]">
+        <div className="relative flex h-12 items-center px-3 md:px-5 lg:mx-auto lg:w-full lg:max-w-[560px]">
+          <SpecularButton
+            size="sm"
+            radius={12}
+            onClick={() => navigate(-1)}
+            lineColor="var(--color-border)"
+            textColor="var(--color-text-secondary)"
+            className="shrink-0"
+          >
+            <ArrowLeft size={15} strokeWidth={1.8} /> 返回
+          </SpecularButton>
+          <h1 className="pointer-events-none absolute inset-x-0 text-center font-display text-base text-text-hi">设置</h1>
         </div>
       </header>
 
-      <main className="flex w-full flex-1 flex-col gap-6 px-4 py-6 md:grid md:grid-cols-2 md:items-start md:gap-5 md:px-6 lg:mx-auto lg:max-w-[1000px]">
-        <section className="rounded-lg border border-border bg-surface/70 p-4">
-          <h2 className="mb-3 text-xs tracking-[0.2em] text-text-dim">阅读</h2>
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="mb-2 text-sm text-text">文字速度</p>
-              <SettingSegment
-                items={SPEED_ITEMS}
-                value={textSpeed}
-                onChange={(value) => setTextSpeed(value as typeof textSpeed)}
-                label="文字速度"
-              />
-            </div>
-            <div>
-              <p className="mb-2 text-sm text-text">字号（正文与选项）</p>
-              <SettingSegment
-                items={FONT_ITEMS}
-                value={fontSize}
-                onChange={(value) => setFontSize(value as typeof fontSize)}
-                label="字号"
-              />
-            </div>
-            <div>
-              <p className="mb-2 text-sm text-text">阅读方式</p>
-              <SettingSegment
-                items={READING_ITEMS}
-                value={readingMode}
-                onChange={(value) => setReadingMode(value as typeof readingMode)}
-                label="阅读方式"
-              />
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-text">自动继续</p>
-                <p className="mt-0.5 text-[11px] text-text-dim">无选择的段落自动推进</p>
-              </div>
-              <SettingToggle checked={autoAdvance} onChange={setAutoAdvance} label="自动继续" />
-            </div>
-          </div>
-        </section>
+      <main className="flex w-full flex-1 flex-col gap-6 px-4 py-5 md:px-6 lg:mx-auto lg:max-w-[560px]">
+        <Group title="阅读">
+          <SegmentRow label="文字速度" items={SPEED_ITEMS} value={textSpeed} onChange={(value) => setTextSpeed(value as typeof textSpeed)} name="文字速度" />
+          <SegmentRow label="字号" items={FONT_ITEMS} value={fontSize} onChange={(value) => setFontSize(value as typeof fontSize)} name="字号" />
+          <SegmentRow label="阅读方式" items={READING_ITEMS} value={readingMode} onChange={(value) => setReadingMode(value as typeof readingMode)} name="阅读方式" />
+          <ToggleRow label="自动继续" description="无选择的段落自动推进" checked={autoAdvance} onChange={setAutoAdvance} />
+        </Group>
 
-        <section className="rounded-lg border border-border bg-surface/70 p-4">
-          <h2 className="mb-3 text-xs tracking-[0.2em] text-text-dim">动效</h2>
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-text">静态背景</p>
-                <p className="mt-0.5 text-[11px] text-text-dim">关闭丝绸波纹流动，使用静态底色</p>
-              </div>
-              <SettingToggle checked={staticBackground} onChange={setStaticBackground} label="静态背景" />
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-text">减弱动效</p>
-                <p className="mt-0.5 text-[11px] text-text-dim">暂停背景动画、关闭闪烁与打字机</p>
-              </div>
-              <SettingToggle checked={reducedMotion} onChange={setReducedMotion} label="减弱动效" />
-            </div>
-          </div>
-        </section>
+        <Group title="动效">
+          <ToggleRow label="静态背景" description="关闭丝绸波纹流动，使用静态底色" checked={staticBackground} onChange={setStaticBackground} />
+          <ToggleRow label="减弱动效" description="暂停背景动画、关闭闪烁与打字机" checked={reducedMotion} onChange={setReducedMotion} />
+        </Group>
 
-        <section className="rounded-lg border border-danger/30 bg-surface/70 p-4">
-          <h2 className="mb-3 text-xs tracking-[0.2em] text-danger/80">存档</h2>
-          <p className="mb-3 text-[11px] leading-relaxed text-text-dim">
+        <Group title="存档">
+          <p className="mb-3 mt-2 text-[11px] leading-relaxed text-text-dim">
             清除存档会删除本机进度，无法恢复。长按下方按钮确认。
           </p>
           <HoldButton
             holdTime={1500}
-            radius={18}
+            radius={12}
             fillColor="var(--color-danger)"
             backgroundColor="var(--color-bg-sunken)"
             textColor="var(--color-text-secondary)"
@@ -181,13 +131,16 @@ export default function SettingsPage() {
           >
             长按清除存档
           </HoldButton>
-        </section>
+        </Group>
 
-        <section className="rounded-lg border border-border bg-surface/70 p-4 text-[11px] leading-relaxed text-text-dim">
-          <h2 className="mb-2 text-xs tracking-[0.2em] text-text-dim">关于</h2>
-          <p>《沙漏停摆》 v{APP_VERSION} · 杭州失忆刑侦档案。平行改编自《空相沙漏》（作者：初禾二）。</p>
-          <p className="mt-1">故事、人物与机构均为虚构；真实地名仅作空间锚点。存档格式 v2。</p>
-        </section>
+        <Group title="关于">
+          <p className="mt-2 text-[11px] leading-relaxed text-text-dim">
+            《沙漏停摆》 v{APP_VERSION} · 杭州失忆刑侦档案。平行改编自《空相沙漏》（作者：初禾二）。
+          </p>
+          <p className="mt-1 text-[11px] leading-relaxed text-text-dim">
+            故事、人物与机构均为虚构；真实地名仅作空间锚点。存档格式 v2。
+          </p>
+        </Group>
       </main>
     </GameShell>
   )

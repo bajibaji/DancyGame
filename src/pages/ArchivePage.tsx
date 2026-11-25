@@ -85,8 +85,8 @@ export default function ArchivePage() {
 
   return (
     <GameShell>
-      <header className="sticky top-0 z-20 border-b border-border-subtle/40 bg-bg-deep/85 pt-[env(safe-area-inset-top)] backdrop-blur">
-        <div className="flex h-12 items-center gap-2.5 px-3 md:px-5">
+      <header className="glass-header sticky top-0 z-20 pt-[env(safe-area-inset-top)]">
+        <div className="relative flex h-12 items-center px-3 md:px-5">
           <SpecularButton
             size="sm"
             radius={12}
@@ -97,16 +97,18 @@ export default function ArchivePage() {
           >
             <ArrowLeft size={15} strokeWidth={1.8} /> 返回
           </SpecularButton>
-          <SplitText
-            text="档案库"
-            tag="h1"
-            className="font-display text-base text-text-hi"
-            splitType="chars"
-            effect="fade"
-            trigger="load"
-            duration={0.4}
-            delay={20}
-          />
+          <div className="pointer-events-none absolute inset-x-0 flex justify-center">
+            <SplitText
+              text="档案库"
+              tag="h1"
+              className="font-display text-base text-text-hi"
+              splitType="chars"
+              effect="fade"
+              trigger="load"
+              duration={0.4}
+              delay={20}
+            />
+          </div>
         </div>
       </header>
 

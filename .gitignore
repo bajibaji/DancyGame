@@ -4,3 +4,4 @@ book
 .workflow
 *.local
 .DS_Store
+tsconfig.tsbuildinfo
