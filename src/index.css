@@ -444,3 +444,19 @@ button {
     scrollbar-color: color-mix(in srgb, var(--color-text-dim) 32%, transparent) transparent;
   }
 }
+
+@keyframes puzzle-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  80% {
+    transform: translateX(-3px);
+  }
+}

@@ -9,10 +9,8 @@ import ChromaGrid from '../components/reactbits/ChromaGrid/ChromaGrid'
 import SpecularButton from '../components/reactbits/SpecularButton/SpecularButton'
 import SplitText from '../components/reactbits/SplitText/SplitText'
 import BlurText from '../components/reactbits/BlurText/BlurText'
-import CountUp from '../components/reactbits/CountUp/CountUp'
-import Noise from '../components/reactbits/Noise/Noise'
-import { RELEASED_CHARACTERS as CHARACTERS, RELEASED_CLUES as CLUES, RELEASED_MEMORIES as MEMORIES, isReleasedRecipe } from '../content/release'
-import { RECIPES } from '../game/puzzle'
+import { PaperFace } from '../components/game/PaperGrain'
+import { RELEASED_CHARACTERS as CHARACTERS, RELEASED_CLUES as CLUES, RELEASED_MEMORIES as MEMORIES } from '../content/release'
 import { useGameStore } from '../stores/gameStore'
 
 const TABS = [
@@ -46,9 +44,6 @@ export default function ArchivePage() {
   const clues = useGameStore((s) => s.clues)
   const memories = useGameStore((s) => s.memories)
   const metCharacters = useGameStore((s) => s.metCharacters)
-  const solved = useGameStore((s) => s.solved)
-  const releasedRecipes = RECIPES.filter(({ cards }) => isReleasedRecipe(cards))
-  const solvedCount = releasedRecipes.filter(({ id }) => solved.includes(id)).length
   const [tab, setTab] = useState(readTab)
   const [cardWidth, setCardWidth] = useState(250)
 
@@ -90,45 +85,32 @@ export default function ArchivePage() {
 
   return (
     <GameShell>
-      <Noise fixed zIndex={1} opacity={0.04} size={1} fps={20} blendMode="overlay" />
-      <header className="sticky top-0 z-20 border-b border-border-subtle/50 bg-bg-deep/80 px-4 py-3 backdrop-blur md:px-6 lg:px-8">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+      <header className="sticky top-0 z-20 border-b border-border-subtle/40 bg-bg-deep/85 pt-[env(safe-area-inset-top)] backdrop-blur">
+        <div className="flex h-12 items-center gap-2.5 px-3 md:px-5">
           <SpecularButton
             size="sm"
-            radius={18}
+            radius={12}
             onClick={() => navigate('/story')}
-            className="justify-self-start"
-            lineColor="var(--color-accent)"
-            textColor="var(--color-accent)"
+            lineColor="var(--color-border)"
+            textColor="var(--color-text-secondary)"
+            className="shrink-0"
           >
-            <ArrowLeft size={16} strokeWidth={1.8} /> 返回
+            <ArrowLeft size={15} strokeWidth={1.8} /> 返回
           </SpecularButton>
           <SplitText
             text="档案库"
             tag="h1"
-            className="font-display text-lg text-text-hi"
+            className="font-display text-base text-text-hi"
             splitType="chars"
             effect="fade"
             trigger="load"
-            duration={0.5}
-            delay={30}
+            duration={0.4}
+            delay={20}
           />
-          <span aria-hidden />
-        </div>
-        <div className="mt-1 flex items-center justify-center gap-4 text-[11px] text-text-dim">
-          <span>
-            线索 <CountUp to={ownedClues.length} className="tabular" />/{CLUES.length}
-          </span>
-          <span>
-            记忆 <CountUp to={ownedMemories.length} className="tabular" />/{MEMORIES.length}
-          </span>
-          <span>
-            推演 <CountUp to={solvedCount} className="tabular" />/{releasedRecipes.length}
-          </span>
         </div>
       </header>
 
-      <main className="relative z-10 w-full flex-1 px-4 py-5 md:px-6 md:py-6 lg:mx-auto lg:max-w-[1120px]">
+      <main className="w-full flex-1 px-4 py-5 md:px-6 md:py-6 lg:mx-auto lg:max-w-[1120px]">
         <div className="mb-5 flex justify-center">
           <GooeyNav
             items={TABS.map(({ label }) => ({ label }))}
@@ -165,20 +147,20 @@ export default function ArchivePage() {
                       shadowColor="#000000"
                       ariaLabel={`${clue.title}，翻面查看描述`}
                       front={
-                        <div className="flex h-full flex-col justify-between p-4">
+                        <PaperFace className="flex flex-col justify-between p-4">
                           <div className="flex items-baseline justify-between gap-2 text-[10px] text-text-dim">
                             <span className="tabular">{clue.id}</span>
                             <span>{clue.category}</span>
                           </div>
                           <h2 className="text-sm text-clue">{clue.title}</h2>
                           <span className="text-[10px] text-text-dim">翻面看描述</span>
-                        </div>
+                        </PaperFace>
                       }
                       back={
-                        <div className="h-full overflow-y-auto p-4">
+                        <PaperFace className="overflow-y-auto p-4">
                           <h2 className="text-sm text-clue">{clue.title}</h2>
                           <p className="mt-2 text-xs leading-relaxed text-text-secondary">{clue.description}</p>
-                        </div>
+                        </PaperFace>
                       }
                     />
                   ))}
@@ -211,17 +193,17 @@ export default function ArchivePage() {
                         shadowColor="#000000"
                         ariaLabel={`${memory.title}，翻面查看内容`}
                         front={
-                          <div className="flex h-full flex-col justify-between p-4">
+                          <PaperFace className="flex flex-col justify-between p-4">
                             <span className="tabular text-[10px] text-text-dim">{memory.id}</span>
                             <h2 className="text-sm text-memory">{memory.title}</h2>
                             <span className="text-[10px] text-text-dim">翻面看内容</span>
-                          </div>
+                          </PaperFace>
                         }
                         back={
-                          <div className="h-full overflow-y-auto p-4">
+                          <PaperFace className="overflow-y-auto p-4">
                             <h2 className="text-sm text-memory">{memory.title}</h2>
                             <p className="mt-2 text-xs leading-relaxed text-text-secondary">{memory.body}</p>
-                          </div>
+                          </PaperFace>
                         }
                       />
                     ))}
@@ -251,18 +233,18 @@ export default function ArchivePage() {
                   shadowColor="#000000"
                   ariaLabel={`${character.name}，翻面查看备注`}
                   front={
-                    <div className="flex h-full flex-col justify-between p-4">
+                    <PaperFace className="flex flex-col justify-between p-4">
                       <span className="text-[10px] text-text-dim">{character.role}</span>
                       <h2 className="text-sm text-text-hi">{character.name}</h2>
                       <span className="text-[10px] text-text-dim">翻面看备注</span>
-                    </div>
+                    </PaperFace>
                   }
                   back={
-                    <div className="h-full overflow-y-auto p-4">
+                    <PaperFace className="overflow-y-auto p-4">
                       <h2 className="text-sm text-text-hi">{character.name}</h2>
                       <p className="mt-1 text-[10px] text-text-dim">{character.role}</p>
                       <p className="mt-2 text-xs leading-relaxed text-text-secondary">{character.note}</p>
-                    </div>
+                    </PaperFace>
                   }
                 />
               ))}
