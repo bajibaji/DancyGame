@@ -139,7 +139,8 @@ export default function TitlePage() {
               </button>
             </div>
           </div>
-          <p className="mt-12 max-w-[340px] text-[11px] leading-relaxed text-text-dim/80 md:max-w-[440px] md:text-xs">
+          <p className="mt-12 text-[10px] tracking-[0.12em] text-text-dim/70">建议用手机 Safari 打开，动效最完整</p>
+          <p className="mt-2 max-w-[340px] text-[11px] leading-relaxed text-text-dim/80 md:max-w-[440px] md:text-xs">
             平行改编自初禾二《空相沙漏》。故事、人物与机构纯属虚构；
             <br />
             杭州地名与 2015 年的交通，照实写。
