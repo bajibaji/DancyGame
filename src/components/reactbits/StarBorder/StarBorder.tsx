@@ -101,11 +101,18 @@ const rgba = (rgb: Rgb, alpha: number) =>
 
 let colorContext: CanvasRenderingContext2D | null = null;
 
+const resolveVar = (value: string): string => {
+  const match = /^var\((--[a-zA-Z0-9-]+)\)$/.exec(value.trim());
+  if (!match) return value;
+  const resolved = getComputedStyle(document.documentElement).getPropertyValue(match[1]).trim();
+  return resolved || value;
+};
+
 const toRgb = (color: string): Rgb => {
   colorContext = colorContext ?? document.createElement('canvas').getContext('2d');
   if (!colorContext) return WHITE;
   colorContext.fillStyle = '#000000';
-  colorContext.fillStyle = color;
+  colorContext.fillStyle = resolveVar(color);
   const value = String(colorContext.fillStyle);
   if (value.startsWith('#')) {
     const hex = parseInt(value.slice(1, 7), 16);

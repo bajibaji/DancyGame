@@ -1,11 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Brain, Search, Sparkles, Users } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import GameShell from '../components/game/Layout/GameShell'
 import PuzzleBoard from '../components/game/PuzzleBoard'
-import RubberSegment from '../components/reactbits/RubberSegment/RubberSegment'
-import SpotlightCard from '../components/reactbits/SpotlightCard/SpotlightCard'
+import GooeyNav from '../components/reactbits/GooeyNav/GooeyNav'
+import FlipCard from '../components/reactbits/FlipCard/FlipCard'
 import ChromaGrid from '../components/reactbits/ChromaGrid/ChromaGrid'
+import SpecularButton from '../components/reactbits/SpecularButton/SpecularButton'
+import SplitText from '../components/reactbits/SplitText/SplitText'
+import BlurText from '../components/reactbits/BlurText/BlurText'
+import CountUp from '../components/reactbits/CountUp/CountUp'
+import Noise from '../components/reactbits/Noise/Noise'
 import { RELEASED_CHARACTERS as CHARACTERS, RELEASED_CLUES as CLUES, RELEASED_MEMORIES as MEMORIES, isReleasedRecipe } from '../content/release'
 import { RECIPES } from '../game/puzzle'
 import { useGameStore } from '../stores/gameStore'
@@ -16,20 +21,6 @@ const TABS = [
   { value: 'memories', label: '记忆' },
   { value: 'people', label: '人物' },
 ]
-
-const TAB_TINT: Record<string, string> = {
-  puzzle: 'var(--color-accent)',
-  clues: 'var(--color-clue)',
-  memories: 'var(--color-memory)',
-  people: 'var(--color-accent-strong)',
-}
-
-const TAB_ICONS: Record<string, typeof Brain> = {
-  puzzle: Brain,
-  clues: Search,
-  memories: Sparkles,
-  people: Users,
-}
 
 const TAB_KEY = 'jiangjia.archive.tab'
 
@@ -59,6 +50,16 @@ export default function ArchivePage() {
   const releasedRecipes = RECIPES.filter(({ cards }) => isReleasedRecipe(cards))
   const solvedCount = releasedRecipes.filter(({ id }) => solved.includes(id)).length
   const [tab, setTab] = useState(readTab)
+  const [cardWidth, setCardWidth] = useState(250)
+
+  const accent = 'var(--color-accent)'
+
+  useEffect(() => {
+    const measure = () => setCardWidth(Math.min(260, window.innerWidth - 64))
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [])
 
   const changeTab = (value: string) => {
     setTab(value)
@@ -86,141 +87,187 @@ export default function ArchivePage() {
     () => ownedMemories.map((m, i) => ({ image: memoryImage(m.title, i), title: m.title, subtitle: m.id, alt: m.title })),
     [ownedMemories],
   )
-  const counts: Record<string, string> = {
-    puzzle: `${solvedCount}/${releasedRecipes.length}`,
-    clues: `${ownedClues.length}/${CLUES.length}`,
-    memories: `${ownedMemories.length}/${MEMORIES.length}`,
-    people: `${visiblePeople.length}`,
-  }
 
   return (
     <GameShell>
+      <Noise fixed zIndex={1} opacity={0.04} size={1} fps={20} blendMode="overlay" />
       <header className="sticky top-0 z-20 border-b border-border-subtle/50 bg-bg-deep/80 px-4 py-3 backdrop-blur md:px-6 lg:px-8">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <button type="button" onClick={() => navigate('/story')} className="flex min-h-11 items-center gap-1 justify-self-start rounded-[18px] pl-1 pr-3 text-sm text-accent active:opacity-70">
+          <SpecularButton
+            size="sm"
+            radius={18}
+            onClick={() => navigate('/story')}
+            className="justify-self-start"
+            lineColor="var(--color-accent)"
+            textColor="var(--color-accent)"
+          >
             <ArrowLeft size={16} strokeWidth={1.8} /> 返回
-          </button>
-          <h1 className="font-display text-lg text-text-hi">档案库</h1>
+          </SpecularButton>
+          <SplitText
+            text="档案库"
+            tag="h1"
+            className="font-display text-lg text-text-hi"
+            splitType="chars"
+            effect="fade"
+            trigger="load"
+            duration={0.5}
+            delay={30}
+          />
           <span aria-hidden />
         </div>
-        <div className="mt-1 text-[11px] text-text-dim">
-          线索 {ownedClues.length}/{CLUES.length} · 记忆 {ownedMemories.length}/{MEMORIES.length} · 推演 {solvedCount}/{releasedRecipes.length}
+        <div className="mt-1 flex items-center justify-center gap-4 text-[11px] text-text-dim">
+          <span>
+            线索 <CountUp to={ownedClues.length} className="tabular" />/{CLUES.length}
+          </span>
+          <span>
+            记忆 <CountUp to={ownedMemories.length} className="tabular" />/{MEMORIES.length}
+          </span>
+          <span>
+            推演 <CountUp to={solvedCount} className="tabular" />/{releasedRecipes.length}
+          </span>
         </div>
       </header>
 
-      <main className="w-full flex-1 px-4 py-5 md:px-6 md:py-6 lg:mx-auto lg:max-w-[1120px]">
-        <div className="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-8">
-          <div className="mb-5 w-full lg:sticky lg:top-24 lg:mb-0">
-            <div className="lg:hidden">
-              <RubberSegment
-                items={TABS}
-                value={tab}
-                onChange={changeTab}
-                aria-label="档案分类"
-                size="lg"
-                radius={18}
-                className="w-full border border-border-subtle/80"
-                trackColor="var(--color-surface-raised)"
-                thumbColor={TAB_TINT[tab]}
-                textColor="var(--color-text-secondary)"
-                activeTextColor="var(--color-bg-deep)"
-              />
-            </div>
-            <nav className="hidden lg:flex lg:flex-col lg:gap-1.5" aria-label="档案分类">
-              {TABS.map((item) => {
-                const Icon = TAB_ICONS[item.value]
-                const active = tab === item.value
-                return (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => changeTab(item.value)}
-                    aria-current={active ? 'page' : undefined}
-                    className={`flex min-h-11 items-center gap-3 rounded-[14px] border px-3 text-sm transition-colors ${
-                      active
-                        ? 'border-accent/40 bg-accent/10 text-accent'
-                        : 'border-transparent text-text-secondary hover:bg-surface'
-                    }`}
-                  >
-                    <Icon size={16} strokeWidth={1.8} />
-                    <span className="flex-1 text-left">{item.label}</span>
-                    <span className="tabular text-[11px] text-text-dim">{counts[item.value]}</span>
-                  </button>
-                )
-              })}
-            </nav>
+      <main className="relative z-10 w-full flex-1 px-4 py-5 md:px-6 md:py-6 lg:mx-auto lg:max-w-[1120px]">
+        <div className="mb-5 flex justify-center">
+          <GooeyNav
+            items={TABS.map(({ label }) => ({ label }))}
+            activeIndex={TABS.findIndex(({ value }) => value === tab)}
+            onChange={(index) => changeTab(TABS[index].value)}
+            color={accent}
+            activeTextColor="var(--color-bg-deep)"
+            size="lg"
+            frame
+            animationTime={400}
+            particleCount={15}
+            timeVariance={50}
+            spread={18}
+          />
+        </div>
+
+        <div className="min-w-0">
+          <div hidden={tab !== 'puzzle'}>
+            <PuzzleBoard />
           </div>
 
-          <div className="min-w-0">
-            <div hidden={tab !== 'puzzle'}>
-              <PuzzleBoard />
-            </div>
-
-            {tab === 'clues' && (
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {ownedClues.map((clue) => (
-                  <SpotlightCard
-                    key={clue.id}
-                    className="rounded-lg border border-border bg-surface p-4"
-                    spotlightColor="rgba(217,162,75,0.25)"
-                    intensity={0.5}
-                    borderGlow={0.4}
-                    ambient
-                  >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h2 className="text-sm text-clue">{clue.title}</h2>
-                      <span className="tabular text-[11px] text-text-dim">{clue.id} · {clue.category}</span>
-                    </div>
-                    <p className="mt-2 text-xs leading-relaxed text-text-secondary">{clue.description}</p>
-                  </SpotlightCard>
-                ))}
-                {ownedClues.length === 0 && <p className="text-sm text-text-dim">还没有入档线索。调查现场会获得线索。</p>}
-              </div>
-            )}
-
-            {tab === 'memories' && (
-              <div>
-                {ownedMemories.length > 0 ? (
-                  <>
-                    <ChromaGrid items={memoryItems} columns={2} minCardWidth={150} grayscale={0.2} dim={0.12} reveal="spotlight" showInfo={false} className="mb-5" />
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {ownedMemories.map((memory) => (
-                        <div key={memory.id} className="rounded-lg border border-border bg-surface/80 p-4">
-                          <div className="flex items-baseline justify-between gap-3">
-                            <h2 className="text-sm text-memory">{memory.title}</h2>
-                            <span className="tabular text-[11px] text-text-dim">{memory.id}</span>
+          {tab === 'clues' && (
+            <div>
+              {ownedClues.length > 0 ? (
+                <div className="flex flex-wrap justify-center gap-3">
+                  {ownedClues.map((clue) => (
+                    <FlipCard
+                      key={clue.id}
+                      width={cardWidth}
+                      height={160}
+                      radius={18}
+                      background="var(--color-surface)"
+                      color="var(--color-text)"
+                      shadowColor="#000000"
+                      ariaLabel={`${clue.title}，翻面查看描述`}
+                      front={
+                        <div className="flex h-full flex-col justify-between p-4">
+                          <div className="flex items-baseline justify-between gap-2 text-[10px] text-text-dim">
+                            <span className="tabular">{clue.id}</span>
+                            <span>{clue.category}</span>
                           </div>
-                          <p className="mt-2 text-xs leading-relaxed text-text-secondary">{memory.body}</p>
+                          <h2 className="text-sm text-clue">{clue.title}</h2>
+                          <span className="text-[10px] text-text-dim">翻面看描述</span>
                         </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-sm text-text-dim">记忆一片空白。有些气味、声音与物件会把它唤醒。</p>
-                )}
-              </div>
-            )}
+                      }
+                      back={
+                        <div className="h-full overflow-y-auto p-4">
+                          <h2 className="text-sm text-clue">{clue.title}</h2>
+                          <p className="mt-2 text-xs leading-relaxed text-text-secondary">{clue.description}</p>
+                        </div>
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <BlurText
+                  text="还没有入档线索。调查现场会获得线索。"
+                  animateBy="words"
+                  trigger="load"
+                  className="justify-center text-sm text-text-dim"
+                />
+              )}
+            </div>
+          )}
 
-            {tab === 'people' && (
-              <div className="grid gap-3 md:grid-cols-2">
-                {visiblePeople.map((character) => (
-                  <SpotlightCard
-                    key={character.id}
-                    className="rounded-lg border border-border bg-surface p-4"
-                    spotlightColor="rgba(103,199,216,0.2)"
-                    intensity={0.4}
-                    borderGlow={0.3}
-                  >
-                    <div className="flex items-baseline justify-between gap-3">
+          {tab === 'memories' && (
+            <div>
+              {ownedMemories.length > 0 ? (
+                <>
+                  <ChromaGrid items={memoryItems} columns={2} minCardWidth={150} grayscale={0.2} dim={0.12} reveal="spotlight" showInfo={false} className="mb-5" />
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {ownedMemories.map((memory) => (
+                      <FlipCard
+                        key={memory.id}
+                        width={cardWidth}
+                        height={170}
+                        radius={18}
+                        background="var(--color-surface)"
+                        color="var(--color-text)"
+                        shadowColor="#000000"
+                        ariaLabel={`${memory.title}，翻面查看内容`}
+                        front={
+                          <div className="flex h-full flex-col justify-between p-4">
+                            <span className="tabular text-[10px] text-text-dim">{memory.id}</span>
+                            <h2 className="text-sm text-memory">{memory.title}</h2>
+                            <span className="text-[10px] text-text-dim">翻面看内容</span>
+                          </div>
+                        }
+                        back={
+                          <div className="h-full overflow-y-auto p-4">
+                            <h2 className="text-sm text-memory">{memory.title}</h2>
+                            <p className="mt-2 text-xs leading-relaxed text-text-secondary">{memory.body}</p>
+                          </div>
+                        }
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <BlurText
+                  text="记忆一片空白。有些气味、声音与物件会把它唤醒。"
+                  animateBy="words"
+                  trigger="load"
+                  className="justify-center text-sm text-text-dim"
+                />
+              )}
+            </div>
+          )}
+
+          {tab === 'people' && (
+            <div className="flex flex-wrap justify-center gap-3">
+              {visiblePeople.map((character) => (
+                <FlipCard
+                  key={character.id}
+                  width={cardWidth}
+                  height={170}
+                  radius={18}
+                  background="var(--color-surface)"
+                  color="var(--color-text)"
+                  shadowColor="#000000"
+                  ariaLabel={`${character.name}，翻面查看备注`}
+                  front={
+                    <div className="flex h-full flex-col justify-between p-4">
+                      <span className="text-[10px] text-text-dim">{character.role}</span>
                       <h2 className="text-sm text-text-hi">{character.name}</h2>
-                      <span className="text-[11px] text-text-dim">{character.role}</span>
+                      <span className="text-[10px] text-text-dim">翻面看备注</span>
                     </div>
-                    <p className="mt-2 text-xs leading-relaxed text-text-secondary">{character.note}</p>
-                  </SpotlightCard>
-                ))}
-              </div>
-            )}
-          </div>
+                  }
+                  back={
+                    <div className="h-full overflow-y-auto p-4">
+                      <h2 className="text-sm text-text-hi">{character.name}</h2>
+                      <p className="mt-1 text-[10px] text-text-dim">{character.role}</p>
+                      <p className="mt-2 text-xs leading-relaxed text-text-secondary">{character.note}</p>
+                    </div>
+                  }
+                />
+              ))}
+            </div>
+          )}
         </div>
       </main>
     </GameShell>

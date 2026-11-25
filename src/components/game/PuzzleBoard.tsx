@@ -7,6 +7,10 @@ import { RECIPES } from '../../game/puzzle'
 import { PUZZLES, assistFor, judgePuzzle, puzzleStatus } from '../../game/puzzles'
 import type { Puzzle } from '../../game/puzzles'
 import { isReleasedChapter, isReleasedRecipe } from '../../content/release'
+import StarBorder from '../reactbits/StarBorder/StarBorder'
+import SpecularButton from '../reactbits/SpecularButton/SpecularButton'
+import SplitText from '../reactbits/SplitText/SplitText'
+import BlurText from '../reactbits/BlurText/BlurText'
 
 const CLUE_CHAPTER = new Map<string, number>()
 CHAPTERS.forEach((chapter, index) => {
@@ -150,7 +154,7 @@ export default function PuzzleBoard() {
     if (!open) return null
     if (successRecipe) {
       return (
-        <div className="rounded-[18px] border border-success/40 bg-success/10 p-3">
+        <StarBorder as="div" radius={18} thickness={1} color="var(--color-success)" className="w-full p-3">
           <p className="font-display text-sm text-text-hi">
             推理成立 · {RECIPES.find(({ id }) => id === successRecipe)?.title ?? open.title}
           </p>
@@ -165,34 +169,22 @@ export default function PuzzleBoard() {
           </details>
           <div className="mt-2.5 flex gap-2">
             {followUpScene && (
-              <button
-                type="button"
-                onClick={() => navigate('/story')}
-                className="flex-1 rounded-[18px] border border-success/50 bg-success/15 py-2.5 text-xs text-success active:scale-[0.99]"
-              >
+              <SpecularButton size="sm" radius={18} onClick={() => navigate('/story')} lineColor="var(--color-success)" textColor="var(--color-success)" className="flex-1">
                 查看补充材料
-              </button>
+              </SpecularButton>
             )}
-            <button
-              type="button"
-              onClick={closePuzzle}
-              className="flex-1 rounded-[18px] border border-border bg-surface py-2.5 text-xs text-text-secondary active:bg-surface-hover lg:hidden"
-            >
+            <SpecularButton size="sm" radius={18} onClick={closePuzzle} lineColor="var(--color-border)" textColor="var(--color-text-secondary)" className="flex-1">
               返回题目列表
-            </button>
+            </SpecularButton>
           </div>
-        </div>
+        </StarBorder>
       )
     }
     if (solved.includes(open.recipe)) {
       return (
-        <button
-          type="button"
-          onClick={closePuzzle}
-          className="w-full rounded-[18px] border border-border bg-surface py-3 text-sm text-text-secondary active:bg-surface-hover lg:hidden"
-        >
+        <SpecularButton size="md" radius={18} onClick={closePuzzle} lineColor="var(--color-border)" textColor="var(--color-text-secondary)" className="w-full">
           返回题目列表
-        </button>
+        </SpecularButton>
       )
     }
     return (
@@ -204,14 +196,17 @@ export default function PuzzleBoard() {
             再错一次也会保留当前提示，逐项排除。
           </p>
         )}
-        <button
-          type="button"
+        <SpecularButton
+          size="md"
+          radius={18}
           onClick={onSubmit}
           disabled={!canSubmit}
-          className="w-full rounded-[18px] border border-clue/50 bg-clue/10 py-3 text-sm text-clue active:scale-[0.99] disabled:border-border disabled:bg-surface disabled:text-text-dim"
+          lineColor="var(--color-clue)"
+          textColor="var(--color-clue)"
+          className="w-full"
         >
           推演
-        </button>
+        </SpecularButton>
       </>
     )
   })()
@@ -219,186 +214,186 @@ export default function PuzzleBoard() {
   return (
     <>
       <div className={open ? 'pb-48 lg:pb-4' : 'pb-4'}>
-        <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start lg:gap-6">
-          <div className={`${open ? 'hidden lg:block' : 'block'} lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:pr-1`}>
-            <p className="mb-3 text-[11px] leading-relaxed text-text-dim">
-              收齐材料后可复核。判断有误时，档案会标出需要重看的地方。
-            </p>
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-[11px] tracking-[0.2em] text-text-dim">推理题（{solvedCount}/{statuses.length}）</h2>
-            </div>
-            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-1">
-              {statuses.map(({ puzzle, status }) => {
-                const active = openId === puzzle.id
-                return (
-                  <button
-                    key={puzzle.id}
-                    type="button"
-                    disabled={status === 'locked-chapter' || status === 'locked-clues'}
-                    onClick={() => openPuzzle(puzzle)}
-                    className={`flex items-center gap-3 rounded-[14px] border p-3 text-left transition-colors active:scale-[0.99] ${
-                      active
-                        ? 'border-accent/50 bg-accent/5'
-                        : status === 'solved'
-                          ? 'border-success/40 bg-success/5'
-                          : status === 'ready'
-                            ? 'border-border bg-surface active:bg-surface-hover'
-                            : 'border-border-subtle bg-bg-sunken/40 opacity-60'
+        <div className={open ? 'hidden lg:block' : 'block'}>
+          <p className="mb-3 text-[11px] leading-relaxed text-text-dim">
+            收齐材料后可复核。判断有误时，档案会标出需要重看的地方。
+          </p>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-[11px] tracking-[0.2em] text-text-dim">推理题（{solvedCount}/{statuses.length}）</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+            {statuses.map(({ puzzle, status }) => {
+              const active = openId === puzzle.id
+              const locked = status === 'locked-chapter' || status === 'locked-clues'
+              return (
+                <StarBorder
+                  key={puzzle.id}
+                  as="button"
+                  disabled={locked}
+                  aria-pressed={active}
+                  onClick={() => openPuzzle(puzzle)}
+                  radius={18}
+                  thickness={1}
+                  color={
+                    active
+                      ? 'var(--color-accent)'
+                      : status === 'solved'
+                        ? 'var(--color-success)'
+                        : status === 'ready'
+                          ? 'var(--color-clue)'
+                          : 'var(--color-border)'
+                  }
+                  className={`flex h-full items-center gap-2.5 p-3 text-left ${locked ? 'opacity-60' : ''}`}
+                >
+                  <span
+                    aria-hidden
+                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border text-[11px] ${
+                      status === 'solved'
+                        ? 'border-success/50 text-success'
+                        : status === 'ready'
+                          ? 'border-accent/50 text-accent'
+                          : 'border-border-strong text-text-dim'
                     }`}
                   >
-                    <span
-                      aria-hidden
-                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-[11px] ${
-                        status === 'solved'
-                          ? 'border-success/50 text-success'
-                          : status === 'ready'
-                            ? 'border-accent/50 text-accent'
-                            : 'border-border-strong text-text-dim'
-                      }`}
-                    >
-                      {status === 'solved' ? <Check size={14} strokeWidth={2.2} /> : status === 'ready' ? <ChevronRight size={14} /> : <Lock size={13} />}
+                    {status === 'solved' ? <Check size={13} strokeWidth={2.2} /> : status === 'ready' ? <ChevronRight size={13} /> : <Lock size={12} />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className={`line-clamp-2 block text-[12px] leading-snug ${status === 'solved' ? 'text-success' : status === 'ready' ? 'text-text-hi' : 'text-text-dim'}`}>
+                      {puzzle.title}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className={`block text-[13px] ${status === 'solved' ? 'text-success' : status === 'ready' ? 'text-text-hi' : 'text-text-dim'}`}>
-                        {puzzle.title}
-                      </span>
-                      <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-text-dim">
-                        <span>{chapterTitle(puzzle.chapter)}</span>
-                        <span aria-hidden>·</span>
-                        <span>
-                          {status === 'solved'
-                            ? '已推演'
-                            : status === 'ready'
-                              ? '可推演'
-                              : status === 'locked-chapter'
-                                ? '推进到该章后开放'
-                                : '相关线索尚未入档'}
-                        </span>
-                      </span>
+                    <span className="mt-0.5 block text-[10px] text-text-dim">
+                      {status === 'solved' ? '已推演' : status === 'ready' ? chapterTitle(puzzle.chapter) : status === 'locked-chapter' ? '未开放' : '缺线索'}
                     </span>
-                  </button>
-                )
-              })}
-            </div>
+                  </span>
+                </StarBorder>
+              )
+            })}
           </div>
+        </div>
 
-          <div className={`${open ? 'block' : 'hidden lg:block'} min-w-0`}>
-            {open ? (
-              <div className="md:mx-auto md:w-full md:max-w-[700px] lg:mx-0 lg:max-w-none">
-                <button
-                  type="button"
-                  onClick={closePuzzle}
-                  className="mb-3 flex min-h-9 items-center gap-1 rounded-[12px] pr-2 text-[11px] text-accent active:opacity-70 lg:hidden"
-                >
-                  <ChevronRight size={14} className="rotate-180" />
-                  返回题目列表
-                </button>
-                <h2 className="font-display text-base text-text-hi">{open.title}</h2>
-                <p className="mt-1 text-[11px] leading-relaxed text-text-dim">{open.prompt}</p>
+        <div className={`${open ? 'block' : 'hidden lg:block'} mt-4 min-w-0`}>
+          {open ? (
+            <div className="md:mx-auto md:w-full md:max-w-[700px] lg:mx-0 lg:max-w-none">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <SplitText
+                  text={open.title}
+                  tag="h2"
+                  className="font-display text-base text-text-hi"
+                  splitType="chars"
+                  effect="fade"
+                  trigger="load"
+                  duration={0.4}
+                  delay={20}
+                />
+                <SpecularButton size="sm" radius={18} onClick={closePuzzle} lineColor="var(--color-border)" textColor="var(--color-text-dim)">
+                  返回列表
+                </SpecularButton>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-text-dim">{open.prompt}</p>
 
-                {solved.includes(open.recipe) && !successRecipe ? (
-                  <div className="mt-4 rounded-[14px] border border-success/40 bg-success/5 p-4">
-                    <p className="flex items-center gap-1.5 text-[13px] text-text-hi">
-                      <Check size={14} strokeWidth={2.2} className="text-success" />
-                      {RECIPES.find(({ id }) => id === open.recipe)?.title ?? open.title}
-                    </p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">这道题已经推演过，结论已记入档案。</p>
-                    <details className="mt-2 border-l-2 border-success/40 pl-2.5">
-                      <summary className="min-h-9 cursor-pointer py-1.5 text-[11px] leading-relaxed text-success">
-                        {open.reward.label}
-                      </summary>
-                      <p className="pb-1.5 text-[11px] leading-relaxed text-text-secondary">{open.reward.text}</p>
-                    </details>
-                  </div>
-                ) : open.kind === 'pair' ? (
-                  <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-3">
-                    {open.choices.map((id) => {
+              {solved.includes(open.recipe) && !successRecipe ? (
+                <StarBorder as="div" radius={18} thickness={1} color="var(--color-success)" className="mt-4 w-full p-4">
+                  <p className="flex items-center gap-1.5 text-[13px] text-text-hi">
+                    <Check size={14} strokeWidth={2.2} className="text-success" />
+                    {RECIPES.find(({ id }) => id === open.recipe)?.title ?? open.title}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">这道题已经推演过，结论已记入档案。</p>
+                  <details className="mt-2 border-l-2 border-success/40 pl-2.5">
+                    <summary className="min-h-9 cursor-pointer py-1.5 text-[11px] leading-relaxed text-success">
+                      {open.reward.label}
+                    </summary>
+                    <p className="pb-1.5 text-[11px] leading-relaxed text-text-secondary">{open.reward.text}</p>
+                  </details>
+                </StarBorder>
+              ) : open.kind === 'pair' ? (
+                <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-3">
+                  {open.choices.map((id) => {
+                    const clue = CLUE_MAP.get(id)
+                    if (!clue) return null
+                    const active = picked.includes(id)
+                    const revealed = assist.revealed.includes(id)
+                    return (
+                      <StarBorder
+                        key={id}
+                        as="button"
+                        aria-pressed={active}
+                        onClick={() => toggle(id)}
+                        radius={18}
+                        thickness={1}
+                        color={active ? 'var(--color-clue)' : 'var(--color-border)'}
+                        className="relative flex min-h-[92px] flex-col gap-1 p-2.5 text-left"
+                      >
+                        <span className="flex items-center justify-between gap-1 text-[10px] leading-none text-text-dim">
+                          <span className="tabular">{clue.id}</span>
+                          <span>{clue.category}</span>
+                        </span>
+                        <span className={`line-clamp-2 text-[13px] font-medium leading-snug ${active ? 'text-clue' : 'text-clue/90'}`}>
+                          {clue.title}
+                        </span>
+                        <span className="line-clamp-1 text-[10px] leading-relaxed text-text-dim">{clue.description}</span>
+                        {revealed && (
+                          <span aria-hidden className="absolute -right-1.5 -top-1.5 flex items-center gap-0.5 rounded-full bg-warning px-1.5 py-0.5 text-[9px] font-semibold text-bg-deep">
+                            保底
+                          </span>
+                        )}
+                      </StarBorder>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="mt-4 grid gap-3">
+                  <div className="grid gap-2 md:grid-cols-2">
+                    {open.materials.map((id) => {
                       const clue = CLUE_MAP.get(id)
                       if (!clue) return null
-                      const active = picked.includes(id)
-                      const revealed = assist.revealed.includes(id)
                       return (
-                        <button
-                          key={id}
-                          type="button"
-                          aria-pressed={active}
-                          onClick={() => toggle(id)}
-                          className={`relative flex min-h-[92px] flex-col gap-1 rounded-[14px] border p-2.5 text-left transition-colors active:scale-[0.99] ${
-                            active ? 'border-clue/70 bg-clue/10' : 'border-border bg-surface active:bg-surface-hover'
-                          }`}
-                        >
-                          <span className="flex items-center justify-between gap-1 text-[10px] leading-none text-text-dim">
-                            <span className="tabular">{clue.id}</span>
-                            <span>{clue.category}</span>
-                          </span>
-                          <span className={`line-clamp-2 text-[13px] font-medium leading-snug ${active ? 'text-clue' : 'text-clue/90'}`}>
-                            {clue.title}
-                          </span>
-                          <span className="line-clamp-1 text-[10px] leading-relaxed text-text-dim">{clue.description}</span>
-                          {revealed && (
-                            <span aria-hidden className="absolute -right-1.5 -top-1.5 flex items-center gap-0.5 rounded-full bg-warning px-1.5 py-0.5 text-[9px] font-semibold text-bg-deep">
-                              保底
-                            </span>
-                          )}
-                        </button>
+                        <StarBorder key={id} as="div" radius={18} thickness={1} color="var(--color-border)" className="w-full p-3">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <h3 className="text-[13px] text-clue">{clue.title}</h3>
+                            <span className="tabular text-[10px] text-text-dim">{clue.id} · {clue.category}</span>
+                          </div>
+                          <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{clue.description}</p>
+                        </StarBorder>
                       )
                     })}
                   </div>
-                ) : (
-                  <div className="mt-4 grid gap-3">
-                    <div className="grid gap-2 md:grid-cols-2">
-                      {open.materials.map((id) => {
-                        const clue = CLUE_MAP.get(id)
-                        if (!clue) return null
-                        return (
-                          <div key={id} className="rounded-[14px] border border-border bg-surface p-3">
-                            <div className="flex items-baseline justify-between gap-2">
-                              <h3 className="text-[13px] text-clue">{clue.title}</h3>
-                              <span className="tabular text-[10px] text-text-dim">{clue.id} · {clue.category}</span>
-                            </div>
-                            <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{clue.description}</p>
-                          </div>
-                        )
-                      })}
-                    </div>
-                    <div className="grid gap-1.5">
-                      {open.items.map((item) => {
-                        const active = picked.includes(item.key)
-                        const excluded = assist.excluded.includes(item.key)
-                        return (
-                          <button
-                            key={item.key}
-                            type="button"
-                            aria-pressed={active}
-                            disabled={excluded}
-                            onClick={() => toggle(item.key)}
-                            className={`flex min-h-11 items-start gap-2.5 rounded-[14px] border p-3 text-left text-[12px] leading-relaxed transition-colors active:scale-[0.99] ${
-                              excluded
-                                ? 'border-border-subtle bg-bg-sunken/40 text-text-dim line-through opacity-60'
-                                : active
-                                  ? 'border-clue/70 bg-clue/10 text-clue'
-                                  : 'border-border bg-surface text-text-secondary active:bg-surface-hover'
-                            }`}
-                          >
-                            <span aria-hidden className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border border-current text-[10px]">
-                              {item.key}
-                            </span>
-                            {item.text}
-                          </button>
-                        )
-                      })}
-                    </div>
+                  <div className="grid gap-1.5">
+                    {open.items.map((item) => {
+                      const active = picked.includes(item.key)
+                      const excluded = assist.excluded.includes(item.key)
+                      return (
+                        <StarBorder
+                          key={item.key}
+                          as="button"
+                          aria-pressed={active}
+                          disabled={excluded}
+                          onClick={() => toggle(item.key)}
+                          radius={18}
+                          thickness={1}
+                          color={active ? 'var(--color-clue)' : 'var(--color-border)'}
+                          className={`flex min-h-11 items-start gap-2.5 p-3 text-left text-[12px] leading-relaxed ${excluded ? 'opacity-60' : ''}`}
+                        >
+                          <span aria-hidden className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border border-current text-[10px]">
+                            {item.key}
+                          </span>
+                          <span className={excluded ? 'line-through' : active ? 'text-clue' : 'text-text-secondary'}>{item.text}</span>
+                        </StarBorder>
+                      )
+                    })}
                   </div>
-                )}
+                </div>
+              )}
 
-                <div className="mt-4 hidden lg:block">{controls}</div>
-              </div>
-            ) : (
-              <div className="rounded-[14px] border border-dashed border-border bg-surface/40 p-8 text-center text-xs leading-relaxed text-text-dim">
-                从左侧选择一道推理题开始。
-              </div>
-            )}
-          </div>
+              <div className="mt-4 hidden lg:block">{controls}</div>
+            </div>
+          ) : (
+            <BlurText
+              text="从上面选择一道推理题开始。"
+              animateBy="words"
+              trigger="view"
+              className="justify-center rounded-[14px] border border-dashed border-border bg-surface/40 p-8 text-center text-xs text-text-dim"
+            />
+          )}
         </div>
       </div>
 
