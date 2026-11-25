@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
-import SplitText from '../components/reactbits/SplitText/SplitText'
+import GlitchText from '../components/reactbits/GlitchText/GlitchText'
 import BlurText from '../components/reactbits/BlurText/BlurText'
 import DecryptedText from '../components/reactbits/DecryptedText/DecryptedText'
 import SpecularButton from '../components/reactbits/SpecularButton/SpecularButton'
@@ -60,24 +60,29 @@ export default function TitlePage() {
                 interactive={false}
               />
             </span>
-            <SplitText
-              text="沙漏停摆"
-              tag="span"
-              className="relative z-10 font-display text-4xl font-semibold text-text-hi md:text-5xl"
-              splitType="chars"
-              effect="rise"
-              mask
-              trigger="load"
-              accentColor="var(--color-clue)"
-              duration={0.7}
-              staggerFrom="center"
-            />
+            <span className="relative z-10 block text-4xl font-semibold text-text-hi md:text-5xl">
+              <GlitchText
+                mode="rgb"
+                speed={9}
+                intensity={0.22}
+                flicker={false}
+                trigger="always"
+                enableShadows
+                color="var(--color-text-hi)"
+                shadowColors={['#2e5a68', '#8a6a2f']}
+                fontSize="inherit"
+                fontWeight={600}
+                className="font-display"
+              >
+                沙漏停摆
+              </GlitchText>
+            </span>
             <span className="tabular absolute left-full top-1 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
               v{APP_VERSION}
             </span>
           </h1>
           <div className="relative z-10 mt-12 text-base text-text-secondary md:mt-16">
-            <BlurText text="杭州 · 失忆刑侦档案" animateBy="letters" effect="blur" trigger="load" delay={120} className="justify-center" />
+            <BlurText text="失忆悬案" animateBy="letters" effect="blur" trigger="load" delay={120} className="justify-center" />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-text-dim">
             一个死在婚礼后，一个死在婚礼前三天。

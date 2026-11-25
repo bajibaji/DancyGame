@@ -324,7 +324,7 @@ const GlitchText: FC<GlitchTextProps> = ({
           ay = off * live.ay;
           by = off * live.by;
         }
-        split = s.enableShadows ? 0.9 : 0.4;
+        split = safeMode === 'rgb' ? 0.38 : s.enableShadows ? 0.9 : 0.4;
       } else if (safeMode === 'scan') {
         const pass = 2.4 * pace;
         const cycle = pass * (1 + (1 - power) * 1.2);
