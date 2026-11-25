@@ -37,9 +37,9 @@ export default function TitlePage() {
           transition={{ duration: 0.6 }}
           className="flex w-full max-w-[360px] flex-col items-center text-center md:max-w-[480px]"
         >
-          <p className="relative z-10 mb-6 text-xs tracking-[0.4em] text-text-dim">2015 · 杭州</p>
+          <p className="relative z-10 mb-12 text-xs tracking-[0.4em] md:mb-16 text-text-dim">2015 · 杭州</p>
           <h1 className="relative inline-flex items-center justify-center">
-            <span className="pointer-events-none absolute left-1/2 top-1/2 h-[140px] w-[62px] -translate-x-1/2 -translate-y-1/2 opacity-50 [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)] md:h-[184px] md:w-[82px]">
+            <span className="pointer-events-none absolute left-1/2 top-1/2 h-[140px] w-[62px] -translate-x-1/2 -translate-y-1/2 opacity-50 [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)] md:h-[176px] md:w-[78px]">
               <CrystalizedBall
                 preset="nebula"
                 color="#2b6994"
@@ -76,7 +76,7 @@ export default function TitlePage() {
               v{APP_VERSION}
             </span>
           </h1>
-          <div className="relative z-10 mt-5 text-base text-text-secondary">
+          <div className="relative z-10 mt-12 text-base text-text-secondary md:mt-16">
             <BlurText text="杭州 · 失忆刑侦档案" animateBy="letters" effect="blur" trigger="load" delay={120} className="justify-center" />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-text-dim">
