@@ -6,7 +6,7 @@ import BlurText from '../components/reactbits/BlurText/BlurText'
 import DecryptedText from '../components/reactbits/DecryptedText/DecryptedText'
 import SpecularButton from '../components/reactbits/SpecularButton/SpecularButton'
 import GameShell from '../components/game/Layout/GameShell'
-import Sandglass from '../components/game/Sandglass'
+import CrystalizedBall from '../components/reactbits/CrystalizedBall/CrystalizedBall'
 import { useGameStore } from '../stores/gameStore'
 import { APP_VERSION } from '../lib/version'
 
@@ -30,7 +30,7 @@ export default function TitlePage() {
 
   return (
     <GameShell>
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-14">
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-10">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -51,10 +51,30 @@ export default function TitlePage() {
               duration={0.7}
               staggerFrom="center"
             />
-            <Sandglass className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-24 w-auto -translate-x-1/2 -translate-y-1/2 text-text-hi opacity-25 md:h-32" />
             <span className="tabular absolute left-full top-1 z-10 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
               v{APP_VERSION}
             </span>
+          </div>
+          <div className="pointer-events-none mt-2 mb-1 h-[150px] w-[82px] md:h-[230px] md:w-[112px]">
+            <CrystalizedBall
+              preset="nebula"
+              color="#2b6994"
+              crackle={1}
+              flares={0.45}
+              particleCount={11000}
+              sway={0.4}
+              dustSpeed={1.2}
+              particleShape="round"
+              size={0.96}
+              sparks={0.55}
+              depth={0.55}
+              glow={0.7}
+              fill={1}
+              haze={0.2}
+              waist={0.24}
+              aspect={0.46}
+              interactive={false}
+            />
           </div>
           <div className="mt-5 text-base text-text-secondary">
             <BlurText text="杭州 · 失忆刑侦档案" animateBy="letters" effect="blur" trigger="load" delay={120} className="justify-center" />
