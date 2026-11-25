@@ -80,9 +80,11 @@ export default function TitlePage() {
             <BlurText text="杭州 · 失忆刑侦档案" animateBy="letters" effect="blur" trigger="load" delay={120} className="justify-center" />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-text-dim">
-            一桩婚礼上的碎尸案，一只在记忆里晃动的沙漏。
+            一个死在婚礼后，一个死在婚礼前三天。
             <br />
-            你是江嘉，26 岁，杭州刑警。你不记得六岁那年的夏天。
+            两个人都被拆开，扔在同一片林子里。
+            <br />
+            你叫江嘉，刑警。查他们，也查你自己。
           </p>
           <div className="mt-10">
             <DecryptedText
@@ -133,8 +135,9 @@ export default function TitlePage() {
             </div>
           </div>
           <p className="mt-12 max-w-[340px] text-[11px] leading-relaxed text-text-dim/80 md:max-w-[440px] md:text-xs">
-            平行改编自《空相沙漏》（作者：初禾二）。故事、人物与机构均为虚构；真实地名仅作空间锚点。
-            2015 年杭州地理与交通按当年实际情况描写。
+            平行改编自初禾二《空相沙漏》。故事、人物与机构纯属虚构；
+            <br />
+            杭州地名与 2015 年的交通，照实写。
           </p>
         </motion.div>
       </div>
