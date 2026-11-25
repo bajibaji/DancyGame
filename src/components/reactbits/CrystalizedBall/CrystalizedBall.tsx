@@ -732,6 +732,7 @@ uniform vec2 uCenter;
 uniform vec2 uViewport;
 uniform float uRadius;
 uniform float uAspect;
+uniform float uWaist;
 uniform float uDpr;
 uniform float uDepth;
 uniform float uTwinkle;
@@ -754,9 +755,14 @@ void main() {
   float spread;
   vec3 p = drift(home, seed, id, life, spread);
   if (uStirred > 0.5) p += texelFetch(tOffset, cell, 0).xyz;
-  float len = length(p);
-  float inside = 1.0 - smoothstep(0.955, 0.985, length(p.xy));
-  if (len > 0.975) p *= 0.975 / len;
+  float ay = clamp(abs(p.y), 0.0, 1.0);
+  float prof = uWaist + (1.0 - uWaist) * ay;
+  float ax = abs(p.x) / max(prof, 1e-3);
+  float lim = max(ax, ay);
+  if (ax > 0.95) p.x = sign(p.x) * prof * 0.95;
+  if (ay > 0.95) p.y = sign(p.y) * 0.95;
+  ax = min(ax, 0.95);
+  float inside = 1.0 - smoothstep(0.9, 0.95, max(ax, ay));
 
   float front = p.z * 0.5 + 0.5;
   float depthSize = mix(1.0, 0.7 + 0.6 * front, uDepth);
@@ -776,7 +782,7 @@ void main() {
   vSize = px;
 
   int tone = int(home.w + 0.5);
-  float rimLit = smoothstep(0.8, 0.97, length(p.xy));
+  float rimLit = smoothstep(0.8, 0.95, max(ax, ay));
   vec3 color = uTones[tone] + uRimTone * rimLit * rimLit * 0.12;
   vColor = color * alpha * fade * twinkle * depthLight * reveal * inside * sqrt(spread) * uEncode;
 }
@@ -1084,6 +1090,7 @@ const CrystalizedBall = ({
       uViewport: { value: [1, 1] },
       uRadius: fieldUniforms.uRadius,
       uAspect: fieldUniforms.uAspect,
+      uWaist: fieldUniforms.uWaist,
       uDpr: fieldUniforms.uDpr,
       uDepth: { value: 0.6 },
       uTwinkle: { value: 0.5 },
