@@ -37,11 +37,32 @@ export default function TitlePage() {
           transition={{ duration: 0.6 }}
           className="flex w-full max-w-[360px] flex-col items-center text-center md:max-w-[480px]"
         >
-          <p className="mb-6 text-xs tracking-[0.4em] text-text-dim">2015 · 杭州</p>
-          <div className="relative inline-block">
+          <p className="relative z-10 mb-6 text-xs tracking-[0.4em] text-text-dim">2015 · 杭州</p>
+          <h1 className="relative inline-flex items-center justify-center">
+            <span className="pointer-events-none absolute left-1/2 top-1/2 h-[140px] w-[62px] -translate-x-1/2 -translate-y-1/2 opacity-50 [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)] md:h-[184px] md:w-[82px]">
+              <CrystalizedBall
+                preset="nebula"
+                color="#2b6994"
+                crackle={1}
+                flares={0.45}
+                particleCount={11000}
+                sway={0.4}
+                dustSpeed={1.2}
+                particleShape="round"
+                size={0.96}
+                sparks={0.55}
+                depth={0.55}
+                glow={0.7}
+                fill={1}
+                haze={0.2}
+                waist={0.24}
+                aspect={0.46}
+                interactive={false}
+              />
+            </span>
             <SplitText
               text="沙漏停摆"
-              tag="h1"
+              tag="span"
               className="relative z-10 font-display text-4xl font-semibold text-text-hi md:text-5xl"
               splitType="chars"
               effect="rise"
@@ -51,32 +72,11 @@ export default function TitlePage() {
               duration={0.7}
               staggerFrom="center"
             />
-            <span className="tabular absolute left-full top-1 z-10 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
+            <span className="tabular absolute left-full top-1 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
               v{APP_VERSION}
             </span>
-          </div>
-          <div className="pointer-events-none mt-2 mb-1 h-[150px] w-[82px] md:h-[230px] md:w-[112px]">
-            <CrystalizedBall
-              preset="nebula"
-              color="#2b6994"
-              crackle={1}
-              flares={0.45}
-              particleCount={11000}
-              sway={0.4}
-              dustSpeed={1.2}
-              particleShape="round"
-              size={0.96}
-              sparks={0.55}
-              depth={0.55}
-              glow={0.7}
-              fill={1}
-              haze={0.2}
-              waist={0.24}
-              aspect={0.46}
-              interactive={false}
-            />
-          </div>
-          <div className="mt-5 text-base text-text-secondary">
+          </h1>
+          <div className="relative z-10 mt-5 text-base text-text-secondary">
             <BlurText text="杭州 · 失忆刑侦档案" animateBy="letters" effect="blur" trigger="load" delay={120} className="justify-center" />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-text-dim">
