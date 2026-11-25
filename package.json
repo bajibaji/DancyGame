@@ -1,7 +1,7 @@
 {
   "name": "shalou-tingbai",
   "private": true,
-  "version": "1.12.1",
+  "version": "1.12.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,9 +13,7 @@
     "check": "npm run typecheck && npm run lint && npm run test && node scripts/check-prose.mjs && node scripts/check-canon.mjs && node scripts/check-version.mjs",
     "bump:patch": "npm version patch --no-git-tag-version",
     "bump:minor": "npm version minor --no-git-tag-version",
-    "bump:major": "npm version major --no-git-tag-version",
-    "twine:export": "node scripts/twine-export.mjs",
-    "twine:import": "node scripts/twine-import.mjs"
+    "bump:major": "npm version major --no-git-tag-version"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
