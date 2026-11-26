@@ -73,8 +73,8 @@ describe('序章两次查证与跨章交接', () => {
       }
     }
 
-    expect(seen.size).toBe(62)
-    expect(store.getState().history).toHaveLength(20)
+    expect(seen.size).toBe(86)
+    expect(store.getState().history).toHaveLength(28)
     const saved = JSON.parse(storage.getItem(SAVE_KEY)!)
     const { store: reloaded } = await loadStore(saved.state, saved.version)
     expect(reloaded.getState()).toMatchObject({ sceneId: 'c0101c', runSeed: 11, clues: saved.state.clues, solved: answer ? ['D11'] : [], history: saved.state.history })
@@ -217,12 +217,12 @@ describe('游玩进度', () => {
     const alternate = offers.find(({ option }) => option.key === 'C')!
     store.getState().choose(collect.key, scene.id)
     store.getState().meet('柳湘')
-    expect(store.getState().clues).toEqual(['C03', 'C27'])
+    expect(store.getState().clues).toEqual(['C03'])
     expect(store.getState().metCharacters).toContain('liuxiang')
     store.getState().undo()
     expect(store.getState()).toMatchObject({ sceneId: 'p04c', clues: [], flags: {}, visited: ['p04c'], history: [], metCharacters: ['jiangjia'] })
     store.getState().choose(alternate.key, scene.id)
-    expect(store.getState().clues).toEqual(['C03', 'C27'])
+    expect(store.getState().clues).toEqual([])
     for (const flag of alternate.option.effects.flags ?? []) expect(store.getState().flags[flag]).toBe(true)
     for (const flag of collect.option.effects.flags ?? []) expect(store.getState().flags[flag]).toBeUndefined()
     expect(store.getState().history.map(({ choice }) => choice)).toEqual([alternate.key])

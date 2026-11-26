@@ -56,7 +56,7 @@ describe('选项在正文里的后果', () => {
     expect(opening.options).toBeUndefined()
     expect(opening.next).toBe('p01b')
     const choice = getScene('p01c')!
-    expect(choice.options?.map(({ key, next }) => [key, next])).toEqual([['A', 'p03a'], ['B', 'p03a'], ['C', 'p03a']])
+    expect(choice.options?.map(({ key, next }) => [key, next])).toEqual([['A', 'pw01a'], ['B', 'pw01a'], ['C', 'pw01a']])
   })
 
   it('第一次选择前先交代空椅、新娘与她做过线人', () => {

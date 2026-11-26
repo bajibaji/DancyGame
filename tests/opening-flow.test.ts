@@ -7,9 +7,17 @@ import { resolveSceneBody } from '../src/game/narrative'
 const openingChapters = CHAPTERS.filter(({ chapter }) => ['prologue', 'ch01'].includes(chapter))
 
 describe('开场角色扮演的调查节拍', () => {
-  it('46 组三幕都有具体的新矛盾、发现或人物请求，不能删成空过渡', () => {
+  it('54 组三幕都有具体的新矛盾、发现或人物请求，不能删成空过渡', () => {
     const hooks: [string, string][] = [
       ['p01b', '回不了消息的人'],
+      ['pw01b', '满杯酒'],
+      ['pw02b', '可明天呢'],
+      ['pw03b', '我是在问你'],
+      ['pw04b', '窄缝'],
+      ['pw05b', '八点'],
+      ['pw06b', '他答应八点来的'],
+      ['pw07b', '第二通'],
+      ['pw08b', '那两分钟只在录像里'],
       ['p03b', '过了今天'],
       ['p04b', '去拿什么'],
       ['p05b', '鞋跟'],
@@ -105,6 +113,43 @@ describe('开场角色扮演的调查节拍', () => {
         expect(responses.size, scene.id + '/' + seed).toBe(3)
       }
     }
+  })
+
+  it('伴郎深夜离席后先过夜、接亲、午宴与寻找，再进入次日下午的现场', () => {
+    const scenes = openingChapters.find(({ chapter }) => chapter === 'prologue')!.scenes
+    const ids = scenes.map(({ id }) => id)
+    const departure = ids.indexOf('p03c')
+    const discovery = ids.indexOf('p06a')
+    for (const id of ['pw05a', 'pw05b', 'pw06a', 'pw07a', 'pw07b', 'pw08a', 'pw08b']) {
+      expect(ids.indexOf(id), id).toBeGreaterThan(departure)
+      expect(ids.indexOf(id), id).toBeLessThan(discovery)
+    }
+    expect(ids.indexOf('pw04c')).toBeLessThan(departure)
+    expect(getScene('p03c')!.timeOfDay).toBe('婚礼前夜 · 23:42')
+    expect(getScene('pw06a')!.timeOfDay).toBe('婚礼当日 · 08:10')
+    expect(getScene('p05a')!.timeOfDay).toBe('婚礼当日 · 15:10')
+    expect(getScene('p05a')!.body).toContain('十五个多小时')
+    expect(getScene('pw05b')!.body).toContain('凌晨一点二十分')
+    expect(getScene('pw06a')!.body).toContain('儿子没有回来睡')
+    expect(getScene('pw07a')!.body).toContain('忙完整个上午')
+    expect(getScene('c0105a')!.body).toContain('23:42')
+    expect(getScene('c0109b')!.body).toContain('前夜二十三点四十二分')
+    expect(getScene('c0101a')!.body).not.toContain('不到十二小时')
+  })
+
+  it('三项状态在婚宴分段介绍，先总说结局，再解释线索、关系和危险', () => {
+    const ids = ['p01c', 'pw02c', 'pw03c', 'pw04c', 'pw05c']
+    const guides = ids.map((id) => getScene(id)!.guide!)
+    for (const guide of guides) {
+      expect(guide.title).toBeTruthy()
+      expect(guide.body).toContain('结局')
+    }
+    expect(guides[0].body).toContain('线索、关系、危险')
+    expect(guides[1].body).toContain('观察、核对和追问')
+    expect(guides[2].body).toContain('信任与支持')
+    expect(guides[3].body).toContain('危险累积过高会导向坏结局')
+    expect(guides[4].body).toContain('关键事实与记忆')
+    for (const id of ids) expect(getScene(id)!.options).toHaveLength(3)
   })
 
   it('进入现场前先认识刑警和婚宴三人，章末的朋友身份不混作无名死者的确认', () => {

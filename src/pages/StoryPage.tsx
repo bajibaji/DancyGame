@@ -6,6 +6,7 @@ import GameShell from '../components/game/Layout/GameShell'
 import LocationBar from '../components/game/HUD/LocationBar'
 import StatMeters from '../components/game/HUD/StatMeters'
 import ChoiceFeedback from '../components/game/Scene/ChoiceFeedback'
+import SceneGuide from '../components/game/Scene/SceneGuide'
 import RichText from '../components/game/Scene/RichText'
 import TypedRichText from '../components/game/Scene/TypedRichText'
 import StarBorder from '../components/reactbits/StarBorder/StarBorder'
@@ -310,6 +311,7 @@ function ReleasedStoryPage() {
                         />
                       )}
                     </div>
+                    {(!isCurrent || textReady) && <SceneGuide guide={section.guide} />}
                     {!isCurrent && <SceneProgress items={resolveSceneProgress(section, arrivals.get(section.id))} />}
                   </section>
                 )
@@ -357,6 +359,7 @@ function ReleasedStoryPage() {
             )}
             {textReady && (
               <div key={scene.id}>
+                {readingMode === 'single' && <SceneGuide guide={scene.guide} />}
                 <SceneProgress items={resolveSceneProgress(scene, arrivals.get(scene.id))} />
                 {activeFollowUps.map(({ recipe, label, text }) => (
                   <details key={recipe} className="mt-4 border-l-2 border-clue/45 pl-3">

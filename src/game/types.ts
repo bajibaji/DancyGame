@@ -35,6 +35,7 @@ export interface Scene {
   locationId: string
   timeOfDay: string
   body: string
+  guide?: { title: string; body: string }
   variants?: { flag: string; body: string }[]
   worldVariants?: { line: WorldLine; body: string }[]
   recalls?: { flag: string; text: string }[]
