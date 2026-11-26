@@ -1,7 +1,10 @@
+export type ReasoningEffort = 'none' | 'low' | 'high' | 'max'
+
 export interface ChatConfig {
   apiKey: string
   model: string
   baseUrl: string
+  effort: ReasoningEffort
 }
 
 export interface ChatMessage {
@@ -15,19 +18,23 @@ export async function streamChat(
   onDelta: (delta: string, full: string) => void,
   signal?: AbortSignal,
 ): Promise<string> {
+  const thinking = config.effort !== 'none'
+  const body: Record<string, unknown> = {
+    model: config.model,
+    messages,
+    stream: true,
+    reasoning_effort: config.effort,
+    max_tokens: thinking ? 16000 : 1200,
+  }
+  if (!thinking) body.temperature = 1.3
+
   const response = await fetch(`${config.baseUrl.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${config.apiKey}`,
     },
-    body: JSON.stringify({
-      model: config.model,
-      messages,
-      stream: true,
-      temperature: 1.3,
-      max_tokens: 1200,
-    }),
+    body: JSON.stringify(body),
     signal,
   })
 

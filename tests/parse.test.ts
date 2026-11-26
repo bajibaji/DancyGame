@@ -40,6 +40,22 @@ describe('parseScene', () => {
     const scene = parseScene('【正文】\n正文\n【选项】\nA. 一\nB. 二\nC. 三')
     expect(scene.patch).toEqual({})
   })
+
+  it('容错 markdown 加粗和列表符号', () => {
+    const text = '【正文】\n正文\n【选项】\n- **A.** 开门放他进来\n- **B.** 等他自己翻墙\n- **C.** 先去叫杨惠\n【状态】\n{}'
+    const scene = parseScene(text)
+    expect(scene.options.map((option) => option.label)).toEqual(['开门放他进来', '等他自己翻墙', '先去叫杨惠'])
+  })
+
+  it('容错缺失【选项】标题时全文扫描', () => {
+    const scene = parseScene('【正文】\n正文\nA. 开门放他进来\nB. 等他自己翻墙\nC. 先去叫杨惠\n')
+    expect(scene.options).toHaveLength(3)
+  })
+
+  it('容错全角括号分隔', () => {
+    const scene = parseScene('【选项】\n（A）开门放他进来\n（B）等他自己翻墙\n（C）先去叫杨惠\n【状态】\n{}')
+    expect(scene.options.map((option) => option.key)).toEqual(['A', 'B', 'C'])
+  })
 })
 
 describe('applyPatch', () => {

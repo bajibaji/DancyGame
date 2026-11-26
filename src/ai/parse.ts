@@ -11,15 +11,42 @@ function parseSystem(text: string): string {
   return section.trim().slice(0, 120)
 }
 
-function parseOptions(text: string): GeneratedOption[] {
-  const section = text.split('【选项】')[1]?.split('【状态】')[0] ?? ''
+function cleanLine(line: string): string {
+  return line
+    .replace(/^\s*[-*•·]\s*/, '')
+    .replace(/\*\*/g, '')
+    .replace(/^\s*【[^】]*】\s*/, '')
+    .trim()
+}
+
+function matchOption(line: string): GeneratedOption | null {
+  const match = line.match(/^(?:[（(]\s*([ABC])\s*[）)]|([ABC])\s*[.、．:：)）])\s*(.+)$/)
+  if (!match) return null
+  const key = (match[1] ?? match[2]) as ChoiceKey
+  const label = match[3].trim().replace(/^[「『"]|[」』"]$/g, '').replace(/\*\*/g, '').trim()
+  if (!label) return null
+  return { key, label }
+}
+
+function scanOptions(text: string): GeneratedOption[] {
   const found: GeneratedOption[] = []
-  for (const match of section.matchAll(/^\s*([ABC])\s*[.、．:：]\s*(.+)$/gm)) {
-    const key = match[1] as ChoiceKey
-    if (found.some((option) => option.key === key)) continue
-    found.push({ key, label: match[2].trim().replace(/^[「『"]|[」』"]$/g, '') })
+  for (const rawLine of text.split('\n')) {
+    const option = matchOption(cleanLine(rawLine))
+    if (!option) continue
+    if (found.some((item) => item.key === option.key)) continue
+    found.push(option)
   }
   return found
+}
+
+function parseOptions(text: string): GeneratedOption[] {
+  const section = text.split('【选项】')[1]?.split('【状态】')[0]
+  const segments = section ? [section, text] : [text]
+  for (const segment of segments) {
+    const found = scanOptions(segment)
+    if (found.length >= 3) return found.slice(0, 3)
+  }
+  return []
 }
 
 function parsePatch(text: string): StatePatch {
@@ -103,7 +130,7 @@ export function applyPatch(state: WorldState, patch: StatePatch): WorldState {
   return next
 }
 
-export function recordTurn(state: WorldState, narration: string, choice?: string): WorldState {
-  const entry = { turn: state.turn + 1, choice, narration: narration.slice(0, 800) }
+export function recordTurn(state: WorldState, narration: string, choice?: string, raw?: string): WorldState {
+  const entry = { turn: state.turn + 1, choice, narration: narration.slice(0, 800), raw: raw?.slice(0, 2000) }
   return { ...state, turn: entry.turn, recent: [...state.recent.slice(-7), entry] }
 }

@@ -8,7 +8,7 @@ import Switch from '../components/ui/Switch'
 import Segmented from '../components/ui/Segmented'
 import { FONT_SCALE, useSettingsStore } from '../stores/settingsStore'
 import { useStoryStore } from '../stores/storyStore'
-import { useAiStore } from '../stores/aiStore'
+import { useAiStore, type ReasoningEffort } from '../stores/aiStore'
 import { GAME } from '../content/index'
 import { APP_VERSION } from '../lib/version'
 
@@ -29,6 +29,18 @@ const FONT_ITEMS = [
 const READING_ITEMS = [
   { value: 'single', label: '单场景' },
   { value: 'linear', label: '连续' },
+]
+
+const MODEL_ITEMS = [
+  { value: 'deepseek-flash', label: 'Flash 快' },
+  { value: 'deepseek-v4-pro', label: 'Pro 稳' },
+]
+
+const EFFORT_ITEMS = [
+  { value: 'none', label: '关' },
+  { value: 'low', label: '低' },
+  { value: 'high', label: '高' },
+  { value: 'max', label: '最高' },
 ]
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
@@ -95,6 +107,7 @@ export default function SettingsPage() {
   const apiKey = useAiStore((s) => s.apiKey)
   const model = useAiStore((s) => s.model)
   const baseUrl = useAiStore((s) => s.baseUrl)
+  const effort = useAiStore((s) => s.effort)
   const setConfig = useAiStore((s) => s.setConfig)
   const reset = useStoryStore((s) => s.reset)
 
@@ -128,10 +141,14 @@ export default function SettingsPage() {
       <main className="flex w-full flex-1 flex-col gap-6 px-4 py-5 md:px-6 lg:mx-auto lg:max-w-[560px]">
         <Group title="模型">
           <FieldRow label="接口地址" value={baseUrl} onChange={(value) => setConfig({ baseUrl: value })} placeholder="https://api.deepseek.com" />
-          <FieldRow label="模型" value={model} onChange={(value) => setConfig({ model: value })} placeholder="deepseek-chat" />
           <FieldRow label="密钥" value={apiKey} onChange={(value) => setConfig({ apiKey: value })} placeholder="sk-..." secret />
+          <SegmentRow label="模型" items={MODEL_ITEMS} value={model} onChange={(value) => setConfig({ model: value })} name="模型" />
+          <SegmentRow label="思考强度" items={EFFORT_ITEMS} value={effort} onChange={(value) => setConfig({ effort: value as ReasoningEffort })} name="思考强度" />
           <p className="mt-2 text-[11px] leading-relaxed text-text-dim">
-            密钥只保存在这台设备的浏览器里，不会上传。每一幕都由模型现场生成，需要联网。
+            Flash 快、便宜，Pro 文笔更稳但也更贵。思考强度关掉时出得最快，开启后会先琢磨再动笔，适合局面复杂的时候。
+          </p>
+          <p className="mt-1 text-[11px] leading-relaxed text-text-dim">
+            密钥只存在这台设备的浏览器里，不会上传。每一幕都由模型现场生成，需要联网。
           </p>
         </Group>
 

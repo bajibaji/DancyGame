@@ -4,6 +4,7 @@ export interface RecentEntry {
   turn: number
   choice?: string
   narration: string
+  raw?: string
 }
 
 export interface Quest {
