@@ -7,17 +7,18 @@ import DecryptedText from '../components/reactbits/DecryptedText/DecryptedText'
 import SpecularButton from '../components/reactbits/SpecularButton/SpecularButton'
 import GameShell from '../components/game/Layout/GameShell'
 import CrystalizedBall from '../components/reactbits/CrystalizedBall/CrystalizedBall'
-import { useGameStore } from '../stores/gameStore'
+import { useStoryStore } from '../stores/storyStore'
 import { GAME } from '../content/index'
 import { APP_VERSION } from '../lib/version'
 
 export default function TitlePage() {
   const navigate = useNavigate()
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const start = useGameStore((s) => s.start)
-  const history = useGameStore((s) => s.history)
-  const started = useGameStore((s) => s.started)
-  const hasSave = started || history.length > 0
+  const start = useStoryStore((s) => s.start)
+  const reset = useStoryStore((s) => s.reset)
+  const started = useStoryStore((s) => s.started)
+  const scene = useStoryStore((s) => s.scene)
+  const hasSave = started || Boolean(scene)
 
   const onStart = () => {
     start()
@@ -25,6 +26,7 @@ export default function TitlePage() {
   }
 
   const onRestart = () => {
+    reset()
     start()
     navigate('/story')
   }

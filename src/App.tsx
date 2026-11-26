@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import TitlePage from './pages/TitlePage'
 import StoryPage from './pages/StoryPage'
 import SettingsPage from './pages/SettingsPage'
+import SystemPage from './pages/SystemPage'
 import { FONT_SCALE, useSettingsStore } from './stores/settingsStore'
 
 const EASE = [0.32, 0.72, 0, 1] as const
@@ -38,6 +39,7 @@ export default function App() {
         <Routes location={location}>
           <Route path="/" element={<TitlePage />} />
           <Route path="/story" element={<StoryPage />} />
+          <Route path="/system" element={<SystemPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<TitlePage />} />
         </Routes>

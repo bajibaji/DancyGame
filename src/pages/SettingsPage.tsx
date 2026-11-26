@@ -7,7 +7,8 @@ import SpecularButton from '../components/reactbits/SpecularButton/SpecularButto
 import Switch from '../components/ui/Switch'
 import Segmented from '../components/ui/Segmented'
 import { FONT_SCALE, useSettingsStore } from '../stores/settingsStore'
-import { useGameStore } from '../stores/gameStore'
+import { useStoryStore } from '../stores/storyStore'
+import { useAiStore } from '../stores/aiStore'
 import { GAME } from '../content/index'
 import { APP_VERSION } from '../lib/version'
 
@@ -60,6 +61,23 @@ function ToggleRow({ label, description, checked, onChange }: { label: string; d
   )
 }
 
+function FieldRow({ label, value, onChange, placeholder, secret }: { label: string; value: string; onChange: (value: string) => void; placeholder: string; secret?: boolean }) {
+  return (
+    <label className="block border-b border-border-subtle/40 py-3.5 last:border-0">
+      <span className="mb-2 block text-[13px] text-text">{label}</span>
+      <input
+        type={secret ? 'password' : 'text'}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        autoComplete="off"
+        spellCheck={false}
+        className="w-full rounded-[10px] border border-border bg-bg-sunken px-3 py-2 text-[13px] text-text placeholder:text-text-dim/60 focus:border-accent focus:outline-none"
+      />
+    </label>
+  )
+}
+
 export default function SettingsPage() {
   const navigate = useNavigate()
   const textSpeed = useSettingsStore((s) => s.textSpeed)
@@ -74,7 +92,11 @@ export default function SettingsPage() {
   const setReducedMotion = useSettingsStore((s) => s.setReducedMotion)
   const setStaticBackground = useSettingsStore((s) => s.setStaticBackground)
   const setAutoAdvance = useSettingsStore((s) => s.setAutoAdvance)
-  const reset = useGameStore((s) => s.reset)
+  const apiKey = useAiStore((s) => s.apiKey)
+  const model = useAiStore((s) => s.model)
+  const baseUrl = useAiStore((s) => s.baseUrl)
+  const setConfig = useAiStore((s) => s.setConfig)
+  const reset = useStoryStore((s) => s.reset)
 
   useEffect(() => {
     document.documentElement.style.setProperty('--fs-scale', String(FONT_SCALE[fontSize]))
@@ -104,6 +126,15 @@ export default function SettingsPage() {
       </header>
 
       <main className="flex w-full flex-1 flex-col gap-6 px-4 py-5 md:px-6 lg:mx-auto lg:max-w-[560px]">
+        <Group title="模型">
+          <FieldRow label="接口地址" value={baseUrl} onChange={(value) => setConfig({ baseUrl: value })} placeholder="https://api.deepseek.com" />
+          <FieldRow label="模型" value={model} onChange={(value) => setConfig({ model: value })} placeholder="deepseek-chat" />
+          <FieldRow label="密钥" value={apiKey} onChange={(value) => setConfig({ apiKey: value })} placeholder="sk-..." secret />
+          <p className="mt-2 text-[11px] leading-relaxed text-text-dim">
+            密钥只保存在这台设备的浏览器里，不会上传。每一幕都由模型现场生成，需要联网。
+          </p>
+        </Group>
+
         <Group title="阅读">
           <SegmentRow label="文字速度" items={SPEED_ITEMS} value={textSpeed} onChange={(value) => setTextSpeed(value as typeof textSpeed)} name="文字速度" />
           <SegmentRow label="字号" items={FONT_ITEMS} value={fontSize} onChange={(value) => setFontSize(value as typeof fontSize)} name="字号" />
