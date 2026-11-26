@@ -8,6 +8,7 @@ import SpecularButton from '../components/reactbits/SpecularButton/SpecularButto
 import GameShell from '../components/game/Layout/GameShell'
 import CrystalizedBall from '../components/reactbits/CrystalizedBall/CrystalizedBall'
 import { useGameStore } from '../stores/gameStore'
+import { GAME } from '../content/index'
 import { APP_VERSION } from '../lib/version'
 
 export default function TitlePage() {
@@ -37,7 +38,9 @@ export default function TitlePage() {
           transition={{ duration: 0.6 }}
           className="flex w-full max-w-[360px] flex-col items-center text-center md:max-w-[480px]"
         >
-          <p className="relative z-10 mb-12 text-xs tracking-[0.4em] md:mb-16 text-text-dim">2015 · 杭州</p>
+          {GAME.kicker && (
+            <p className="relative z-10 mb-12 text-xs tracking-[0.4em] md:mb-16 text-text-dim">{GAME.kicker}</p>
+          )}
           <h1 className="relative inline-flex items-center justify-center">
             <span className="pointer-events-none absolute left-1/2 top-1/2 h-[140px] w-[62px] -translate-x-1/2 -translate-y-1/2 opacity-50 [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)] md:h-[176px] md:w-[78px]">
               <CrystalizedBall
@@ -74,7 +77,7 @@ export default function TitlePage() {
                 fontWeight={600}
                 className="font-display"
               >
-                沙漏停摆
+                {GAME.title}
               </GlitchText>
             </span>
             <span className="tabular absolute left-full top-1 ml-2 text-[10px] tracking-[0.2em] text-text-dim" aria-label={`游戏版本 ${APP_VERSION}`}>
@@ -82,18 +85,19 @@ export default function TitlePage() {
             </span>
           </h1>
           <div className="relative z-10 mt-12 text-base text-text-secondary md:mt-16">
-            <BlurText text="失忆悬案" animateBy="letters" effect="blur" trigger="load" delay={120} className="justify-center" />
+            <BlurText text={GAME.subtitle} animateBy="letters" effect="blur" trigger="load" delay={120} className="justify-center" />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-text-dim">
-            一个死在婚礼后，一个死在婚礼前三天。
-            <br />
-            两个人都被拆开，扔在同一片林子里。
-            <br />
-            你叫江嘉，刑警。查他们，也查你自己。
+            {GAME.lines.map((line, index) => (
+              <span key={line}>
+                {line}
+                {index < GAME.lines.length - 1 && <br />}
+              </span>
+            ))}
           </p>
           <div className="mt-10">
             <DecryptedText
-              text="HZ-2015-0419-ARCHIVE"
+              text={GAME.code}
               speed={40}
               animateOn="view"
               effect="scramble"
@@ -111,7 +115,7 @@ export default function TitlePage() {
               textColor="var(--color-text-hi)"
               className="md:w-[260px]"
             >
-              {hasSave ? '继续调查' : '开始调查'}
+              {hasSave ? '继续' : '开始'}
             </SpecularButton>
             {hasSave && (
               <button
@@ -125,13 +129,6 @@ export default function TitlePage() {
             <div className="flex items-center gap-3 text-sm text-text-dim">
               <button
                 type="button"
-                onClick={() => navigate('/archive')}
-                className="min-h-11 rounded-[18px] border border-border-subtle px-4 py-2 active:bg-surface"
-              >
-                档案库
-              </button>
-              <button
-                type="button"
                 onClick={() => navigate('/settings')}
                 className="min-h-11 rounded-[18px] border border-border-subtle px-4 py-2 active:bg-surface"
               >
@@ -140,11 +137,6 @@ export default function TitlePage() {
             </div>
           </div>
           <p className="mt-12 text-[10px] tracking-[0.12em] text-text-dim/70">建议用手机 Safari 打开，动效最完整</p>
-          <p className="mt-2 max-w-[340px] text-[11px] leading-relaxed text-text-dim/80 md:max-w-[440px] md:text-xs">
-            平行改编自初禾二《空相沙漏》。故事、人物与机构纯属虚构；
-            <br />
-            杭州地名与 2015 年的交通，照实写。
-          </p>
         </motion.div>
       </div>
 

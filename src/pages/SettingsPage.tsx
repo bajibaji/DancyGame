@@ -8,6 +8,7 @@ import Switch from '../components/ui/Switch'
 import Segmented from '../components/ui/Segmented'
 import { FONT_SCALE, useSettingsStore } from '../stores/settingsStore'
 import { useGameStore } from '../stores/gameStore'
+import { GAME } from '../content/index'
 import { APP_VERSION } from '../lib/version'
 
 const SPEED_ITEMS = [
@@ -135,10 +136,7 @@ export default function SettingsPage() {
 
         <Group title="关于">
           <p className="mt-2 text-[11px] leading-relaxed text-text-dim">
-            《沙漏停摆》 v{APP_VERSION} · 杭州失忆刑侦档案。平行改编自《空相沙漏》（作者：初禾二）。
-          </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-text-dim">
-            故事、人物与机构均为虚构；真实地名仅作空间锚点。存档格式 v2。
+            《{GAME.title}》 v{APP_VERSION} · {GAME.subtitle}
           </p>
         </Group>
       </main>

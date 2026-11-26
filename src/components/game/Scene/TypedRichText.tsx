@@ -6,10 +6,9 @@ interface TypedRichTextProps {
   speed: number
   revealAll: boolean
   onDone?: () => void
-  onSelect: (id: string, alias: string) => void
 }
 
-export default function TypedRichText({ text, speed, revealAll, onDone, onSelect }: TypedRichTextProps) {
+export default function TypedRichText({ text, speed, revealAll, onDone }: TypedRichTextProps) {
   const paragraphs = useMemo(() => parseRichText(text), [text])
   const total = useMemo(
     () => paragraphs.reduce((sum, paragraph) => sum + paragraph.tokens.reduce((n, token) => n + token.text.length, 0), 0),
@@ -63,36 +62,6 @@ export default function TypedRichText({ text, speed, revealAll, onDone, onSelect
               if (token.kind === 'quote') {
                 return (
                   <span key={tokenIndex} className={token.speech ? 'dialogue' : 'dialogue-inline'}>
-                    {part}
-                  </span>
-                )
-              }
-              if (token.kind === 'name') {
-                if (part.length < token.text.length) {
-                  return (
-                    <span key={tokenIndex} className="font-medium text-accent-strong">
-                      {part}
-                    </span>
-                  )
-                }
-                return (
-                  <span
-                    key={tokenIndex}
-                    role="button"
-                    tabIndex={0}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      onSelect(token.id, token.text)
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault()
-                        event.stopPropagation()
-                        onSelect(token.id, token.text)
-                      }
-                    }}
-                    className="font-medium text-accent-strong active:text-accent"
-                  >
                     {part}
                   </span>
                 )

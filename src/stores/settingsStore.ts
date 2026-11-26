@@ -36,7 +36,7 @@ export const useSettingsStore = create<SettingsStore>()(
       setStaticBackground: (staticBackground) => set({ staticBackground }),
       setAutoAdvance: (autoAdvance) => set({ autoAdvance }),
     }),
-    { name: 'jiangjia.settings.v3', version: 3 },
+    { name: 'jiage.settings.v1', version: 1 },
   ),
 )
 

@@ -4,33 +4,9 @@ import type { RichTextToken } from './richTextTokens'
 
 interface RichTextProps {
   text: string
-  onSelect: (id: string, alias: string) => void
 }
 
-function renderToken(token: RichTextToken, key: string, onSelect: RichTextProps['onSelect']) {
-  if (token.kind === 'name') {
-    return (
-      <span
-        key={key}
-        role="button"
-        tabIndex={0}
-        onClick={(event) => {
-          event.stopPropagation()
-          onSelect(token.id, token.text)
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            event.stopPropagation()
-            onSelect(token.id, token.text)
-          }
-        }}
-        className="font-medium text-accent-strong active:text-accent"
-      >
-        {token.text}
-      </span>
-    )
-  }
+function renderToken(token: RichTextToken, key: string) {
   if (token.kind === 'quote') {
     return (
       <span key={key} className={token.speech ? 'dialogue' : 'dialogue-inline'}>
@@ -41,13 +17,13 @@ function renderToken(token: RichTextToken, key: string, onSelect: RichTextProps[
   return <Fragment key={key}>{token.text}</Fragment>
 }
 
-export default function RichText({ text, onSelect }: RichTextProps) {
+export default function RichText({ text }: RichTextProps) {
   const paragraphs = useMemo(() => parseRichText(text), [text])
   return (
     <>
       {paragraphs.map((paragraph, index) => (
         <p key={index} className={paragraph.dialogueLead ? 'dialogue-paragraph' : undefined}>
-          {paragraph.tokens.map((token, tokenIndex) => renderToken(token, `${index}-${tokenIndex}`, onSelect))}
+          {paragraph.tokens.map((token, tokenIndex) => renderToken(token, `${index}-${tokenIndex}`))}
         </p>
       ))}
     </>
