@@ -30,7 +30,7 @@ describe('选项在正文里的后果', () => {
 
   it.each([
     ['p03f', 'p04d'],
-    ['p04f', 'p05a'],
+    ['p04f', 'p02a'],
     ['p06f', 'p07b'],
     ['p08f', 'c0101a'],
   ])('%s 的三条迟回收分别出现于 %s', (choiceId, recallId) => {
@@ -56,14 +56,18 @@ describe('选项在正文里的后果', () => {
     expect(opening.options).toBeUndefined()
     expect(opening.next).toBe('p01b')
     const choice = getScene('p01c')!
-    expect(choice.options?.map(({ key, next }) => [key, next])).toEqual([['A', 'p02a'], ['B', 'p02a'], ['C', 'p02a']])
+    expect(choice.options?.map(({ key, next }) => [key, next])).toEqual([['A', 'p03a'], ['B', 'p03a'], ['C', 'p03a']])
   })
 
   it('第一次选择前先交代空椅、新娘与她做过线人', () => {
     const opening = resolveSceneBody(getScene('p01a')!, {})
     expect(opening).toMatch(/折叠椅|空椅/)
     expect(opening).toMatch(/叶小满/)
-    expect(resolveSceneBody(getScene('p01b')!, {})).toMatch(/线人/)
+    expect(opening).toMatch(/线人/)
+    expect(opening).toMatch(/二十六岁/)
+    expect(opening).toMatch(/刑侦一队.*代理队长/)
+    expect(opening).toMatch(/六岁.*嘉兴/)
+    expect(resolveSceneBody(getScene('p01c')!, {})).toMatch(/伴郎马宏图.*老同学/)
     const note = CHARACTERS.find(({ id }) => id === 'jiangjia')?.note
     expect(note).toMatch(/杭州本地人/)
   })

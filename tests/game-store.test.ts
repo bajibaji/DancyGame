@@ -45,8 +45,8 @@ describe('序章两次查证与跨章交接', () => {
       expect(seen.has(scene.id), scene.id).toBe(false)
       seen.add(scene.id)
 
-      if (scene.id === 'p04d') expect(state.clues).not.toContain('C27')
-      if (scene.id === 'p04e') expect(state.clues).toContain('C27')
+      if (scene.id === 'p04a') expect(state.clues).not.toContain('C27')
+      if (scene.id === 'p05a') expect(state.clues).toContain('C27')
       if (scene.id === 'p09a') expect(puzzleStatus(puzzle, scene.chapter, state.clues, state.solved)).toBe('locked-clues')
       if (scene.id === 'p09b') {
         expect(state.clues).toEqual(expect.arrayContaining(['C27', 'C28']))
@@ -64,7 +64,7 @@ describe('序章两次查证与跨章交接', () => {
 
       if (scene.options) {
         const offers = choiceOffers(scene, state.runSeed, state.flags)
-        if (scene.id === 'p04c') expect(offers.some(({ opportunity }) => opportunity?.includes('乘客'))).toBe(search === 'C')
+        if (scene.id === 'p04f') expect(offers.some(({ opportunity }) => opportunity?.includes('乘客'))).toBe(search === 'C')
         const offer = offers.find(({ option }) => option.key === pick(scene.id))!
         state.choose(offer.key, scene.id)
       } else {
@@ -217,12 +217,14 @@ describe('游玩进度', () => {
     const alternate = offers.find(({ option }) => option.key === 'C')!
     store.getState().choose(collect.key, scene.id)
     store.getState().meet('柳湘')
-    expect(store.getState().clues).toEqual(['C03'])
+    expect(store.getState().clues).toEqual(['C03', 'C27'])
     expect(store.getState().metCharacters).toContain('liuxiang')
     store.getState().undo()
     expect(store.getState()).toMatchObject({ sceneId: 'p04c', clues: [], flags: {}, visited: ['p04c'], history: [], metCharacters: ['jiangjia'] })
     store.getState().choose(alternate.key, scene.id)
-    expect(store.getState().clues).toEqual([])
+    expect(store.getState().clues).toEqual(['C03', 'C27'])
+    for (const flag of alternate.option.effects.flags ?? []) expect(store.getState().flags[flag]).toBe(true)
+    for (const flag of collect.option.effects.flags ?? []) expect(store.getState().flags[flag]).toBeUndefined()
     expect(store.getState().history.map(({ choice }) => choice)).toEqual([alternate.key])
   })
 
