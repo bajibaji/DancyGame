@@ -115,6 +115,45 @@ describe('开场角色扮演的调查节拍', () => {
     }
   })
 
+  it('第二幕的打断直接接到第三幕动作，决定只在选择幕交回玩家', () => {
+    const second = getScene('p01b')!
+    const third = getScene(second.next!)!
+    expect(second.body.split(/\n\n/).at(-1)).toBe('你还没按下接听，摄影师已在桌外举起相机：「先别动，新郎也过来。」')
+    expect(second.body).not.toContain('等你决定先听哪一边')
+    expect(third.body.startsWith('杜衡应声从邻桌过来')).toBe(true)
+    expect(third.body).toContain('来电没有停')
+    expect(third.body).toContain('勾着袖口的手始终没松')
+    expect(third.options).toHaveLength(3)
+  })
+
+  it('首次行动先处理完市局来电，再接回空椅谈话，随机替代也不漏回拨', () => {
+    const opening = getScene('p01a')!
+    expect(opening.body).toContain('今天吃婚前宴，明早接亲，中午才正式行礼')
+    expect(getScene('p01b')!.body).toContain('市局支队长傅铮')
+    const decision = getScene('p01c')!
+    const target = getScene('pw01a')!
+    const actions = new Set<string>()
+    for (let seed = 0; seed < 48; seed++) for (const { option } of choiceOffers(decision, seed, {})) {
+      const state = choose(createInitialState(decision.id, seed), decision, option)
+      const body = resolveSceneBody(target, state.flags, state.history[0])
+      actions.add(option.label)
+      expect(body).toContain('傅铮')
+      expect(body).toContain('后天上午九点')
+      expect(body).toMatch(/不是急事|没有临时任务/)
+      expect(body).toContain('不用走？')
+      expect(body).toContain('刚才的话还算数')
+      expect(body).toContain('空椅')
+      if (!option.effects.flags?.includes('F_OPENING_PAPER')) {
+        expect(option.consequence).toMatch(/按掉来电|静音/)
+        expect(body).toContain('回拨市局')
+      } else expect(body).not.toContain('回拨市局')
+      expect(body).not.toContain('孟小禾')
+    }
+    expect(actions.size).toBe(5)
+    expect(target.title).toBe('刚才的话还算数')
+    expect(target.body).not.toContain('今天是女方家办的婚前宴')
+  })
+
   it('伴郎深夜离席后先过夜、接亲、午宴与寻找，再进入次日下午的现场', () => {
     const scenes = openingChapters.find(({ chapter }) => chapter === 'prologue')!.scenes
     const ids = scenes.map(({ id }) => id)

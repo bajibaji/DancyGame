@@ -68,7 +68,7 @@ export const OPPORTUNITIES: Readonly<Record<string, readonly Opportunity[]>> = {
       action: {
         label: '当着杜衡问她，这个位置到底留给谁。',
         tendency: 'intuition', risk: 'medium', effects: { clue: 3, relation: -1, danger: 1, world: -1, flags: ['F_OPENING_PROMISE'] },
-        consequence: '叶小满请你看她，别问丈夫。她说那个人十年没回消息，今天不会来，但自己想留着。你等她继续，她只轻轻握了一下你的手：“明天婚礼后，我会说名字。”',
+        consequence: '你将来电调成静音，当着杜衡问空椅留给谁。叶小满请你看她，别问丈夫。她说那个人十年没回消息，自己仍想留着这个位置，随后握了握你的手：「你先回电话。今晚我会单独告诉你。」',
         progress: '叶小满要亲自讲空椅的人，杜衡没有代答。',
       },
     },
@@ -78,8 +78,8 @@ export const OPPORTUNITIES: Readonly<Record<string, readonly Opportunity[]>> = {
       action: {
         label: '把席卡递给她，请她决定什么时候把名字告诉你。',
         tendency: 'empathy', risk: 'low', effects: { relation: 1, world: 1, flags: ['F_WEDDING_BLANK_CARD', 'F_OPENING_PROMISE'] },
-        consequence: '叶小满在席卡背面加个问号，交给你，说等明天婚礼后自己来回答。你收好这张小纸，答应走以前先来找她。她终于朝镜头转身，空椅仍留在两人中间。',
-        progress: '席卡问号留下，婚礼后由叶小满补上名字。',
+        consequence: '你先将来电调成静音，把席卡递过去。叶小满在背面加个问号，交还给你：「先回电话，别走。今晚我来答。」你收好这张小纸，她才朝镜头转身，空椅仍留在两人中间。',
+        progress: '席卡问号留下，叶小满约好今晚单独回答。',
       },
     },
   ],
