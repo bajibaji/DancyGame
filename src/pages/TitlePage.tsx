@@ -85,9 +85,9 @@ export default function TitlePage() {
             <BlurText text="失忆悬案" animateBy="letters" effect="blur" trigger="load" delay={120} className="justify-center" />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-text-dim">
-            伴郎前夜离席，直到婚礼散场仍未归。
+            一个死在婚礼后，一个死在婚礼前三天。
             <br />
-            众人寻到林中，却发现了两组不同的遗骸。
+            两个人都被拆开，扔在同一片林子里。
             <br />
             你叫江嘉，刑警。查他们，也查你自己。
           </p>
