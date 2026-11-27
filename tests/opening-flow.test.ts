@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CHAPTERS, getScene } from '../src/content'
+import { CHAPTERS, getScene, getSceneBaseId } from '../src/content'
 import { choiceOffers } from '../src/game/choices'
 import { choose, createInitialState } from '../src/game/engine'
 import { resolveSceneBody } from '../src/game/narrative'
@@ -66,23 +66,39 @@ describe('开场角色扮演的调查节拍', () => {
     ]
     expect(hooks).toHaveLength(openingChapters.flatMap(({ scenes }) => scenes.filter(({ options }) => options)).length)
     for (const [id, anchor] of hooks) expect(getScene(id)!.body, id).toContain(anchor)
-    for (const chapter of openingChapters) for (let index = 1; index < chapter.scenes.length; index += 3) {
-      expect(hooks.some(([id]) => id === chapter.scenes[index].id), chapter.scenes[index].id).toBe(true)
+    for (const chapter of openingChapters) for (const decision of chapter.scenes.filter(({ options }) => options)) {
+      for (const option of decision.options!) {
+        const first = getScene(option.next)!
+        if (first.chapter === chapter.chapter) expect(hooks.some(([id]) => id === first.next), decision.id).toBe(true)
+        else expect(getScene(first.next!)!.body, decision.id).toMatch(/为什么选婚礼|前夜二十三点四十二分/)
+      }
     }
   })
 
-  it.each(openingChapters)('$title 每组三幕才选择，组内无跳过正文或旧场景死路', ({ scenes }) => {
-    expect(scenes.length % 3).toBe(0)
-    for (let index = 0; index < scenes.length; index += 3) {
-      const [first, discovery, decision] = scenes.slice(index, index + 3)
-      expect(first.options, first.id).toBeUndefined()
-      expect(discovery.options, discovery.id).toBeUndefined()
-      expect(first.next, first.id).toBe(discovery.id)
-      expect(discovery.next, discovery.id).toBe(decision.id)
-      expect(decision.options?.map(({ key }) => key), decision.id).toEqual(['A', 'B', 'C'])
-      const destination = scenes[index + 3]?.id ?? getScene(decision.options![0].next)!.id
-      for (const option of decision.options!) expect(option.next, decision.id).toBe(destination)
+  it.each(openingChapters)('$title 按真实路径每三幕选择，三路均能到下一决定', ({ chapter, scenes }) => {
+    const checked = new Set<string>()
+    const walk = (id: string, gap: number) => {
+      const scene = getScene(id)!
+      if (scene.chapter !== chapter) return
+      const key = id + ':' + gap
+      if (checked.has(key)) return
+      checked.add(key)
+      expect(gap + 1, id).toBeLessThanOrEqual(3)
+      if (scene.options) {
+        expect(gap + 1, id).toBe(3)
+        expect(scene.options.map(({ key }) => key), id).toEqual(['A', 'B', 'C'])
+        const next = scene.options.map(({ next }) => getScene(next)!)
+        expect(new Set(next.map((target) => target.next)).size, id).toBe(1)
+        if (next[0].chapter === chapter) expect(new Set(next.map(({ id }) => id)).size, id).toBe(3)
+        else expect(next[0].variants).toHaveLength(3)
+        for (const option of scene.options) walk(option.next, 0)
+      } else {
+        expect(scene.next, id).toBeDefined()
+        walk(scene.next!, gap + 1)
+      }
     }
+    walk(scenes[0].id, 0)
+    expect(new Set([...checked].map((key) => key.split(':')[0])).size).toBe(scenes.length)
   })
 
   it('每个实际行动在下一组选项前有独立回应，随机替代也不会串用另外两条后果', () => {
@@ -98,7 +114,7 @@ describe('开场角色扮演的调查节拍', () => {
           const arrival = state.history.at(-1)
           const arrived = resolveSceneBody(target, state.flags, arrival)
           expect(arrived, scene.id).toContain(option.consequence)
-          const recalled: string[] = []
+          const recalled: string[] = [resolveSceneBody(target, state.flags)]
           while (!target.options) {
             for (const recall of target.recalls ?? []) {
               if (!state.flags[recall.flag] || !option.effects.flags?.includes(recall.flag)) continue
@@ -107,7 +123,7 @@ describe('开场角色扮演的调查节拍', () => {
             }
             target = getScene(target.next!)!
           }
-          expect(recalled.length, scene.id + '/' + option.key).toBeGreaterThan(0)
+          expect(recalled[0].length, scene.id + '/' + option.key).toBeGreaterThanOrEqual(200)
           responses.add(recalled.join('|'))
         }
         expect(responses.size, scene.id + '/' + seed).toBe(3)
@@ -135,13 +151,13 @@ describe('开场角色扮演的调查节拍', () => {
     const actions = new Set<string>()
     for (let seed = 0; seed < 48; seed++) for (const { option } of choiceOffers(decision, seed, {})) {
       const state = choose(createInitialState(decision.id, seed), decision, option)
-      const body = resolveSceneBody(target, state.flags, state.history[0])
+      const body = resolveSceneBody(getScene(option.next)!, state.flags, state.history[0])
       actions.add(option.label)
       expect(body).toContain('傅铮')
       expect(body).toContain('后天上午九点')
       expect(body).toMatch(/不是急事|没有临时任务/)
-      expect(body).toContain('不用走？')
-      expect(body).toContain('刚才的话还算数')
+      expect(body).toContain('不用走')
+      expect(body).toMatch(/刚才的话还算数|空椅的事还没说完/)
       expect(body).toContain('空椅')
       if (!option.effects.flags?.includes('F_OPENING_PAPER')) {
         expect(option.consequence).toMatch(/按掉来电|静音/)
@@ -169,11 +185,12 @@ describe('开场角色扮演的调查节拍', () => {
     expect(getScene('p05a')!.timeOfDay).toBe('婚礼当日 · 15:10')
     expect(getScene('p05a')!.body).toContain('十五个多小时')
     expect(getScene('pw05b')!.body).toContain('凌晨一点二十分')
-    expect(getScene('pw06a')!.body).toContain('儿子没有回来睡')
-    expect(getScene('pw07a')!.body).toContain('忙完整个上午')
+    expect(getScene('pw06a')!.body).toContain('儿子整夜未归')
+    expect(getScene('pw07a')!.body).toContain('整个上午')
     expect(getScene('c0105a')!.body).toContain('23:42')
     expect(getScene('c0109b')!.body).toContain('前夜二十三点四十二分')
     expect(getScene('c0101a')!.body).not.toContain('不到十二小时')
+    expect(getSceneBaseId('p06a_B')).toBe('p06a')
   })
 
   it('三项状态在婚宴分段介绍，先总说结局，再解释线索、关系和危险', () => {

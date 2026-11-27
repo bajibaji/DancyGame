@@ -1,4 +1,4 @@
-import { CHAPTERS, chapterTitle, getScene, START_SCENE } from '../content'
+import { CHAPTERS, chapterTitle, getScene, getSceneBaseId, START_SCENE } from '../content'
 import { isReleasedScene, RELEASED_CLUES } from '../content/release'
 import type { GameState } from './types'
 
@@ -58,12 +58,12 @@ export function shouldShowRecap(state: SessionState, lastActiveAt: number | null
 
 export function buildStoryRecap(state: RecapState): StoryRecap {
   const current = getScene(state.sceneId)
-  const ordered = CHAPTERS.flatMap(({ scenes }) => scenes).filter(({ id }) => isReleasedScene(id))
+  const ordered = CHAPTERS.flatMap(({ scenes }) => scenes).filter(({ id, inherits }) => !inherits && isReleasedScene(id))
   const indices = new Map(ordered.map(({ id }, index) => [id, index]))
-  const currentIndex = indices.get(state.sceneId) ?? -1
-  const completed = (id: string) => (indices.get(id) ?? Infinity) < currentIndex
-  const seen = new Set(state.visited.filter(completed))
-  for (const entry of state.history) if (completed(entry.sceneId)) seen.add(entry.sceneId)
+  const currentIndex = indices.get(getSceneBaseId(state.sceneId)) ?? -1
+  const completed = (id: string) => (indices.get(getSceneBaseId(id)) ?? Infinity) < currentIndex
+  const seen = new Set(state.visited.filter(completed).map(getSceneBaseId))
+  for (const entry of state.history) if (completed(entry.sceneId)) seen.add(getSceneBaseId(entry.sceneId))
   const known = checkpoints.filter(({ scene }) => seen.has(scene))
   const recent = known.slice(-4).map(({ text }) => text)
   const anchor = [...known].reverse().find(({ scene }) => ['c0101a', 'p07b', 'p06a', 'p03c', 'p01b', 'p01a'].includes(scene))?.text

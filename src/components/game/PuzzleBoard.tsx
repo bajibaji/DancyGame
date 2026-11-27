@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check, ChevronRight, Lock, RotateCcw, X } from 'lucide-react'
-import { CHAPTERS, CLUE_MAP, chapterTitle, getScene } from '../../content/index'
+import { CHAPTERS, CLUE_MAP, chapterTitle, getScene, getSceneBaseId } from '../../content/index'
 import { useGameStore } from '../../stores/gameStore'
 import { RECIPES } from '../../game/puzzle'
 import { PUZZLES, assistFor, judgePuzzle, puzzleStatus } from '../../game/puzzles'
@@ -65,8 +65,8 @@ export default function PuzzleBoard() {
     }
   }, [open])
 
-  const chapterScenes = CHAPTERS.find(({ chapter }) => chapter === scene?.chapter)?.scenes ?? []
-  const currentIndex = chapterScenes.findIndex(({ id }) => id === sceneId)
+  const chapterScenes = CHAPTERS.find(({ chapter }) => chapter === scene?.chapter)?.scenes.filter((section) => !section.inherits) ?? []
+  const currentIndex = chapterScenes.findIndex(({ id }) => id === getSceneBaseId(sceneId))
   const followUpScene =
     open &&
     chapterScenes.find(

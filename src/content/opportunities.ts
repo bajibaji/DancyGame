@@ -10,27 +10,47 @@ interface Opportunity {
 export const OPPORTUNITIES: Readonly<Record<string, readonly Opportunity[]>> = {
   money02c: [
     {
-      insteadOf: 'C', requires: 'MONEY01_0',
-      context: '卢旭刚补过两次交纸的经过，陆晚已经约到接纸时在场的人。',
-      action: {
-        label: '先让接纸时在场的人独立认交付日期。',
-        tendency: 'evidence', risk: 'low', effects: { relation: 1, world: -1, flags: ['MONEY02_2'] },
-        consequence: '在场人只认得其中一张，说另外两张不在自己那次。你将他的范围独立记下，另请陆晚核收款联系；凭证流转与钱真正到账仍是不同的问题。',
-        progress: '交纸见证有独立范围，收款与交付仍分别核。',
-      },
-    },
+      "insteadOf": "C",
+      "requires": "MONEY01_0",
+      "context": "卢旭刚补过两次交纸的经过，陆晚已经约到接纸时在场的人。",
+      "action": {
+        "label": "先让接纸时在场的人独立认交付日期。",
+        "tendency": "evidence",
+        "risk": "low",
+        "effects": {
+          "relation": 1,
+          "world": -1,
+          "flags": [
+            "MONEY02_2",
+            "F_MONEY_WITNESS_ROUTE"
+          ]
+        },
+        "consequence": "你约接纸时在场的人独立说，不先给他看卢旭的版本。原件暂留夹板，他从自己那回到店开始讲，钱什么时候到账仍由银行另核。",
+        "progress": "交纸见证有独立范围，收款与交付仍分别核。"
+      }
+    }
   ],
   clock01c: [
     {
-      insteadOf: 'C', requires: 'FEAST01_0',
-      context: '摄影师的原片能看见收摊占去半条巷子，贺川正等复走时的条件。',
-      action: {
-        label: '用原片补收摊遮挡，请贺川按当时条件复走。',
-        tendency: 'evidence', risk: 'low', effects: { clue: 1, world: -1, flags: ['CLOCK01_2'] },
-        consequence: '摄影师按原片指出板车何时挡到路口，贺川收到遮挡与绕行条件，带上空车继续核。你把校时误差一起交出，复测留来源，不能将最快一次当作当晚实际经过。',
-        progress: '原片收摊条件交贺川复测，筛查同步更新。',
-      },
-    },
+      "insteadOf": "C",
+      "requires": "FEAST01_0",
+      "context": "摄影师的原片能看见收摊占去半条巷子，贺川正等复走时的条件。",
+      "action": {
+        "label": "用原片补收摊遮挡，请贺川按当时条件复走。",
+        "tendency": "evidence",
+        "risk": "low",
+        "effects": {
+          "clue": 1,
+          "world": -1,
+          "flags": [
+            "CLOCK01_2",
+            "F_CLOCK_PHOTO_ROUTE"
+          ]
+        },
+        "consequence": "你请摄影师调出收摊前后连续原片，先将板车遮挡的位置标给贺川。复走条件连同校时误差交接，自己留在屏幕前等他说哪段是亲眼拍过的。",
+        "progress": "原片收摊条件交贺川复测，筛查同步更新。"
+      }
+    }
   ],
   yuan03c: [{
     insteadOf: 'C', requires: 'YUAN01_2',
@@ -63,85 +83,159 @@ export const OPPORTUNITIES: Readonly<Record<string, readonly Opportunity[]>> = {
   }],
   p01c: [
     {
-      insteadOf: 'B',
-      context: '叶小满又把空椅拖回身边，杜衡伸来的手已经收回去。',
-      action: {
-        label: '当着杜衡问她，这个位置到底留给谁。',
-        tendency: 'intuition', risk: 'medium', effects: { clue: 3, relation: -1, danger: 1, world: -1, flags: ['F_OPENING_PROMISE'] },
-        consequence: '你将来电调成静音，当着杜衡问空椅留给谁。叶小满请你看她，别问丈夫。她说那个人十年没回消息，自己仍想留着这个位置，随后握了握你的手：「你先回电话。今晚我会单独告诉你。」',
-        progress: '叶小满要亲自讲空椅的人，杜衡没有代答。',
-      },
+      "insteadOf": "B",
+      "context": "叶小满又把空椅拖回身边，杜衡伸来的手已经收回去。",
+      "action": {
+        "label": "当着杜衡问她，这个位置到底留给谁。",
+        "tendency": "intuition",
+        "risk": "medium",
+        "effects": {
+          "clue": 3,
+          "relation": -1,
+          "danger": 1,
+          "world": -1,
+          "flags": [
+            "F_OPENING_PROMISE",
+            "F_OPENING_PUBLIC"
+          ]
+        },
+        "consequence": "你将来电调成静音，面对叶小满问空椅留给谁。杜衡想接话，你先看着她，等这个位置的主人亲口决定怎样回答。",
+        "progress": "叶小满要亲自讲空椅的人，杜衡没有代答。"
+      }
     },
     {
-      insteadOf: 'B',
-      context: '那张没有姓名的席卡仍压在她手底，她还没说完十年前的事。',
-      action: {
-        label: '把席卡递给她，请她决定什么时候把名字告诉你。',
-        tendency: 'empathy', risk: 'low', effects: { relation: 1, world: 1, flags: ['F_WEDDING_BLANK_CARD', 'F_OPENING_PROMISE'] },
-        consequence: '你先将来电调成静音，把席卡递过去。叶小满在背面加个问号，交还给你：「先回电话，别走。今晚我来答。」你收好这张小纸，她才朝镜头转身，空椅仍留在两人中间。',
-        progress: '席卡问号留下，叶小满约好今晚单独回答。',
-      },
-    },
+      "insteadOf": "B",
+      "context": "那张没有姓名的席卡仍压在她手底，她还没说完十年前的事。",
+      "action": {
+        "label": "把席卡递给她，请她决定什么时候把名字告诉你。",
+        "tendency": "empathy",
+        "risk": "low",
+        "effects": {
+          "relation": 1,
+          "world": 1,
+          "flags": [
+            "F_WEDDING_BLANK_CARD",
+            "F_OPENING_PROMISE",
+            "F_OPENING_CARD_ROUTE"
+          ]
+        },
+        "consequence": "你将来电调成静音，把空席卡递给叶小满，请她自己定什么时候讲。她找来一支笔，在纸背停住，杜衡没有再伸手。",
+        "progress": "席卡问号留下，叶小满约好今晚单独回答。"
+      }
+    }
   ],
   p03c: [
     {
-      insteadOf: 'B', requires: 'F_WEDDING_BLANK_CARD',
-      context: '叶小满经过时碰了碰你口袋，提醒你刚收过那张问号席卡。',
-      action: {
-        label: '拿出那张席卡，问她现在为什么停住不说。',
-        tendency: 'empathy', risk: 'low', effects: { clue: 1, relation: 1, danger: -1, world: 1, flags: ['F_BEAT_p03c_B'] },
-        consequence: '叶小满看着问号，先说马宏图今晚一直少喝酒，像要保持清醒。她想问，却被杜衡叫回去敬酒。你将席卡收回，她说自己的那个人晚些再讲，现在先看伴郎。',
-        progress: '叶小满指出伴郎刻意清醒，席卡上的名字仍等她讲。',
-      },
-    },
+      "insteadOf": "B",
+      "requires": "F_WEDDING_BLANK_CARD",
+      "context": "叶小满经过时碰了碰你口袋，提醒你刚收过那张问号席卡。",
+      "action": {
+        "label": "拿出那张席卡，问她现在为什么停住不说。",
+        "tendency": "empathy",
+        "risk": "low",
+        "effects": {
+          "clue": 1,
+          "relation": 1,
+          "danger": -1,
+          "world": 1,
+          "flags": [
+            "F_BEAT_p03c_B",
+            "F_OPENING_CARD_RETURN"
+          ]
+        },
+        "consequence": "你拿出问号席卡，小满先将它翻回没有字的一面。你请她等会儿继续讲，现在先说伴郎今晚哪里和平日不同，她回头看那部没带走的手机。",
+        "progress": "叶小满指出伴郎刻意清醒，席卡上的名字仍等她讲。"
+      }
+    }
   ],
   p04f: [
     {
-      insteadOf: 'C', requires: 'F_P_WITNESS_VAN',
-      context: '司机认出传话的那位乘客，他还在路边等车。',
-      action: {
-        label: '找后排乘客，当面核对他是怎么认出伴郎的。',
-        tendency: 'evidence', risk: 'low', effects: { relation: 1, world: 1, flags: ['F_P_SEARCH_YE', 'F_P_PASSENGER_CHECK'] },
-        consequence: '乘客一开始说看到了胸花。你请他站回等车的位置，他才指着自己的手机说，胸花是从婚宴的照片上认出来的。真正经过巷口时，他没看清那人穿什么。你请叶小满守住家属，近路由搜寻组继续查。',
-        progress: '乘客认出的是婚宴照片里的人，不是巷口经过的人。',
-      },
-    },
+      "insteadOf": "C",
+      "requires": "F_P_WITNESS_VAN",
+      "context": "司机认出传话的那位乘客，他还在路边等车。",
+      "action": {
+        "label": "找后排乘客，当面核对他是怎么认出伴郎的。",
+        "tendency": "evidence",
+        "risk": "low",
+        "effects": {
+          "relation": 1,
+          "world": 1,
+          "flags": [
+            "F_P_SEARCH_YE",
+            "F_P_PASSENGER_CHECK",
+            "F_PASSENGER_ROUTE"
+          ]
+        },
+        "consequence": "你约后排乘客回原站位，先请他别看婚宴照片。近道继续由民警核，原片交陆晚，你只想听清那次认人究竟从哪儿开始。",
+        "progress": "乘客认出的是婚宴照片里的人，不是巷口经过的人。"
+      }
+    }
   ],
   p08c: [
     {
-      insteadOf: 'A',
-      context: '刘琼的妹妹每问一句收不收，就把袋口捏得更紧一点。',
-      action: {
-        label: '请她自己把东西拿出来，当面写一张接收单。',
-        tendency: 'empathy', risk: 'low', effects: { clue: 1, relation: 1, world: 1, flags: ['F_P_FAMILY_RECEIPT', 'F_BEAT_p08c_A'] },
-        consequence: '她跟你走到车旁，把身份证和旧手机一样样搁在后备厢边沿。陆晚记下接收时间，撕下留存联。她接过来，还险些把手机又揣回去：「背壳也别丢，那是他自己换的。」',
-        progress: '当面核对了手机和身份证，家属带走了接收单。',
-      },
-    },
+      "insteadOf": "A",
+      "context": "刘琼的妹妹每问一句收不收，就把袋口捏得更紧一点。",
+      "action": {
+        "label": "请她自己把东西拿出来，当面写一张接收单。",
+        "tendency": "empathy",
+        "risk": "low",
+        "effects": {
+          "clue": 1,
+          "relation": 1,
+          "world": 1,
+          "flags": [
+            "F_P_FAMILY_RECEIPT",
+            "F_BEAT_p08c_A",
+            "F_FAMILY_RECEIPT_ROUTE"
+          ]
+        },
+        "consequence": "你请妹妹亲手将东西摆到车边，陆晚准备接收单。每一件先核清外观与用途，你让她慢慢取，不必因周围人催着问身份就急着交完。",
+        "progress": "当面核对了手机和身份证，家属带走了接收单。"
+      }
+    }
   ],
   c0102c: [
     {
-      insteadOf: 'B',
-      context: '陆晚正等筛 02 的范围，顾淮手里仍是两处不同来源的检验页。',
-      action: {
-        label: '亲自核 02 的筛查条件，别让熟悉名字先占空栏。',
-        tendency: 'evidence', risk: 'medium', effects: { clue: 2, danger: 1, flags: ['F_MISSING_LIST'] },
-        consequence: '你将死亡估计和失踪时段分别交给陆晚，她筛出十七个方向。你逐项标清能核的来源，没有凭任何生活评价先删人；名单开始回到原报案单位找样本与亲属。',
-        progress: '02 的十七个筛查方向按独立来源核。',
-      },
-    },
+      "insteadOf": "B",
+      "context": "陆晚正等筛 02 的范围，顾淮手里仍是两处不同来源的检验页。",
+      "action": {
+        "label": "亲自核 02 的筛查条件，别让熟悉名字先占空栏。",
+        "tendency": "evidence",
+        "risk": "medium",
+        "effects": {
+          "clue": 2,
+          "danger": 1,
+          "flags": [
+            "F_MISSING_LIST",
+            "F_MISSING_ROUTE"
+          ]
+        },
+        "consequence": "你和陆晚重新核筛查条件，先分清估计死亡与失踪的时段。原报案处逐项联络，熟悉名字也要有独立来源，不能先占住无名那一栏。",
+        "progress": "02 的十七个筛查方向按独立来源核。"
+      }
+    }
   ],
   c0106c: [
     {
-      insteadOf: 'A',
-      context: '战远愿意先受封控约束，只想把第二级踏板那处异常留给你。',
-      action: {
-        label: '请战远在图上标好踏板，再给他十分钟线外观察。',
-        tendency: 'empathy', risk: 'low', effects: { clue: 1, danger: -2, world: 1, flags: ['F_TEN_MIN'] },
-        consequence: '战远在图上标出第二级踏板，没有下井。十分钟里有人从侧门经过，他将可分享的进出方向交给值班室。观察结束，贺川固定井口外围，现场一直由你负责。',
-        progress: '踏板位置与侧门观察留存，井口按时固定。',
-      },
-    },
+      "insteadOf": "A",
+      "context": "战远愿意先受封控约束，只想把第二级踏板那处异常留给你。",
+      "action": {
+        "label": "请战远在图上标好踏板，再给他十分钟线外观察。",
+        "tendency": "empathy",
+        "risk": "low",
+        "effects": {
+          "clue": 1,
+          "relation": 1,
+          "world": 1,
+          "flags": [
+            "F_TEN_MIN",
+            "F_TEN_MAP_ROUTE"
+          ]
+        },
+        "consequence": "你将空白图交战远，让他先标第二级踏板，确认十分钟都在线外观察。贺川继续外围准备，图和实际进出分别留存，由你按时收回观察。",
+        "progress": "踏板位置与侧门观察留存，井口按时固定。"
+      }
+    }
   ],
   c0201c: [{
     insteadOf: 'C', context: '湖边还有信号，陆晚把手机举在肩侧等你。',

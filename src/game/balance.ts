@@ -1,5 +1,5 @@
 import { RELEASED_CHAPTERS } from '../content/release'
-import type { Chapter, Effects } from './types'
+import type { Chapter } from './types'
 
 export interface StatCaps {
   clue: number
@@ -17,40 +17,38 @@ export const RATIO = {
 let cached: StatCaps | null = null
 const scoped = new Map<string, StatCaps>()
 
-function top(effects: Effects[], key: 'clue' | 'relation' | 'danger' | 'memory'): number {
-  return Math.max(0, ...effects.map((entry) => entry[key] ?? 0))
-}
-
 function computeCaps(chapters: readonly Chapter[]): StatCaps {
-  let clue = 0
-  let relation = 0
-  let danger = 0
-  let memory = 0
-  let beats = 0
-  for (const chapter of chapters) {
-    for (const scene of chapter.scenes) {
-      if (scene.effects) {
-        clue += Math.max(0, scene.effects.clue ?? 0)
-        relation += Math.max(0, scene.effects.relation ?? 0)
-        danger += Math.max(0, scene.effects.danger ?? 0)
-        memory += Math.max(0, scene.effects.memory ?? 0) + (scene.effects.memories?.length ?? 0)
+  const scenes = new Map(chapters.flatMap((chapter) => chapter.scenes).map((scene) => [scene.id, scene]))
+  const cache = new Map<string, StatCaps>()
+  const empty = (): StatCaps => ({ clue: 0, relation: 0, danger: 0, memory: 0, beats: 0 })
+  const visit = (id: string): StatCaps => {
+    const scene = scenes.get(id)
+    if (!scene) return empty()
+    const known = cache.get(id)
+    if (known) return known
+    const paths = scene.options?.map((option) => {
+      const next = visit(option.next)
+      return {
+        clue: next.clue + Math.max(0, option.effects.clue ?? 0),
+        relation: next.relation + Math.max(0, option.effects.relation ?? 0),
+        danger: next.danger + Math.max(0, option.effects.danger ?? 0),
+        memory: next.memory + Math.max(0, option.effects.memory ?? 0),
+        beats: next.beats + 1,
       }
-      if (!scene.options) continue
-      beats += 1
-      const effects = scene.options.map((option) => option.effects)
-      clue += top(effects, 'clue')
-      relation += top(effects, 'relation')
-      danger += top(effects, 'danger')
-      memory += top(effects, 'memory')
+    }) ?? [scene.next ? visit(scene.next) : empty()]
+    const effects = scene.effects ?? {}
+    const result = {
+      clue: Math.max(0, effects.clue ?? 0) + Math.max(0, ...paths.map((path) => path.clue)),
+      relation: Math.max(0, effects.relation ?? 0) + Math.max(0, ...paths.map((path) => path.relation)),
+      danger: Math.max(0, effects.danger ?? 0) + Math.max(0, ...paths.map((path) => path.danger)),
+      memory: Math.max(0, effects.memory ?? 0) + (effects.memories?.length ?? 0) + Math.max(0, ...paths.map((path) => path.memory)),
+      beats: Math.max(0, ...paths.map((path) => path.beats)),
     }
+    cache.set(id, result)
+    return result
   }
-  return {
-    clue: Math.max(1, clue),
-    relation: Math.max(1, relation),
-    danger: Math.max(1, danger),
-    memory: Math.max(1, memory),
-    beats,
-  }
+  const result = chapters[0] ? visit(chapters[0].scenes[0].id) : empty()
+  return { ...result, clue: Math.max(1, result.clue), relation: Math.max(1, result.relation), danger: Math.max(1, result.danger), memory: Math.max(1, result.memory) }
 }
 
 export function statCaps(): StatCaps {

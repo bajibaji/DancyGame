@@ -5,7 +5,7 @@ import { applyEffects, CHOICE_UNDO_MS, choose as engineChoose, createInitialStat
 import { choiceOffers } from '../game/choices'
 import { solvePuzzle as engineSolvePuzzle } from '../game/puzzle'
 import type { Recipe } from '../game/puzzle'
-import { CHAPTERS, getScene, START_SCENE } from '../content/index'
+import { CHAPTERS, getScene, getSceneBaseId, START_SCENE } from '../content/index'
 import { characterIdsInText } from '../game/characterNames'
 import { isReleasedRecipe, isReleasedScene } from '../content/release'
 import { shouldShowRecap } from '../game/recap'
@@ -88,9 +88,9 @@ function mergeSave(saved: unknown, current: GameStore): GameStore {
   const sceneId = validSceneId(state)
   const visited = state.visited.filter((id) => Boolean(getScene(id)))
   const appliedScenes = state.appliedScenes.filter((id) => Boolean(getScene(id)))
-  const ordered = CHAPTERS.flatMap((chapter) => chapter.scenes)
-  const currentIndex = ordered.findIndex((scene) => scene.id === sceneId)
-  const reached = (id: string) => sceneId === id || visited.includes(id) || appliedScenes.includes(id)
+  const ordered = CHAPTERS.flatMap((chapter) => chapter.scenes).filter((scene) => !scene.inherits)
+  const currentIndex = ordered.findIndex((scene) => scene.id === getSceneBaseId(sceneId))
+  const reached = (id: string) => getSceneBaseId(sceneId) === id || [...visited, ...appliedScenes].some((seen) => getSceneBaseId(seen) === id)
   const passed = (id: string) => {
     const index = ordered.findIndex((scene) => scene.id === id)
     return index >= 0 && currentIndex >= index

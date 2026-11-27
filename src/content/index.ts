@@ -1,5 +1,6 @@
-import type { Chapter, EndingId, Epilogue, Scene } from '../game/types'
+import type { EndingId, Epilogue, Scene } from '../game/types'
 import type { CaptureStatus, MemoryStatus } from '../game/narrative'
+import { resolveChapters } from './sceneInheritance.js'
 import prologueJson from './story/prologue.json'
 import ch01Json from './story/ch01.json'
 import ch02Json from './story/ch02.json'
@@ -56,7 +57,7 @@ export interface EndingData {
   variants: { flag: string; text: string }[]
 }
 
-export const CHAPTERS = [
+export const CHAPTERS = resolveChapters([
   prologueJson,
   ch01Json,
   ch02Json,
@@ -71,7 +72,7 @@ export const CHAPTERS = [
   ch11Json,
   ch12Json,
   ch13Json,
-] as unknown as Chapter[]
+] as unknown as Parameters<typeof resolveChapters>[0])
 
 export const SCENES = new Map<string, Scene>()
 for (const chapter of CHAPTERS) {
@@ -84,6 +85,11 @@ export const START_SCENE = 'p01a'
 
 export function getScene(id: string): Scene | undefined {
   return SCENES.get(id)
+}
+
+export function getSceneBaseId(id: string): string {
+  const scene = getScene(id)
+  return scene?.inherits ? getSceneBaseId(scene.inherits) : id
 }
 
 export const CLUES: ClueCard[] = cluesJson as ClueCard[]

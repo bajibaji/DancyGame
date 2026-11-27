@@ -29,8 +29,8 @@ describe('选项在正文里的后果', () => {
   })
 
   it.each([
-    ['p03f', 'p04d'],
-    ['p04f', 'p02a'],
+    ['p03f', 'p04e'],
+    ['p04f', 'p02b'],
     ['p06f', 'p07b'],
     ['p08f', 'c0101a'],
   ])('%s 的三条迟回收分别出现于 %s', (choiceId, recallId) => {
@@ -56,7 +56,7 @@ describe('选项在正文里的后果', () => {
     expect(opening.options).toBeUndefined()
     expect(opening.next).toBe('p01b')
     const choice = getScene('p01c')!
-    expect(choice.options?.map(({ key, next }) => [key, next])).toEqual([['A', 'pw01a'], ['B', 'pw01a'], ['C', 'pw01a']])
+    expect(choice.options?.map(({ key, next }) => [key, next])).toEqual([['A', 'pw01a'], ['B', 'pw01a_B'], ['C', 'pw01a_C']])
   })
 
   it('第一次选择前先交代空椅、新娘与她做过线人', () => {

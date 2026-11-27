@@ -30,6 +30,7 @@ export interface Option {
 
 export interface Scene {
   id: string
+  inherits?: string
   chapter: string
   title: string
   locationId: string

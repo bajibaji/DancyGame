@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { resolveChapters } from '../src/content/sceneInheritance.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const strictChapters = ['prologue', 'ch01', 'ch02', 'ch03', 'ch04', 'ch05', 'ch06', 'ch07', 'ch08', 'ch09', 'ch10', 'ch11', 'ch12', 'ch13']
@@ -16,17 +17,17 @@ const lines = []
 const shortBodies = []
 const choiceExempt = new Set(JSON.parse(readFileSync(join(root, 'scripts', 'choice-ending-exemptions.json'), 'utf8')))
 
-for (const name of strictChapters) {
-  const text = readFileSync(join(root, 'src', 'content', 'story', name + '.json'), 'utf8')
-  const chapter = JSON.parse(text)
-  let gap = 0
+const sources = strictChapters.map((name) => readFileSync(join(root, 'src', 'content', 'story', name + '.json'), 'utf8'))
+const chapters = resolveChapters(sources.map((text) => JSON.parse(text)))
+for (const [chapterIndex, chapter] of chapters.entries()) {
+  const name = strictChapters[chapterIndex]
+  const text = sources[chapterIndex]
   let chars = 0
   let variants = 0
   const seenTitles = new Map()
   for (const scene of chapter.scenes) {
     const id = scene.id
     chars += scene.body.length
-    gap++
     const sameTitle = seenTitles.get(scene.title)
     if (sameTitle) errors.push(id + ' 本章标题与 ' + sameTitle + ' 重复：' + scene.title)
     else seenTitles.set(scene.title, id)
@@ -54,13 +55,14 @@ for (const name of strictChapters) {
       const worlds = scene.options.map((option) => option.effects.world ?? 0)
       if (Math.min(...worlds) > 0) errors.push(id + ' 三个选项都不加逆线，世界线无法摆荡')
       if (scene.body.length < CHOICE_MIN) errors.push(id + ' 选择幕正文 ' + scene.body.length + ' 字，低于 ' + CHOICE_MIN)
-      if (gap > MAX_CHOICE_GAP) errors.push(id + ' 距上一次选择隔了 ' + gap + ' 幕')
-      gap = 0
       for (const option of scene.options) {
         if (option.consequence.length < CONSEQUENCE_MIN) errors.push(id + '/' + option.key + ' 即时后果过短')
       }
     } else if (scene.body.length < PLAIN_MIN) {
       errors.push(id + ' 正文 ' + scene.body.length + ' 字，低于 ' + PLAIN_MIN)
+    }
+    for (const entry of scene.variants ?? []) {
+      if (entry.body.length < (scene.options ? CHOICE_MIN : PLAIN_MIN) || entry.body.length > MAX_BODY) errors.push(id + '/' + entry.flag + ' 分支正文长度不合规：' + entry.body.length)
     }
     if (scene.worldVariants) {
       variants++
@@ -68,6 +70,7 @@ for (const name of strictChapters) {
       if (kinds !== 'loss,order') errors.push(id + ' 双版本线不完整：' + kinds)
       for (const entry of scene.worldVariants) {
         if (entry.body.length < VARIANT_MIN) errors.push(id + ' ' + entry.line + ' 版本过短')
+        if (entry.body.length > MAX_BODY) errors.push(id + ' ' + entry.line + ' 版本超过 ' + MAX_BODY + ' 字')
         if (entry.body === scene.body) errors.push(id + ' ' + entry.line + ' 版本与主版本相同')
       }
     }
@@ -78,6 +81,29 @@ for (const name of strictChapters) {
   }
   lines.push(name + '：' + chapter.scenes.length + ' 幕，平均 ' + Math.round(chars / chapter.scenes.length) + ' 字，双版本 ' + variants + ' 幕')
 }
+
+const sceneMap = new Map(chapters.flatMap(({ scenes }) => scenes).map((scene) => [scene.id, scene]))
+const checked = new Set()
+const walk = (id, gap, active = new Set()) => {
+  const scene = sceneMap.get(id)
+  if (!scene) {
+    errors.push('跳转目标不存在：' + id)
+    return
+  }
+  if (active.has(id)) {
+    errors.push('剧情跳转循环：' + id)
+    return
+  }
+  const key = id + ':' + gap
+  if (checked.has(key)) return
+  checked.add(key)
+  const count = gap + 1
+  if (count > MAX_CHOICE_GAP || (['prologue', 'ch01'].includes(scene.chapter) && scene.options && count !== MAX_CHOICE_GAP)) errors.push(id + ' 实际路径距上次选择 ' + count + ' 幕')
+  const targets = scene.options?.map(({ next }) => next) ?? (scene.next ? [scene.next] : [])
+  const path = new Set([...active, id])
+  for (const next of targets) walk(next, scene.options ? 0 : count, path)
+}
+walk(chapters[0].scenes[0].id, 0)
 
 console.log(lines.join('\n'))
 if (shortBodies.length) {

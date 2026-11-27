@@ -9,8 +9,8 @@ export function resolveSceneBody(scene: Scene, flags: GameState['flags'], arriva
   const consequence = arrival?.next === scene.id ? arrival.consequence : undefined
   const recalls = scene.recalls?.filter(({ flag }) => flags[flag]).map(({ text }) => text) ?? []
   const body =
-    scene.worldVariants?.find((variant) => variant.line === line)?.body ??
     scene.variants?.find(({ flag }) => flags[flag])?.body ??
+    scene.worldVariants?.find((variant) => variant.line === line)?.body ??
     scene.body
   return [consequence, ...recalls, body].filter(Boolean).join('\n\n')
 }

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { getScene } from '../src/content/index'
+import { getScene, getSceneBaseId } from '../src/content/index'
 import { CHOICE_UNDO_MS, createInitialState } from '../src/game/engine'
 import { choiceOffers } from '../src/game/choices'
 import { resolveSceneBody, resolveSceneFollowUps, resolveSceneProgress } from '../src/game/narrative'
@@ -45,9 +45,9 @@ describe('序章两次查证与跨章交接', () => {
       expect(seen.has(scene.id), scene.id).toBe(false)
       seen.add(scene.id)
 
-      if (scene.id === 'p04a') expect(state.clues).not.toContain('C27')
-      if (scene.id === 'p05a') expect(state.clues).toContain('C27')
-      if (scene.id === 'p09a') expect(puzzleStatus(puzzle, scene.chapter, state.clues, state.solved)).toBe('locked-clues')
+      if (getSceneBaseId(scene.id) === 'p04a') expect(state.clues).not.toContain('C27')
+      if (getSceneBaseId(scene.id) === 'p05a') expect(state.clues).toContain('C27')
+      if (getSceneBaseId(scene.id) === 'p09a') expect(puzzleStatus(puzzle, scene.chapter, state.clues, state.solved)).toBe('locked-clues')
       if (scene.id === 'p09b') {
         expect(state.clues).toEqual(expect.arrayContaining(['C27', 'C28']))
         expect(puzzleStatus(puzzle, scene.chapter, state.clues, state.solved)).toBe('ready')
@@ -74,6 +74,7 @@ describe('序章两次查证与跨章交接', () => {
     }
 
     expect(seen.size).toBe(86)
+    for (const id of ['p04a', 'p05a', 'p09a']) expect([...seen].some((seenId) => getSceneBaseId(seenId) === id), id).toBe(true)
     expect(store.getState().history).toHaveLength(28)
     const saved = JSON.parse(storage.getItem(SAVE_KEY)!)
     const { store: reloaded } = await loadStore(saved.state, saved.version)
@@ -125,6 +126,30 @@ describe('序章两次查证与跨章交接', () => {
 })
 
 describe('游玩进度', () => {
+  it('继承幕刷新保留所在支路，关键材料不提前补，撤回可切另一支且只结算一次', async () => {
+    const scene = getScene('pw08c')!
+    const initial = { ...createInitialState(scene.id, 11), started: true }
+    const { store, storage } = await loadStore(initial, 3)
+    const offer = choiceOffers(scene, 11, {}).find(({ option }) => option.key === 'B')!
+    store.getState().choose(offer.key, scene.id)
+    const selected = store.getState()
+    expect(selected.sceneId).toBe('p05a_B')
+    expect(selected.clues.filter((id) => id === 'C27')).toHaveLength(1)
+    expect(selected.clues).not.toContain('C28')
+    const raw = JSON.parse(storage.getItem(SAVE_KEY)!)
+    const { store: reloaded } = await loadStore(raw.state, raw.version)
+    expect(reloaded.getState()).toMatchObject({ sceneId: 'p05a_B', meta: selected.meta, clues: selected.clues, flags: selected.flags, history: selected.history })
+    const body = resolveSceneBody(getScene('p05a_B')!, selected.flags, selected.history.at(-1))
+    expect(resolveSceneBody(getScene('p05a_B')!, reloaded.getState().flags, reloaded.getState().history.at(-1))).toBe(body)
+    selected.undo()
+    expect(store.getState()).toMatchObject({ sceneId: scene.id, clues: [], history: [] })
+    const alternate = choiceOffers(scene, 11, {}).find(({ option }) => option.key === 'C')!
+    store.getState().choose(alternate.key, scene.id)
+    expect(store.getState().sceneId).toBe('p05a_C')
+    expect(store.getState().clues.filter((id) => id === 'C27')).toHaveLength(1)
+    expect(store.getState().flags.F_pw08_B).toBeUndefined()
+  })
+
   it('离开满四小时才待看提要，关闭与刷新不会重结算，重新开局清除旧提醒', async () => {
     const now = 1_900_000_000_000
     const { store, storage } = await loadStore({ ...createInitialState('pw05c', 17), started: true, lastActiveAt: now }, 3)
