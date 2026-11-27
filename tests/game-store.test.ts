@@ -125,6 +125,50 @@ describe('序章两次查证与跨章交接', () => {
 })
 
 describe('游玩进度', () => {
+  it('离开满四小时才待看提要，关闭与刷新不会重结算，重新开局清除旧提醒', async () => {
+    const now = 1_900_000_000_000
+    const { store, storage } = await loadStore({ ...createInitialState('pw05c', 17), started: true, lastActiveAt: now }, 3)
+    const before = store.getState()
+    before.enterSession(now + 4 * 60 * 60 * 1000 - 1)
+    expect(store.getState().recapPending).toBe(false)
+    store.getState().recordActive(now)
+    store.getState().enterSession(now + 4 * 60 * 60 * 1000)
+    expect(store.getState().recapPending).toBe(true)
+    store.getState().choose('A', 'pw05c')
+    expect(store.getState()).toMatchObject({ sceneId: before.sceneId, history: before.history, meta: before.meta, runSeed: 17 })
+    const saved = JSON.parse(storage.getItem(SAVE_KEY)!)
+    const { store: reopened } = await loadStore(saved.state, saved.version)
+    expect(reopened.getState().recapPending).toBe(true)
+    reopened.getState().dismissRecap()
+    expect(reopened.getState()).toMatchObject({ recapPending: false, sceneId: before.sceneId, meta: before.meta, history: before.history, runSeed: 17 })
+    reopened.getState().enterSession(Date.now())
+    expect(reopened.getState().recapPending).toBe(false)
+    reopened.getState().start()
+    expect(reopened.getState()).toMatchObject({ recapPending: false, sceneId: 'p01a', history: [] })
+    reopened.getState().reset()
+    expect(reopened.getState()).toMatchObject({ recapPending: false, lastActiveAt: null, started: false })
+  })
+
+  it('短时刷新与无时间的旧档不误弹，提要期间不能自动推进或撤销', async () => {
+    const { store } = await loadStore({ ...createInitialState('pw05a', 29), started: true }, 3)
+    expect(store.getState()).toMatchObject({ lastActiveAt: null, recapPending: false })
+    store.getState().enterSession(1_900_000_000_000)
+    expect(store.getState().recapPending).toBe(false)
+    store.getState().recordActive(1_900_000_000_100)
+    store.getState().enterSession(1_900_000_000_200)
+    expect(store.getState().recapPending).toBe(false)
+    store.getState().recordActive(1_900_000_000_000)
+    store.getState().enterSession(1_900_000_000_000 + 4 * 60 * 60 * 1000)
+    store.getState().advance(getScene('pw05a')!)
+    store.getState().undo()
+    store.getState().finishAutoEnding()
+    expect(store.getState()).toMatchObject({ sceneId: 'pw05a', recapPending: true, ending: null })
+    store.getState().dismissRecap()
+    store.getState().advance(getScene('pw05a')!)
+    expect(store.getState().sceneId).toBe('pw05b')
+  })
+
+
   it('第五章结束停在敬请期待，刷新不结算第六章，仍可撤销最后选择', async () => {
     const { store, storage } = await loadStore({ ...createInitialState('festivalbridgec', 19), started: true }, 3)
     const before = store.getState()

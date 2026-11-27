@@ -7,10 +7,13 @@ import ArchivePage from './pages/ArchivePage'
 import EndingPage from './pages/EndingPage'
 import SettingsPage from './pages/SettingsPage'
 import { FONT_SCALE, useSettingsStore } from './stores/settingsStore'
+import { useGameSession } from './game/useGameSession'
+import ResumeRecap from './components/game/ResumeRecap'
 
 const EASE = [0.32, 0.72, 0, 1] as const
 
 export default function App() {
+  useGameSession()
   const fontSize = useSettingsStore((s) => s.fontSize)
   const reducedMotion = useSettingsStore((s) => s.reducedMotion)
   const location = useLocation()
@@ -28,6 +31,8 @@ export default function App() {
   }, [fontSize])
 
   return (
+    <>
+    <ResumeRecap />
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={location.pathname}
@@ -48,5 +53,6 @@ export default function App() {
         </Routes>
       </motion.div>
     </AnimatePresence>
+    </>
   )
 }

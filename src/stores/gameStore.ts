@@ -8,6 +8,7 @@ import type { Recipe } from '../game/puzzle'
 import { CHAPTERS, getScene, START_SCENE } from '../content/index'
 import { characterIdsInText } from '../game/characterNames'
 import { isReleasedRecipe, isReleasedScene } from '../content/release'
+import { shouldShowRecap } from '../game/recap'
 
 interface GameStore {
   screen: string
@@ -27,6 +28,8 @@ interface GameStore {
   ending: EndingId | null
   epilogue: Epilogue | null
   snapshot: (Snapshot & { metCharacters: string[] }) | null
+  lastActiveAt: number | null
+  recapPending: boolean
   start: () => void
   choose: (key: ChoiceKey, sceneId: string) => void
   advance: (scene: Scene) => void
@@ -38,6 +41,9 @@ interface GameStore {
   repairScene: () => void
   reset: () => void
   setScreen: (screen: string) => void
+  enterSession: (now: number) => void
+  recordActive: (now: number) => void
+  dismissRecap: () => void
 }
 
 const initial = createInitialState(START_SCENE)
@@ -68,6 +74,8 @@ function mergeRaw(saved: unknown, current: GameStore): GameStore {
     ...merged,
     meta: { ...merged.meta, world: merged.meta?.world ?? 0 },
     runSeed: Number.isInteger(merged.runSeed) && merged.runSeed >= 0 && merged.runSeed <= 0xffffffff ? merged.runSeed : 0,
+    lastActiveAt: typeof merged.lastActiveAt === 'number' && Number.isFinite(merged.lastActiveAt) && merged.lastActiveAt > 0 ? merged.lastActiveAt : null,
+    recapPending: Boolean(merged.recapPending) && merged.started && !merged.ending && isReleasedScene(merged.sceneId),
   }
   if (!isReleasedScene(state.sceneId) || state.ending || state.sceneId === 'c0609' || state.visited.includes('c0609')) return state
   const notebookSource = state.sceneId === 'c0614b' || state.visited.includes('c0614b') || state.appliedScenes.includes('c0614b')
@@ -140,6 +148,8 @@ export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       screen: 'title',
+      lastActiveAt: null,
+      recapPending: false,
       sceneId: initial.sceneId,
       runSeed: initial.runSeed,
       meta: initial.meta,
@@ -161,6 +171,8 @@ export const useGameStore = create<GameStore>()(
         set({
           ...fresh,
           screen: 'story',
+          lastActiveAt: Date.now(),
+          recapPending: false,
           metCharacters: ['jiangjia'],
           started: true,
           ending: null,
@@ -170,7 +182,7 @@ export const useGameStore = create<GameStore>()(
       },
       choose: (key, sceneId) => {
         const state = get()
-        if (!isReleasedScene(state.sceneId)) return
+        if (state.recapPending || !isReleasedScene(state.sceneId)) return
         if (sceneId !== state.sceneId) return
         const scene = getScene(sceneId)
         if (!scene) return
@@ -204,7 +216,7 @@ export const useGameStore = create<GameStore>()(
         set({ ...next, ...entered, snapshot, screen: 'story' })
       },
       advance: (scene) => {
-        if (!isReleasedScene(get().sceneId)) return
+        if (get().recapPending || !isReleasedScene(get().sceneId)) return
         if (scene.id !== get().sceneId || scene.options?.length) return
         if (scene.ending) {
           if (scene.ending === 'auto' || scene.ending === 'good') get().finishAutoEnding()
@@ -218,7 +230,7 @@ export const useGameStore = create<GameStore>()(
       },
       solvePuzzle: (a, b) => {
         const state = get()
-        if (!isReleasedRecipe([a, b])) return null
+        if (state.recapPending || !isReleasedRecipe([a, b])) return null
         const result = engineSolvePuzzle(
           {
             sceneId: state.sceneId,
@@ -241,7 +253,7 @@ export const useGameStore = create<GameStore>()(
       },
       finishAutoEnding: () => {
         const state = get()
-        if (!isReleasedScene(state.sceneId)) return
+        if (state.recapPending || !isReleasedScene(state.sceneId)) return
         const ending = decideEnding({
           sceneId: state.sceneId,
           runSeed: state.runSeed,
@@ -267,7 +279,7 @@ export const useGameStore = create<GameStore>()(
       },
       undo: () => {
         const state = get()
-        if (!state.snapshot) return
+        if (state.recapPending || !state.snapshot) return
         if (Date.now() - state.snapshot.at >= CHOICE_UNDO_MS) {
           set({ snapshot: null })
           return
@@ -289,6 +301,8 @@ export const useGameStore = create<GameStore>()(
         set({
           ...fresh,
           screen: 'title',
+          lastActiveAt: null,
+          recapPending: false,
           metCharacters: ['jiangjia'],
           started: false,
           ending: null,
@@ -297,6 +311,15 @@ export const useGameStore = create<GameStore>()(
         })
       },
       setScreen: (screen) => set({ screen }),
+      enterSession: (now) => {
+        const state = get()
+        if (!state.started) return
+        set({ lastActiveAt: now, recapPending: state.recapPending || shouldShowRecap(state, state.lastActiveAt, now) })
+      },
+      recordActive: (now) => {
+        if (get().started) set({ lastActiveAt: now })
+      },
+      dismissRecap: () => set({ recapPending: false, lastActiveAt: Date.now() }),
     }),
     {
       name: 'jiangjia.save.v1',
@@ -318,6 +341,8 @@ export const useGameStore = create<GameStore>()(
         history: state.history,
         metCharacters: state.metCharacters,
         started: state.started,
+        lastActiveAt: state.lastActiveAt,
+        recapPending: state.recapPending,
         ending: state.ending,
         epilogue: state.epilogue,
       }),

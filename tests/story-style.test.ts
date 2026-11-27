@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { ENDINGS, ENDING_MEMORY, SCENES } from '../src/content/index'
 import type { Scene } from '../src/game/types'
 
-const FORBIDDEN = ['心里一沉', '你意识到', '仿佛在说', '像是在诉说', '深吸一口气', '不由得', '不禁', '空气仿佛凝固']
+const FORBIDDEN = ['心里一沉', '你意识到', '仿佛在说', '像是在诉说', '深吸一口气', '不由得', '不禁', '空气仿佛凝固', '看手机却仍留在桌上', '你要找的是是谁', '收席前后厨还缺个人', '听见你问可以坐下', '在封条写下时间', '他给出到店联系']
 
 const bodiesOf = (scene: Scene) => [
   scene.body,

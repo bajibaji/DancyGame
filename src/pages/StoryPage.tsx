@@ -57,10 +57,12 @@ function ReleasedStoryPage() {
   const readingMode = useSettingsStore((s) => s.readingMode)
   const reducedMotion = useSettingsStore((s) => s.reducedMotion)
   const autoAdvance = useSettingsStore((s) => s.autoAdvance)
+  const recapPending = useGameStore((s) => s.recapPending)
   const [readScene, setReadScene] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<{ sceneId: string; message: string | null; canUndo: boolean } | null>(null)
   const [selectedCharacter, setSelectedCharacter] = useState<SelectedCharacter | null>(null)
   const [atBottom, setAtBottom] = useState(true)
+  const [pageVisible, setPageVisible] = useState(() => document.visibilityState === 'visible')
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const latestRef = useRef<HTMLElement | null>(null)
 
@@ -93,6 +95,12 @@ function ReleasedStoryPage() {
   }, [sceneId])
 
   useEffect(() => {
+    const update = () => setPageVisible(document.visibilityState === 'visible')
+    document.addEventListener('visibilitychange', update)
+    return () => document.removeEventListener('visibilitychange', update)
+  }, [])
+
+  useEffect(() => {
     if (!scene) return
     const activeUndo = snapshot ? CHOICE_UNDO_MS - (Date.now() - snapshot.at) : 0
     const newClues = snapshot ? clues.filter((id) => !snapshot.clues.includes(id)) : scene.effects?.clues ?? []
@@ -109,8 +117,8 @@ function ReleasedStoryPage() {
   }, [scene, snapshot, clues, memories])
 
   useEffect(() => {
-    if (activeBody) meet(activeBody)
-  }, [activeBody, meet])
+    if (activeBody && !recapPending) meet(activeBody)
+  }, [activeBody, meet, recapPending])
 
   useLayoutEffect(() => {
     if (readingMode !== 'single') return
@@ -160,11 +168,13 @@ function ReleasedStoryPage() {
   }, [sceneId, readingMode, activeBody])
 
   useEffect(() => {
-    if (!autoAdvance || !scene || scene.options?.length || !textReady || resolveSceneFollowUps(scene, solved).length) return
+    if (!pageVisible || recapPending || !autoAdvance || !scene || scene.options?.length || !textReady || resolveSceneFollowUps(scene, solved).length) return
     const remainingUndo = snapshot ? CHOICE_UNDO_MS - (Date.now() - snapshot.at) : 0
-    const timer = setTimeout(() => advance(scene), Math.max(3000, remainingUndo))
+    const timer = setTimeout(() => {
+      if (document.visibilityState === 'visible') advance(scene)
+    }, Math.max(3000, remainingUndo))
     return () => clearTimeout(timer)
-  }, [autoAdvance, scene, textReady, advance, snapshot, solved])
+  }, [autoAdvance, scene, textReady, advance, snapshot, solved, recapPending, pageVisible])
 
   const characterCard = useMemo(
     () => (selectedCharacter ? RELEASED_CHARACTERS.find((c) => c.id === selectedCharacter.id) : undefined),
@@ -205,7 +215,7 @@ function ReleasedStoryPage() {
     }),
     [onChoose, onAdvance, onUndo, navigate, selectedCharacter],
   )
-  useGameKeys(keys, true)
+  useGameKeys(keys, !recapPending)
 
   useEffect(() => {
     if (!scene) repairScene()
